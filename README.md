@@ -1,7 +1,6 @@
 # Nectrae
 
-Agent Spend Control: teto de gastos por tipo de pagamento para agentes de IA, com validação de cada pagamento na rede Solana.
-
+Agent Spend Control: per-API USDC spending controls for AI agents, with budget checks before signing and payment verification on Solana and Base.
 | Pasta ou arquivo | O que é |
 | --- | --- |
 | `mvp/` | O MVP que funciona: motor de regras, SDK do agente, registro em SQLite, validador Solana e painel (com o visual da Nectrae e versão para celular). Veja `mvp/README.md`. |
