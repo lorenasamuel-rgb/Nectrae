@@ -1,58 +1,58 @@
 # Nectrae Spend Control · MVP
 
-Teto de USDC por API. Cada agente é uma API. Solana devnet e Base Sepolia só conferem o pagamento. As duas redes entram no mesmo teto.
+One USDC cap per API. Each agent is one API. Solana devnet and Base Sepolia only check the payment. Both networks count toward the same cap.
 
-- **Motor de regras:** decide antes de o dinheiro sair (permitir, bloquear, pedir aprovação, pausar o agente).
-- **Registro único:** cada tentativa fica gravada, permitida ou não.
-- **Validação na fonte:** confere a assinatura na Solana ou o hash na Base, e varre as duas carteiras atrás de USDC que não passou pelo motor.
-- **Painel:** um teto por agente, aprovações, alertas, validação e registro.
+- **Rules engine:** decides before money leaves (allow, block, ask for approval, pause the agent).
+- **Single ledger:** every attempt is recorded, whether it was allowed or not.
+- **Source validation:** checks the Solana signature or the Base hash, and scans both wallets for USDC that skipped the engine.
+- **Panel:** one cap per agent, approvals, alerts, validation, and the ledger.
 
-Não precisa instalar nada além do Node 22.13 ou mais novo (testado no Node 24). Não há dependências: o banco é o SQLite que já vem no Node.
+You only need Node 22.13 or newer (tested on Node 24). There are no dependencies: the database is the SQLite that already ships with Node.
 
-## Rodar
+## Run
 
 ```bash
-cp .env.example .env      # depois preencha AGENT_TOKEN com um valor longo e aleatório
-npm run seed              # cria os 3 agentes de exemplo e suas regras
-npm start                 # painel em http://127.0.0.1:8787
-npm run demo              # em outro terminal: um agente de exemplo chama o SDK algumas vezes
-npm test                  # regras, chaves, validadores Solana e Base, e API
+cp .env.example .env      # then set AGENT_TOKEN to a long random value
+npm run seed              # creates the 3 example agents and their rules
+npm start                 # panel at http://127.0.0.1:8787
+npm run demo              # in another terminal: an example agent calls the SDK a few times
+npm test                  # 40 tests: rules, keys, Solana and Base validators, and the API
 ```
 
-O banco fica em `data/nectrae.db`. Para começar do zero, apague essa pasta e rode `npm run seed` de novo.
+The database is `data/nectrae.db`. `npm run seed` wipes the demo ledger and recreates agents `nansen`, `vybe`, and `tcg`, each with a daily USDC cap. The addresses it writes are examples, not a Phantom wallet.
 
-## Visual e versão para celular
+## Visual and phone layout
 
-O painel segue o guia de identidade visual da Nectrae: fundo navy `#031626`, cards `#06202F` com borda `#172C3A`, âmbar `#EDAE44` só nos destaques, verde `#5FDFA6` para o que está seguro e laranja `#E8803A` para bloqueios. Títulos e logo em Playfair Display, interface e números em Inter; endereços e provas em JetBrains Mono. As cores ficam em variáveis CSS no começo de `public/index.html`.
+The panel follows the Nectrae visual identity: navy background `#031626`, cards `#06202F` with border `#172C3A`, amber `#EDAE44` only on highlights, green `#5FDFA6` for what is safe, and orange `#E8803A` for blocks. Titles and the logo use Playfair Display; the interface and numbers use Inter; addresses and proofs use JetBrains Mono. The colors live in CSS variables at the top of `public/index.html`.
 
-Cores do gráfico: âmbar para USDC que saiu na Solana, azul para USDC que saiu na Base. A barra do teto vira o degradê âmbar → laranja a partir de 80%.
+Chart colors: amber for USDC that left on Solana, blue for USDC that left on Base. The cap bar switches to the amber-to-orange gradient from 80% up.
 
-**Versão para celular.** Em telas de até 700 px de largura o painel vira um app com barra de abas embaixo:
+**Phone layout.** On screens up to 700 px wide the panel becomes an app with a tab bar at the bottom:
 
-| Aba | O que mostra |
+| Tab | What it shows |
 | --- | --- |
-| Início | gasto do dia e do mês, tetos acima de 80%, barrados, alertas e atalho para aprovações pendentes |
-| Agentes | agentes, teto de USDC, gráfico por rede e teste de pagamento |
-| Aprovações | pedidos com Aprovar e Recusar; a aba mostra quantos estão pendentes |
-| Registro | validação do registro e registro único com filtros |
-| Proteção | conexão Solana devnet, Base Sepolia e endereços públicos |
+| Home | today's and this month's spend, caps above 80%, blocks, alerts, and a shortcut to pending approvals |
+| Agents | agents, the USDC cap, the chart by network, and the payment test |
+| Approvals | requests with Approve and Reject; the tab shows how many are pending |
+| Ledger | ledger validation and the single ledger with filters |
+| Protection | Solana devnet and Base Sepolia connection, plus public addresses |
 
-Dá para abrir uma aba direto pelo endereço: `http://127.0.0.1:8787/#aprovacoes` (também `#inicio`, `#agentes`, `#registro`, `#protecao`). No computador o painel continua numa página só.
+Open a tab directly: `http://127.0.0.1:8787/#approvals` (also `#home`, `#agents`, `#ledger`, `#protection`). On a computer the panel stays on one page.
 
-Para ver a versão de celular no Mac: abra o painel no Chrome, aperte Cmd+Option+I e ligue o modo dispositivo (ícone de celular).
+To see the phone layout on a Mac: open the panel in Chrome, press Cmd+Option+I, and turn on device mode (the phone icon).
 
-### Abrir no celular de verdade
+### Open it on a real phone
 
-1. No `.env`, troque `HOST=127.0.0.1` por `HOST=0.0.0.0` e preencha `PANEL_TOKEN` com um valor longo e aleatório. Sem `PANEL_TOKEN` o servidor não sobe nesse modo.
-2. Rode `npm start` e descubra o IP do Mac na rede (Ajustes do Sistema › Wi-Fi › Detalhes, ou `ipconfig getifaddr en0`).
-3. No celular, na mesma rede Wi-Fi, abra `http://<IP do Mac>:8787`.
-4. O painel pede o token: cole o valor de `PANEL_TOKEN`. Marque "Lembrar neste aparelho" para não precisar digitar de novo; sem marcar, ele vale só até fechar a aba.
+1. In `.env`, change `HOST=127.0.0.1` to `HOST=0.0.0.0` and set `PANEL_TOKEN` to a long random value. Without `PANEL_TOKEN` the server will not start in that mode.
+2. Run `npm start` and find the Mac's IP on the network (System Settings › Wi-Fi › Details, or `ipconfig getifaddr en0`).
+3. On the phone, on the same Wi-Fi, open `http://<Mac IP>:8787`.
+4. The panel asks for the token: paste the `PANEL_TOKEN` value. Check "Remember on this device" so you do not have to type it again; otherwise it lasts only until the tab closes.
 
-Cuidado: a conexão é HTTP sem criptografia, então o token passa aberto pela rede. Use só em rede de confiança (casa ou escritório), nunca em Wi-Fi público. Para acesso de fora, coloque o painel atrás de HTTPS.
+The connection is plain HTTP, so the token travels in the clear. Use it only on a trusted network (home or office), never on public Wi-Fi. For access from outside, put the panel behind HTTPS.
 
-Com `PANEL_TOKEN` preenchido, o painel pede o token também no próprio Mac.
+With `PANEL_TOKEN` set, the panel also asks for the token on the Mac itself.
 
-## Integrar um agente
+## Integrate an agent
 
 ```js
 import { SpendControl } from './sdk/client.mjs';
@@ -60,52 +60,51 @@ import { SpendControl } from './sdk/client.mjs';
 const spend = new SpendControl({ url: 'http://127.0.0.1:8787', token: process.env.AGENT_TOKEN, agent: 'nansen' });
 
 const ok = await spend.check({ network: 'solana', amount: 0.01, vendor: 'api.nansen.ai', destination: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' });
-if (ok.decision !== 'allowed') return;            // 'blocked' ou 'needs_approval'
-const signature = await pagar();                   // a carteira do agente assina; o SDK nunca vê chave privada
-await spend.confirm(ok.paymentId, signature);      // o validador confere na rede
+if (ok.decision !== 'allowed') return;            // 'blocked' or 'needs_approval'
+const signature = await pay();                    // the agent's wallet signs; the SDK never sees a private key
+await spend.confirm(ok.paymentId, signature);     // the validator checks the chain
 ```
 
-`network` é `solana` ou `base`. `destination` é o endereço que a API pediu no 402. As duas redes entram no mesmo teto.
+`network` is `solana` or `base`. `destination` is the address the API requested in the 402. Both networks count toward the same cap.
 
-## Validar na rede de teste
+## Validate on a test network
 
-Solana fica em **devnet**. Base fica em **Sepolia**. O USDC dessas redes não tem valor.
+Solana stays on **devnet**. Base stays on **Sepolia**. USDC on those networks has no value.
 
-1. Na Phantom, mude para Devnet e copie o endereço público. Na Base, copie o endereço `0x` da carteira de teste.
-2. No painel, em Proteção, troque os endereços de exemplo do agente. Não cole chave privada nem as 12 ou 24 palavras.
-3. Faça uma transferência de USDC de teste com essa carteira:
-   - **Passando pelo SDK** (`check` → pagar → `confirm`): o pagamento aparece como "Conferido".
-   - **Sem passar pelo SDK:** a varredura marca como "Fora do registro" e soma ao teto.
+1. In Phantom, switch to Devnet and copy the public address. On Base, copy the `0x` address of the test wallet.
+2. In the panel, under Protection, replace the agent's example addresses. Do not paste a private key or the 12 or 24 words.
+3. Send a test USDC transfer from that wallet:
+   - **Through the SDK** (`check` → pay → `confirm`): the payment shows as "Checked".
+   - **Without the SDK:** the scan marks it "Outside the ledger" and adds it to the cap.
 
-A validação roda sozinha a cada `VALIDATE_EVERY_SECONDS` (padrão 60) e pelo botão "Validar agora".
+Validation runs on its own every `VALIDATE_EVERY_SECONDS` (default 60) and from the "Validate now" button.
 
-## Segurança
+## Security
 
-- O produto **nunca** pede nem guarda chave privada. Os campos de carteira recusam chave privada, keypair em JSON e frase de 12/24 palavras.
-- A chave do provedor de RPC fica só no `.env`; o painel mostra no máximo os 4 últimos caracteres.
-- A API do agente (`/v1`) exige `Authorization: Bearer <AGENT_TOKEN>`.
-- A API do painel (`/api`) só responde em localhost, recusa pedidos de outros sites e exige `Content-Type: application/json`. Para abrir o servidor na rede (`HOST=0.0.0.0`), defina `PANEL_TOKEN`; sem ele, o servidor não sobe.
-- Toda mudança de regra fica em `rule_audit`, com o valor anterior e o novo.
+- The product **never** asks for or stores a private key. Wallet fields refuse a private key, a JSON keypair, and a 12/24-word phrase.
+- The RPC provider key stays only in `.env`; the panel shows at most the last 4 characters.
+- The agent API (`/v1`) requires `Authorization: Bearer <AGENT_TOKEN>`.
+- The panel API (`/api`) only responds on localhost, refuses requests from other sites, and requires `Content-Type: application/json`. To open the server on the network (`HOST=0.0.0.0`), set `PANEL_TOKEN`; without it, the server does not start.
+- Every rule change is stored in `rule_audit`, with the previous value and the new one.
 
-## O que fica para a fase 2
+## Left for phase 2
 
-- Proxy compatível com OpenAI para medir e cortar gasto com modelos de IA, e conferência na API de uso do provedor.
-- Alertas por e-mail, Slack e webhook.
-- Teto aplicado na própria rede: `approve` do token SPL com revogação agendada (o `approve` não expira sozinho).
-- Login no painel com usuários e papéis, no lugar de "só localhost".
+- Mainnet. The default today is Solana devnet and Base Sepolia; production x402 APIs will not accept that test USDC.
+- Alerts by email, Slack, and webhook.
+- Prove the public address by signing a message in the wallet. The key never enters the app, and this does not replace `PANEL_TOKEN`.
 
-## Estrutura
+## Layout
 
 ```
-src/rules.mjs    motor de regras (puro, sem I/O)
-src/solana.mjs   cliente JSON-RPC da Solana, validação e varredura
-src/base.mjs     cliente JSON-RPC da Base, validação e varredura
-src/catalog.mjs  agentes de exemplo e a rodada de apresentação
-src/keys.mjs     endereço Solana, recusa de chave privada, máscara de URL
-src/store.mjs    banco SQLite e operações (check, assinatura, aprovação, validação)
-src/server.mjs   API do agente, API do painel e servidor do painel
-public/          painel (index.html: visual Nectrae, abas de celular e pedido de token)
-sdk/client.mjs   SDK do agente
-scripts/         seed e demo
-test/            testes (node --test)
+src/rules.mjs    rules engine (pure, no I/O)
+src/solana.mjs   Solana JSON-RPC client, validation, and scan
+src/base.mjs     Base JSON-RPC client, validation, and scan
+src/catalog.mjs  example agents and the demo round
+src/keys.mjs     Solana and Base addresses, private-key refusal, URL mask
+src/store.mjs    SQLite database and operations (check, signature, approval, validation)
+src/server.mjs   agent API, panel API, and the panel server
+public/          panel (index.html: Nectrae visual, phone tabs, and token prompt)
+sdk/client.mjs   agent SDK
+scripts/         seed and demo
+test/            tests (node --test)
 ```

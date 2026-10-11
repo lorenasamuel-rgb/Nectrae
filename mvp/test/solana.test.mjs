@@ -36,7 +36,7 @@ test('RPC tenta de novo depois de 429 e desiste com mensagem clara', async () =>
   assert.equal(await flaky('getSlot'), 42);
   assert.equal(calls, 3);
   const dead = createRpc('http://rpc', { retries: 1, sleep: async () => {}, fetchImpl: async () => reply(429) });
-  await assert.rejects(dead('getSlot'), /limite de chamadas/);
+  await assert.rejects(dead('getSlot'), /rate limit/);
 });
 
 test('calcula a saída de USDC da carteira e quem recebeu', () => {

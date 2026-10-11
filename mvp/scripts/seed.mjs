@@ -33,7 +33,7 @@ for (const a of DEMO_AGENTS) {
     at80: 'alertar',
     at100: a.id === 'nansen' ? 'pausar_agente' : 'bloquear',
   }, 'seed');
-  console.log(`agente ${a.id} pronto`);
+  console.log(`agent ${a.id} ready`);
 }
-console.log(`Banco: ${config.dbPath}`);
-console.log('Solana devnet e Base Sepolia. Os endereços de exemplo não são a sua Phantom.');
+console.log(`Database: ${config.dbPath}`);
+console.log('Solana devnet and Base Sepolia. The example addresses are not your Phantom wallet.');

@@ -1,14 +1,14 @@
 # Nectrae
 
-Agent Spend Control: teto de gastos por tipo de pagamento para agentes de IA, com validação de cada pagamento na rede Solana.
+Agent Spend Control: one USDC cap per API, checked on Solana devnet and Base Sepolia.
 
-| Pasta ou arquivo | O que é |
+| Path | What it is |
 | --- | --- |
-| `mvp/` | O MVP que funciona: motor de regras, SDK do agente, registro em SQLite, validador Solana e painel (com o visual da Nectrae e versão para celular). Veja `mvp/README.md`. |
-| `docs/PRD-v2-Agent-Spend-Control.md` | PRD v2. A versão viva, com os diagramas, está em https://claude.ai/code/artifact/abc882a7-a1d5-480b-b924-a900139e3be8 |
-| `painel-teto.html` | Protótipo clicável do painel, só com dados de exemplo. Abra no navegador. |
+| `mvp/` | The working MVP: one USDC cap per API, SDK, SQLite ledger, validation on Solana devnet and Base Sepolia, and a panel with a phone layout. See `mvp/README.md`. |
+| `docs/PRD-v2-Agent-Spend-Control.md` | PRD v2, revised on 11 Oct 2026. |
+| `painel-teto.html` | Clickable panel prototype, example data only. Open it in a browser. |
 
-Para rodar o MVP:
+To run the MVP:
 
 ```bash
 cd mvp

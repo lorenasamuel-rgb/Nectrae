@@ -11,7 +11,7 @@ export const NETWORKS = {
 export const DEMO_AGENTS = [
   {
     id: 'nansen',
-    description: 'Dados on-chain · USDC por chamada',
+    description: 'On-chain data · USDC per call',
     cap: 1,
     perTx: 0.05,
     pay: {
@@ -21,7 +21,7 @@ export const DEMO_AGENTS = [
   },
   {
     id: 'vybe',
-    description: 'Dados da Solana · USDC por chamada',
+    description: 'Solana data · USDC per call',
     cap: 0.5,
     perTx: 0.03,
     pay: {
@@ -31,7 +31,7 @@ export const DEMO_AGENTS = [
   },
   {
     id: 'tcg',
-    description: 'Cartas e preços · USDC por chamada',
+    description: 'Cards and prices · USDC per call',
     cap: 0.4,
     perTx: 0.05,
     pay: {
