@@ -1,0 +1,135 @@
+import { test, before, after } from 'node:test';
+import assert from 'node:assert/strict';
+import { createServer } from 'node:http';
+import { createApp } from '../src/server.mjs';
+import { openStore } from '../src/store.mjs';
+import { SpendControl } from '../sdk/client.mjs';
+import { USDC_MINTS } from '../src/solana.mjs';
+import { USDC_BASE } from '../src/base.mjs';
+import { DEMO_AGENTS } from '../src/catalog.mjs';
+
+const MINT = USDC_MINTS.devnet;
+const WALLET = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'; // qualquer endereço válido serve no teste
+const SHOP = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA';
+const SIG_OK = '5'.repeat(88);
+const SIG_OUT = '4'.repeat(88);
+
+const tx = amount => ({
+  slot: 7, blockTime: Math.floor(Date.now() / 1000),
+  meta: { err: null,
+    preTokenBalances: [{ accountIndex: 1, mint: MINT, owner: WALLET, uiTokenAmount: { uiAmountString: '100' } }, { accountIndex: 2, mint: MINT, owner: SHOP, uiTokenAmount: { uiAmountString: '0' } }],
+    postTokenBalances: [{ accountIndex: 1, mint: MINT, owner: WALLET, uiTokenAmount: { uiAmountString: String(100 - amount) } }, { accountIndex: 2, mint: MINT, owner: SHOP, uiTokenAmount: { uiAmountString: String(amount) } }] },
+});
+const rpc = async (method, params) => {
+  if (method === 'getTransaction') return { [SIG_OK]: tx(0.25), [SIG_OUT]: tx(75) }[params[0]] ?? null;
+  if (method === 'getSignaturesForAddress') return [{ signature: SIG_OK, blockTime: Math.floor(Date.now() / 1000) }, { signature: SIG_OUT, blockTime: Math.floor(Date.now() / 1000) }];
+  if (method === 'getSlot') return 123;
+  if (method === 'getVersion') return { 'solana-core': '2.x' };
+};
+
+let server, base, app;
+const BASE_USDC = USDC_BASE.sepolia;
+const BASE_FROM = '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+const BASE_HASH = '0x' + 'ab'.repeat(32);
+const baseRpc = async (method, params) => {
+  if (method === 'eth_chainId') return '0x14a34';
+  if (method === 'eth_blockNumber') return '0x2000';
+  if (method === 'eth_getTransactionReceipt') return null;
+  if (method === 'eth_getLogs') return [];
+  return null;
+};
+
+const config = { agentToken: 'tok-agent', panelToken: '', mint: MINT, commitment: 'finalized', network: 'devnet', rpcUrl: 'https://api.devnet.solana.com', baseNetwork: 'sepolia', baseRpcUrl: 'https://sepolia.base.org', baseUsdc: BASE_USDC, validateEverySec: -1 };
+
+before(async () => {
+  const store = openStore();
+  store.upsertAgent({ id: 'pesquisa-mercado', description: 'teste', wallet: WALLET });
+  store.setRule('pesquisa-mercado', { period: 'dia', cap: 1, perTx: 0.5, at80: 'alertar', at100: 'pausar_agente' });
+  const nansen = DEMO_AGENTS[0];
+  store.upsertAgent({ id: nansen.id, description: nansen.description, walletBase: BASE_FROM });
+  store.setRule(nansen.id, { period: 'dia', cap: nansen.cap, perTx: nansen.perTx, allow: [nansen.pay.solana, nansen.pay.base], at80: 'alertar', at100: 'pausar_agente' });
+  const tcg = DEMO_AGENTS[2];
+  store.upsertAgent({ id: tcg.id, description: tcg.description, walletBase: '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb' });
+  store.setRule(tcg.id, { period: 'dia', cap: tcg.cap, perTx: tcg.perTx, allow: [tcg.pay.solana, tcg.pay.base], at80: 'alertar', at100: 'bloquear' });
+  app = createApp(config, { store, rpc, baseRpc });
+  server = createServer(app.handle);
+  await new Promise(r => server.listen(0, '127.0.0.1', r));
+  base = `http://127.0.0.1:${server.address().port}`;
+});
+after(() => server.close());
+
+const panel = (path, init = {}) => fetch(base + path, { ...init, headers: { 'content-type': 'application/json', ...(init.headers || {}) } }).then(async r => ({ status: r.status, body: await r.json() }));
+
+test('SDK sem token é recusado', async () => {
+  const bad = new SpendControl({ url: base, token: 'errado', agent: 'pesquisa-mercado' });
+  await assert.rejects(bad.check({ network: 'solana', amount: 0.1, destination: SHOP }), /Token do agente/);
+});
+
+test('fluxo completo: checar, pagar, informar assinatura, validar na rede', async () => {
+  const spend = new SpendControl({ url: base, token: 'tok-agent', agent: 'pesquisa-mercado' });
+  const ok = await spend.check({ network: 'solana', amount: 0.25, vendor: 'mcp.search-pro', destination: SHOP });
+  assert.equal(ok.decision, 'allowed');
+  await spend.confirm(ok.paymentId, SIG_OK);
+
+  const summary = await app.validate(null);
+  assert.equal(summary.verified, 1);
+  assert.equal(summary.external, 1, 'a saída de 75 USDC sem pedido deve aparecer como fora do registro');
+
+  const { body } = await panel('/api/state');
+  const paid = body.payments.find(p => p.id === ok.paymentId);
+  assert.equal(paid.ver_status, 'verified');
+  const ext = body.payments.find(p => p.decision === 'external');
+  assert.equal(ext.amount, 75);
+  assert.ok(body.alerts.some(a => /sem passar pelo motor/.test(a.text)));
+});
+
+test('loop de USDC pausa o agente ao estourar o teto diário', async () => {
+  const spend = new SpendControl({ url: base, token: 'tok-agent', agent: 'pesquisa-mercado' });
+  let last;
+  for (let i = 0; i < 10; i++) { last = await spend.check({ network: 'solana', amount: 0.25, vendor: 'loop', destination: SHOP }); if (last.decision !== 'allowed') break; }
+  assert.equal(last.decision, 'blocked');
+  const { body } = await panel('/api/state');
+  assert.equal(body.agents.find(a => a.id === 'pesquisa-mercado').paused, true);
+  await panel('/api/agents/pesquisa-mercado/resume', { method: 'POST' });
+});
+
+test('aprovação humana', async () => {
+  app.store.upsertAgent({ id: 'caixa', description: 'aprovação', wallet: WALLET });
+  app.store.setRule('caixa', { period: 'dia', cap: 100, perTx: 50, approveAbove: 1, at100: 'bloquear' });
+  const spendBox = new SpendControl({ url: base, token: 'tok-agent', agent: 'caixa' });
+  const r = await spendBox.check({ network: 'solana', amount: 2, destination: SHOP });
+  assert.equal(r.decision, 'needs_approval');
+  const res = await panel(`/api/payments/${r.paymentId}/approve`, { method: 'POST' });
+  assert.equal(res.body.decision, 'allowed');
+});
+
+test('painel recusa chave privada no campo da carteira', async () => {
+  const secret = JSON.stringify(Array.from({ length: 64 }, (_, i) => i));
+  const res = await panel('/api/agents/pesquisa-mercado/wallet', { method: 'PUT', body: JSON.stringify({ wallet: secret }) });
+  assert.equal(res.status, 422);
+  assert.match(res.body.error, /chave privada/);
+});
+
+test('painel recusa pedido vindo de outro site', async () => {
+  const res = await panel('/api/agents/pesquisa-mercado/pause', { method: 'POST', headers: { origin: 'https://site-malicioso.example' } });
+  assert.equal(res.status, 403);
+});
+
+test('simulação da apresentação grava tentativas e não paga', async () => {
+  const res = await panel('/api/demo', { method: 'POST', body: '{}' });
+  assert.equal(res.status, 200);
+  assert.equal(res.body.paid, false);
+  assert.ok(res.body.lines.length >= 1);
+  const over = res.body.lines.find(l => l.agent === 'nansen' && l.amount === 0.2);
+  assert.equal(over.decision, 'blocked');
+  const wrong = res.body.lines.find(l => l.destination === '0x9999999999999999999999999999999999999999');
+  assert.equal(wrong.decision, 'blocked');
+  assert.ok(res.body.lines.some(l => l.network === 'solana' && l.decision === 'allowed'));
+  assert.ok(res.body.lines.some(l => l.network === 'base' && l.decision === 'allowed'));
+});
+
+test('alterar teto fica registrado na auditoria', async () => {
+  const res = await panel('/api/agents/pesquisa-mercado/rules', { method: 'PUT', body: JSON.stringify({ cap: 30 }) });
+  assert.equal(res.body.cap, 30);
+  assert.equal(app.store.db.prepare('SELECT COUNT(*) AS n FROM rule_audit WHERE agent_id = ?').get('pesquisa-mercado').n, 2);
+});

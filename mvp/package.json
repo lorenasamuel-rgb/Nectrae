@@ -1,0 +1,14 @@
+{
+  "name": "nectrae-spend-control",
+  "version": "0.1.0",
+  "private": true,
+  "description": "MVP do Agent Spend Control: teto de gastos por tipo de pagamento para agentes de IA, com validação na rede Solana.",
+  "type": "module",
+  "engines": { "node": ">=22.13" },
+  "scripts": {
+    "start": "node src/server.mjs",
+    "seed": "node scripts/seed.mjs",
+    "demo": "node scripts/demo.mjs",
+    "test": "node --test \"test/*.test.mjs\""
+  }
+}

@@ -1,0 +1,937 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Nectrae Spend Control</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+html{color-scheme:dark}
+body{margin:0}
+[hidden]{display:none!important}
+
+/* Nectrae · paleta do guia de identidade visual */
+:root{
+  --bg:#031626; --surface:#06202F; --surface-2:#172C3A; --ink:#FAF8F2; --muted:#BFC3BF; --line:#172C3A;
+  --accent:#EDAE44; --accent-ink:#031626; --accent-soft:#F6C574; --focus:#F6C574;
+  --ok:#5FDFA6; --ok-bg:rgba(95,223,166,.12); --warn:#EDAE44; --warn-bg:rgba(237,174,68,.14); --crit:#E8803A; --crit-bg:rgba(232,128,58,.14);
+  --r-ia:#69A9D2; --r-x402:#EDAE44; --r-sol:#E8803A; --r-sub:#BFC3BF;
+  --grad:linear-gradient(90deg,#EDAE44,#E8803A);
+  --sans:"Inter",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"Inter",ui-sans-serif,system-ui,sans-serif;
+  --code:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --serif:"Playfair Display",Georgia,serif;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.45;padding-inline:16px;padding-block:0 48px}
+.wrap{max-width:1240px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+h1,h2,h3{margin:0;text-wrap:balance}
+button,select,input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+
+/* top bar */
+.top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;padding-block:20px 4px;border-bottom:1px solid var(--line);padding-bottom:16px}
+.brand{display:flex;align-items:center;gap:12px}
+.mark{width:34px;height:34px;border-radius:8px;background:var(--ink);display:grid;place-items:center}
+.mark svg{display:block}
+.brand h1{font-size:19px;font-weight:700;letter-spacing:-.01em}
+.brand p{margin:0;color:var(--muted);font-size:13px}
+.top-meta{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 10px;font-size:12px;color:var(--muted)}
+.chip.example{border-style:dashed}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:7px 12px;cursor:pointer;font-weight:500;font-size:13px}
+.btn:hover{background:var(--surface-2)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.danger{color:var(--crit)}
+.btn.small{padding:4px 9px;font-size:12px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+
+/* kpis */
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:4px}
+.kpi .lbl{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:500}
+.kpi .val{font-family:var(--mono);font-size:24px;font-weight:500;letter-spacing:-.02em}
+.kpi .sub{font-size:12px;color:var(--muted)}
+.kpi.warn .val{color:var(--warn)} .kpi.crit .val{color:var(--crit)}
+
+/* layout */
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:20px;align-items:start}
+.col{display:flex;flex-direction:column;gap:20px;min-width:0}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.panel-h{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.panel-h h2{font-size:15px;font-weight:600}
+.panel-h .hint{color:var(--muted);font-size:12px}
+
+/* agent honeycomb: one face, wax color is identity, eyes are the cap */
+.tabs{display:flex;gap:8px 16px;flex-wrap:wrap}
+.tab{display:flex;flex-direction:column;align-items:center;gap:6px;width:112px;border:0;background:transparent;border-radius:8px;padding:2px;cursor:pointer;color:var(--muted);font-size:12px;font-weight:500}
+.tab[aria-selected="true"]{color:var(--accent);font-weight:600}
+.tab:hover:not([aria-selected="true"]){color:var(--ink)}
+.tab .id{text-align:center;min-height:2.5em;line-height:1.25;overflow-wrap:anywhere}
+.tab .face{width:72px;height:72px;display:block}
+.tab .halo{fill:none;stroke:transparent;stroke-width:1.5}
+.tab[aria-selected="true"] .halo{stroke:var(--ink)}
+.tab .face ellipse,.tab .face rect{fill:var(--ink)}
+
+.agent-h{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.agent-h h2{font-family:var(--mono);font-size:17px;font-weight:500}
+.agent-h p{margin:2px 0 0;color:var(--muted);font-size:13px}
+.pill{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:2px 9px;font-size:12px;font-weight:600;white-space:nowrap}
+.pill.ok{background:var(--ok-bg);color:var(--ok)} .pill.warn{background:var(--warn-bg);color:var(--warn)}
+.pill.crit{background:var(--crit-bg);color:var(--crit)} .pill.muted{background:var(--surface-2);color:var(--muted)}
+.agent-actions{display:flex;gap:8px;align-items:center}
+
+/* caps */
+.caps{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
+.cap{border:1px solid var(--line);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:10px;background:var(--surface)}
+.cap.off{background:var(--surface-2)}
+.cap-h{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.cap-name{display:flex;align-items:center;gap:8px;font-weight:600;font-size:14px}
+.sw{width:10px;height:10px;border-radius:3px;flex:none}
+.period{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.cap-fig{display:flex;align-items:baseline;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.cap-fig .spent{font-family:var(--mono);font-size:20px;font-weight:500}
+.cap-fig .of{color:var(--muted);font-size:13px}
+.cap-fig .pct{font-family:var(--mono);font-size:13px;font-weight:500}
+.bar{position:relative;height:10px;border-radius:5px;background:var(--surface-2);overflow:hidden}
+.cap.off .bar{background:var(--line)}
+.bar i{position:absolute;inset:0 auto 0 0;border-radius:5px;transition:width .25s ease}
+.bar b{position:absolute;top:0;bottom:0;width:1px;background:var(--muted);opacity:.45}
+.cap-rules{font-size:12px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 12px}
+.cap-rules span strong{color:var(--ink);font-weight:500}
+.cap-foot{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px;color:var(--muted);flex-wrap:wrap}
+.cap-edit{display:flex;gap:6px;align-items:center}
+.cap-edit input{width:96px;border:1px solid var(--line);border-radius:6px;padding:4px 8px;background:var(--surface);font-family:var(--mono);font-size:13px}
+
+/* chart */
+.chart-wrap{overflow-x:auto}
+.chart-wrap svg{display:block;width:100%;min-width:520px;height:auto}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+
+/* simulator */
+.form{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.field{display:flex;flex-direction:column;gap:4px;min-width:0}
+.field.full{grid-column:1/-1}
+.field label{font-size:12px;color:var(--muted);font-weight:500}
+.field select,.field input{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--surface);width:100%;min-width:0}
+.field input{font-family:var(--mono)}
+.form-actions{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap}
+.present{display:flex;flex-direction:column;align-items:flex-start;gap:6px;padding-bottom:12px;border-bottom:1px solid var(--line)}
+.present .hint{margin:0;color:var(--muted);font-size:12px}
+.result{border:1px solid var(--line);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px;background:var(--surface-2)}
+.result ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px;font-size:13px}
+.result .rh{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.result .rh span{font-size:12px;color:var(--muted)}
+
+/* approvals & alerts */
+.list{display:flex;flex-direction:column;gap:0}
+.item{display:flex;flex-direction:column;gap:6px;padding-block:10px;border-top:1px solid var(--line)}
+.item:first-child{border-top:0;padding-top:0}
+.item .row{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.item .who{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.item .what{font-size:13px}
+.item .time{font-family:var(--mono);font-size:11px;color:var(--muted);white-space:nowrap}
+.item .acts{display:flex;gap:6px}
+.sev{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:6px;vertical-align:middle;background:var(--muted)}
+.sev.warn{background:var(--warn)} .sev.crit{background:var(--crit)} .sev.ok{background:var(--ok)} .sev.info{background:var(--accent)}
+.empty{color:var(--muted);font-size:13px}
+.count{font-family:var(--mono);font-size:12px;background:var(--surface-2);border-radius:999px;padding:1px 8px;color:var(--muted)}
+.count.hot{background:var(--warn-bg);color:var(--warn)}
+.alerts{max-height:340px;overflow:auto}
+
+/* ledger */
+.filters{display:flex;gap:8px;flex-wrap:wrap}
+.filters select{border:1px solid var(--line);border-radius:8px;padding:6px 10px;background:var(--surface);font-size:13px}
+.table-wrap{overflow-x:auto;max-height:440px;overflow-y:auto;border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;min-width:960px;font-size:13px}
+th{position:sticky;top:0;background:var(--surface-2);text-align:left;font-weight:500;color:var(--muted);font-size:12px;padding:8px 12px;border-bottom:1px solid var(--line)}
+td{padding:8px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+td.r,th.r{text-align:right}
+td .note{color:var(--muted);font-size:12px}
+tr.flash td{animation:flash 1.2s ease}
+@keyframes flash{from{background:var(--warn-bg)}to{background:transparent}}
+
+/* validação */
+.vstats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.vstat{border:1px solid var(--line);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:2px;cursor:pointer;background:var(--surface);text-align:left}
+.vstat:hover{background:var(--surface-2)}
+.vstat[aria-pressed="true"]{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.vstat .n{font-family:var(--mono);font-size:20px;font-weight:500}
+.vstat .t{font-size:12px;color:var(--muted)}
+.vstat.warn .n{color:var(--warn)} .vstat.crit .n{color:var(--crit)} .vstat.ok .n{color:var(--ok)}
+.cover{display:flex;flex-direction:column;gap:6px;font-size:12px;color:var(--muted)}
+tr.clickable{cursor:pointer}
+tr.clickable:hover td{background:var(--surface-2)}
+tr.detail td{background:var(--surface-2)}
+.checks{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
+.checks ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.checks li{display:flex;gap:8px;align-items:flex-start;font-size:13px}
+.ck{flex:none;width:18px;height:18px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:700;margin-top:1px}
+.ck.ok{background:var(--ok-bg);color:var(--ok)} .ck.fail{background:var(--crit-bg);color:var(--crit)} .ck.wait{background:var(--line);color:var(--muted)}
+.proof{display:flex;flex-direction:column;gap:4px;font-size:12px}
+.proof div{display:flex;gap:8px}
+.proof dt,.proof .k{color:var(--muted);min-width:92px}
+.proof .v{font-family:var(--mono);word-break:break-all}
+.expand{font-family:var(--mono);color:var(--muted);font-size:12px}
+@media (max-width:600px){ .checks{grid-template-columns:minmax(0,1fr)} }
+
+/* conexão solana */
+.conn{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px}
+.field .help{font-size:12px;color:var(--muted)}
+.errbox{grid-column:1/-1;border-radius:8px;padding:8px 10px;font-size:13px;background:var(--crit-bg);color:var(--crit)}
+.connlog{border:1px solid var(--line);border-radius:10px;background:var(--surface-2);padding:12px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.connlog .endpoint{font-family:var(--mono);font-size:12px;word-break:break-all;color:var(--ink)}
+.connlog ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.connlog li{display:flex;gap:8px;align-items:flex-start;font-size:13px}
+.connlog li code{font-family:var(--mono);font-size:12px}
+.wallets{min-width:820px}
+.addr{font-family:var(--mono);font-size:12px}
+.wact{display:flex;gap:6px;flex-wrap:wrap}
+.wedit{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.wedit input{width:340px;max-width:100%;border:1px solid var(--line);border-radius:6px;padding:4px 8px;background:var(--surface);font-family:var(--mono);font-size:12px}
+.werr{color:var(--crit);font-size:12px;margin-top:4px}
+@media (max-width:760px){ .conn{grid-template-columns:minmax(0,1fr)} }
+
+.foot{color:var(--muted);font-size:12px;border-top:1px solid var(--line);padding-top:14px}
+
+@media (max-width:980px){
+  .grid{grid-template-columns:minmax(0,1fr)}
+  .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:600px){
+  .caps{grid-template-columns:minmax(0,1fr)}
+  .form{grid-template-columns:minmax(0,1fr)}
+  .kpi .val{font-size:20px}
+}
+@media (prefers-reduced-motion:reduce){
+  .bar i{transition:none} tr.flash td{animation:none}
+}
+
+#banner{margin:0}
+.proof a.v{color:var(--accent)}
+.wact .btn,.cap-foot .btn{white-space:nowrap}
+
+/* ===== Nectrae · ajustes de identidade visual ===== */
+a{color:var(--accent)} a:hover{color:var(--accent-soft)} a:visited{color:var(--accent)}
+body{padding-inline:24px}
+.top{padding-block:24px 18px;align-items:flex-end}
+.brand{gap:28px;align-items:flex-end;flex-wrap:wrap}
+.logo-block{display:flex;flex-direction:column;gap:4px}
+.brand h1.logo{font-family:var(--serif);font-weight:700;font-size:34px;line-height:1;letter-spacing:-.01em;display:flex;align-items:flex-end;gap:2px}
+.brand h1.logo svg{margin-bottom:20px}
+.tagline{font-size:10px;letter-spacing:.32em;color:var(--muted)}
+.brand-copy{display:flex;flex-direction:column;gap:4px;padding-bottom:2px}
+.eyebrow{font-size:11px;font-weight:600;letter-spacing:.24em;color:var(--accent)}
+.brand p{font-size:13px}
+.chip{background:var(--surface);color:var(--ink);padding:6px 12px}
+.btn{border-radius:10px;padding:8px 14px;font-weight:600;background:var(--surface);border-color:var(--line)}
+.btn:hover{background:var(--surface-2)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.primary:hover{background:var(--accent-soft);filter:none}
+.btn.danger{color:var(--crit);border-color:var(--crit);background:transparent}
+.btn.small{padding:6px 11px}
+.kpi{border-radius:14px;padding:18px 20px;gap:6px}
+.kpi .lbl{text-transform:none;letter-spacing:0;font-size:13px;color:var(--muted);font-weight:400}
+.kpi .val{font-size:30px;font-weight:700;letter-spacing:-.01em}
+.panel{border-radius:14px;padding:20px 22px}
+.panel-h h2{font-size:16px}
+.tab{background:transparent;color:var(--muted);font-weight:500}
+.tab[aria-selected="true"]{box-shadow:none;background:transparent;color:var(--accent);font-weight:600}
+.agent-h h2{font-size:18px;font-weight:600}
+.cap{background:var(--bg);border-radius:12px}
+.cap.off{background:var(--bg);opacity:.75}
+.cap-fig .spent{font-weight:700}
+.bar{height:8px;border-radius:999px}
+.bar i{border-radius:999px}
+.bar b{background:var(--muted);opacity:.35}
+.field select,.field input,.filters select,.cap-edit input,.wedit input{background:var(--bg);border-color:var(--line);border-radius:8px;color:var(--ink)}
+.field select,.field input{min-height:44px}
+.result{background:var(--bg)}
+.vstat{background:var(--bg);border-radius:10px}
+.vstat[aria-pressed="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.vstat .n{font-weight:700}
+.count{background:var(--surface-2);color:var(--ink)}
+.count.hot{background:var(--accent);color:var(--accent-ink);font-weight:700}
+.sev.info{background:var(--r-ia)}
+th{background:var(--surface);text-transform:uppercase;letter-spacing:.08em;font-size:11px;font-weight:600}
+.connlog{background:var(--bg)}
+.addr,.proof .v,.connlog .endpoint,.connlog li code,.wedit input{font-family:var(--code)}
+.proof a.v{color:var(--accent)}
+tr.detail td{background:var(--bg)}
+@keyframes flash{from{background:var(--warn-bg)}to{background:transparent}}
+.foot{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+@media (max-width:600px){ body{padding-inline:16px} .brand h1.logo{font-size:28px} .kpi .val{font-size:24px} }
+
+/* ===== Nectrae · pedido de token ===== */
+.login{max-width:420px;width:100%;margin:24px auto;align-items:flex-start;text-align:left}
+.login h2{font-family:var(--serif);font-size:28px;font-weight:700}
+.login p{margin:0;color:var(--muted);font-size:13px;line-height:1.5}
+.login code{font-family:var(--code);color:var(--ink)}
+.login-form{display:flex;flex-direction:column;gap:12px;width:100%}
+.login-remember{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);min-height:44px}
+.login-remember input{width:18px;height:18px;accent-color:var(--accent)}
+.login .btn.primary{min-height:44px;font-size:14px}
+body:has(#login:not([hidden])) .wrap > :not(.top):not(#login):not(#banner),
+body:has(#login:not([hidden])) .mtabs{display:none!important}
+
+/* ===== Nectrae · versão para celular (barra de abas) ===== */
+.mtabs,.m-head,.m-pending{display:none}
+@media (max-width:700px){
+  body{padding-bottom:calc(104px + env(safe-area-inset-bottom))}
+  .brand-copy,.top-meta{display:none}
+  .top{padding-block:16px 12px}
+  .m-head{display:flex;flex-direction:column;gap:2px}
+  .m-head h2{font-family:var(--serif);font-size:32px;font-weight:700;line-height:1.1}
+  body[data-mtab] [data-m]{display:none}
+  body[data-mtab="inicio"] [data-m="inicio"],body[data-mtab="agentes"] [data-m="agentes"],
+  body[data-mtab="aprovacoes"] [data-m="aprovacoes"],body[data-mtab="registro"] [data-m="registro"],
+  body[data-mtab="protecao"] [data-m="protecao"]{display:flex}
+  body[data-mtab="inicio"] .kpis[data-m]{display:grid}
+  body[data-mtab="protecao"] .foot[data-m]{display:block}
+  .m-pending[hidden]{display:none!important}
+  .m-pending{align-items:center;gap:12px;width:100%;text-align:left;border:0;border-radius:20px;background:var(--accent-soft);color:var(--accent-ink);padding:14px 16px;cursor:pointer}
+  .m-pending span{flex:1;display:flex;flex-direction:column;gap:2px}
+  .m-pending strong{font-size:15px}
+  .m-pending small{font-size:12px}
+  .grid,.col{display:contents}
+  .panel{border-radius:20px}
+  .kpi{border-radius:18px}
+  .mtabs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));position:fixed;left:0;right:0;bottom:0;z-index:20;
+    padding:6px 6px calc(10px + env(safe-area-inset-bottom));background:rgba(6,32,47,.86);
+    -webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);border-top:1px solid var(--line)}
+  .mtabs button{position:relative;border:0;background:transparent;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:3px;
+    font-size:10px;font-weight:500;padding:6px 0;min-height:52px;cursor:pointer}
+  .mtabs button[aria-current="page"]{color:var(--accent);font-weight:600}
+  .m-badge{position:absolute;top:2px;left:50%;margin-left:6px;min-width:18px;height:18px;border-radius:9px;background:var(--accent);color:var(--accent-ink);
+    font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 4px}
+  .m-badge[hidden]{display:none}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <div class="logo-block">
+        <h1 class="logo">Nectrae<svg width="13" height="13" viewBox="0 0 24 24" aria-hidden="true"><polygon points="12,1 22,6.5 22,17.5 12,23 2,17.5 2,6.5" fill="#EDAE44"/></svg><span hidden> · Spend Control</span></h1>
+        <span class="tagline">Bee in control</span>
+      </div>
+      <div class="brand-copy">
+        <span class="eyebrow">AI AGENT SPEND GOVERNANCE</span>
+        <p>Um teto de USDC por API, conferido na Solana e na Base</p>
+      </div>
+    </div>
+    <div class="top-meta">
+      <span class="chip" id="net-chip">Solana</span>
+      <span class="chip num" id="clock">—</span>
+    </div>
+  </header>
+
+  <div id="banner" class="errbox" hidden></div>
+
+  <section class="panel login" id="login" aria-labelledby="login-title" hidden>
+    <svg width="40" height="40" viewBox="0 0 24 24" aria-hidden="true"><polygon points="12,1 22,6.5 22,17.5 12,23 2,17.5 2,6.5" fill="#EDAE44"/><path d="M9 11V9a3 3 0 0 1 6 0v2" fill="none" stroke="#031626" stroke-width="1.8" stroke-linecap="round"/><rect x="8" y="11" width="8" height="6" rx="1.2" fill="#031626"/></svg>
+    <h2 id="login-title">Entrar no painel</h2>
+    <p>Este servidor está aberto para a rede e pede o token do painel. Use o valor de <code>PANEL_TOKEN</code> do arquivo <code>.env</code>.</p>
+    <form id="login-form" class="login-form">
+      <div class="field">
+        <label for="login-token">Token do painel</label>
+        <input id="login-token" type="password" autocomplete="current-password" spellcheck="false" required>
+      </div>
+      <label class="login-remember"><input type="checkbox" id="login-remember"> Lembrar neste aparelho</label>
+      <p class="werr" id="login-err" role="alert" hidden></p>
+      <button class="btn primary" type="submit">Entrar</button>
+    </form>
+  </section>
+
+  <div class="m-head" aria-live="polite"><span class="eyebrow" id="m-eyebrow">NECTRAE · BEE IN CONTROL</span><h2 id="m-title">Início</h2></div>
+  <button type="button" class="m-pending" id="m-pending" data-m="inicio" hidden><svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><polygon points="12,1 22,6.5 22,17.5 12,23 2,17.5 2,6.5" fill="#031626"/></svg><span><strong id="m-pending-t"></strong><small>Toque para revisar</small></span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+
+  <section class="kpis" id="kpis" data-m="inicio" aria-label="Resumo"></section>
+
+  <div class="grid">
+    <div class="col">
+      <section class="panel" aria-labelledby="agent-title" data-m="agentes">
+        <div class="tabs" role="tablist" id="tabs" aria-label="Agentes"></div>
+        <div class="agent-h" id="agent-h"></div>
+        <div class="caps" id="caps"></div>
+      </section>
+      <section class="panel" aria-labelledby="chart-title" data-m="agentes">
+        <div class="panel-h">
+          <h2 id="chart-title">Gasto diário por rede</h2>
+          <span class="hint" id="chart-hint">últimos 14 dias</span>
+        </div>
+        <div class="chart-wrap" id="chart"></div>
+        <div class="legend" id="legend"></div>
+      </section>
+    </div>
+
+    <div class="col">
+      <section class="panel" aria-labelledby="sim-title" data-m="agentes">
+        <div class="panel-h">
+          <h2 id="sim-title">Testar um pagamento</h2>
+          <span class="hint">simulação: nada é gravado nem pago</span>
+        </div>
+        <div class="present">
+          <button class="btn primary" type="button" id="present">Simular pagamentos</button>
+          <p class="hint" id="present-note">Grava uma rodada no registro, para a apresentação. Nada é pago.</p>
+        </div>
+        <form class="form" id="sim">
+          <div class="field">
+            <label for="sim-agent">Agente</label>
+            <select id="sim-agent"></select>
+          </div>
+          <div class="field">
+            <label for="sim-network">Rede</label>
+            <select id="sim-network">
+              <option value="solana">Solana</option>
+              <option value="base">Base</option>
+            </select>
+          </div>
+          <div class="field full">
+            <label for="sim-vendor">API</label>
+            <input id="sim-vendor" type="text" value="api.nansen.ai" spellcheck="false">
+          </div>
+          <div class="field full">
+            <label for="sim-dest">Endereço que recebe</label>
+            <input id="sim-dest" type="text" placeholder="o endereço do 402" spellcheck="false" autocomplete="off">
+          </div>
+          <div class="field full">
+            <label for="sim-amount">Valor (US$)</label>
+            <input id="sim-amount" type="number" min="0.000001" step="any" value="0.25" inputmode="decimal">
+          </div>
+          <div class="form-actions">
+            <button class="btn primary" type="submit">Checar</button>
+            <button class="btn" type="button" id="loop">Simular agente em loop</button>
+          </div>
+        </form>
+        <div id="sim-result" hidden></div>
+      </section>
+
+      <section class="panel" aria-labelledby="val-title" data-m="registro">
+        <div class="panel-h">
+          <h2 id="val-title">Validação do registro</h2>
+          <button class="btn small" type="button" data-act="validate">Validar agora</button>
+        </div>
+        <div class="vstats" id="vstats"></div>
+        <div class="cover" id="cover"></div>
+      </section>
+
+      <section class="panel" aria-labelledby="appr-title" data-m="aprovacoes">
+        <div class="panel-h">
+          <h2 id="appr-title">Aguardando aprovação</h2>
+          <span class="count" id="appr-count">0</span>
+        </div>
+        <div class="list" id="approvals"></div>
+      </section>
+
+      <section class="panel" aria-labelledby="alert-title" data-m="inicio">
+        <div class="panel-h">
+          <h2 id="alert-title">Alertas</h2>
+          <span class="hint">tetos, bloqueios e validação</span>
+        </div>
+        <div class="list alerts" id="alerts"></div>
+      </section>
+    </div>
+  </div>
+
+  <section class="panel" aria-labelledby="conn-title" data-m="protecao">
+    <div class="panel-h">
+      <div>
+        <h2 id="conn-title">Conexão das redes</h2>
+        <span class="hint">só leitura · Solana devnet e Base Sepolia · a chave do provedor fica no .env</span>
+      </div>
+      <span id="conn-pill"></span>
+    </div>
+    <div class="conn">
+      <div class="connlog" id="conn-info"></div>
+      <div class="connlog" id="conn-log" aria-live="polite"></div>
+    </div>
+    <div class="table-wrap">
+      <table class="wallets">
+        <thead><tr><th>Agente</th><th>Endereços públicos</th><th>Validação</th><th></th></tr></thead>
+        <tbody id="wallets"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="panel" aria-labelledby="ledger-title" data-m="registro">
+    <div class="panel-h">
+      <div>
+        <h2 id="ledger-title">Registro único</h2>
+        <span class="hint">cada tentativa de pagamento, permitida ou não · clique numa linha para ver a validação</span>
+      </div>
+      <div class="filters">
+        <select id="f-agent" aria-label="Filtrar por agente"></select>
+        <select id="f-dec" aria-label="Filtrar por decisão">
+          <option value="">Todas as decisões</option>
+          <option value="allowed">Permitidos</option>
+          <option value="blocked">Barrados</option>
+          <option value="needs_approval">Pediram aprovação</option>
+          <option value="external">Fora do motor</option>
+        </select>
+        <select id="f-ver" aria-label="Filtrar por validação">
+          <option value="">Toda validação</option>
+          <option value="verified">Conferidos</option>
+          <option value="pending">Aguardando</option>
+          <option value="mismatch">Divergentes</option>
+          <option value="external">Fora do registro</option>
+          <option value="na">Sem conferência</option>
+        </select>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Quando</th><th>Agente</th><th>Rede</th><th>Destino</th><th class="r">Valor</th><th>Decisão</th><th>Validação</th><th>Motivo</th><th aria-label="Detalhes"></th></tr></thead>
+        <tbody id="ledger"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <p class="foot" data-m="protecao">Nectrae Spend Control · MVP. O produto nunca guarda fundos nem chaves privadas. A regra mais restritiva sempre vence. Dias e meses seguem o relógio do servidor; o gráfico agrupa por dia UTC.</p>
+</div>
+
+<nav class="mtabs" aria-label="Seções"><button type="button" data-mtab="inicio"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="12,2 21,7 21,17 12,22 3,17 3,7"/></svg>Início</button><button type="button" data-mtab="agentes"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="12,2 21,7 21,17 12,22 3,17 3,7"/><ellipse cx="9" cy="12" rx="2.15" ry="0.85" fill="currentColor" stroke="none"/><ellipse cx="15" cy="12.3" rx="2.3" ry="0.95" fill="currentColor" stroke="none"/></svg>Agentes</button><button type="button" data-mtab="aprovacoes"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg>Aprovações<span class="m-badge" id="m-badge" hidden></span></button><button type="button" data-mtab="registro"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3h8l4 4v14H7z"/><path d="M15 3v4h4"/><path d="M10 12h6M10 16h6"/></svg>Registro</button><button type="button" data-mtab="protecao"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg>Proteção</button></nav>
+<script>
+(() => {
+const NETS = {
+  solana: {label:'Solana', short:'Solana', color:'--r-x402'},
+  base:   {label:'Base',   short:'Base',   color:'--r-ia'}
+};
+const NET_KEYS = Object.keys(NETS);
+const ACT = {permitir:'Permitir', alertar:'Alertar', trocar_modelo:'Trocar p/ modelo mais barato', pedir_aprovacao:'Pedir aprovação', bloquear:'Bloquear', pausar_agente:'Pausar agente'};
+const PERIOD = {dia:'hoje', mes:'no mês'};
+const DEC = {allowed:['ok','Permitido'], blocked:['crit','Barrado'], needs_approval:['warn','Aprovação'], external:['crit','Fora do motor']};
+const VER = {verified:['ok','Conferido'], pending:['muted','Aguardando'], mismatch:['warn','Divergente'], external:['crit','Fora do registro'], na:['muted','—']};
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmtUSD = n => new Intl.NumberFormat('pt-BR',{style:'currency',currency:'USD',minimumFractionDigits:2,maximumFractionDigits:2}).format(n);
+const fmtTime = isoStr => { const d = new Date(isoStr), today = new Date().toDateString() === d.toDateString();
+  return today ? d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}) : d.toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}); };
+const shortAddr = a => a && a.length > 14 ? `${a.slice(0,4)}…${a.slice(-4)}` : (a || '');
+const looksLikeSecret = v => { v = v.trim(); if (/^\[\s*\d{1,3}(\s*,\s*\d{1,3}){31,}\s*\]$/.test(v)) return true;
+  const w = v.split(/\s+/); if ((w.length === 12 || w.length === 24) && w.every(x => /^[a-z]{3,8}$/.test(x))) return true;
+  return /^0x[0-9a-fA-F]{64}$/.test(v) || /^[1-9A-HJ-NP-Za-km-z]{80,90}$/.test(v); };
+const SECRET_MSG = 'Isto parece uma chave privada ou frase de recuperação. Nada foi enviado ao servidor. Use só o endereço público; se a chave for real, considere que ela vazou e mova os fundos.';
+
+const ui = { sel: null, open: null, editingCap: null, editingWallet: null, walletErr: {}, busy: {}, looping: null, lastValidation: null };
+let S = null;
+
+// Token do painel (PANEL_TOKEN). Fica só neste navegador: na aba (sessionStorage) ou no aparelho (localStorage).
+const TOKEN_KEY = 'nectrae.panelToken';
+function getPanelToken() {
+  try { return sessionStorage.getItem(TOKEN_KEY) || localStorage.getItem(TOKEN_KEY) || ''; } catch { return ''; }
+}
+function setPanelToken(t, remember) {
+  try {
+    sessionStorage.removeItem(TOKEN_KEY); localStorage.removeItem(TOKEN_KEY);
+    if (t) (remember ? localStorage : sessionStorage).setItem(TOKEN_KEY, t);
+  } catch {}
+}
+async function api(method, path, body) {
+  const headers = body !== undefined || method !== 'GET' ? {'content-type':'application/json'} : {};
+  const tok = getPanelToken();
+  if (tok) headers['x-panel-token'] = tok;
+  const res = await fetch(path, { method, headers, body: body !== undefined ? JSON.stringify(body) : (method !== 'GET' ? '{}' : undefined) });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) { const err = new Error(data.error || `HTTP ${res.status}`); err.status = res.status; throw err; }
+  return data;
+}
+
+function showLogin(msg) {
+  $('login').hidden = false;
+  $('login-err').textContent = msg || '';
+  $('login-err').hidden = !msg;
+  banner(null);
+}
+
+function banner(msg) { const b = $('banner'); b.hidden = !msg; b.textContent = msg || ''; }
+
+async function refresh() {
+  try { S = await api('GET', '/api/state'); banner(null); $('login').hidden = true; }
+  catch (e) {
+    if (e.status === 401) { showLogin(getPanelToken() ? 'Esse token não confere com o PANEL_TOKEN do servidor.' : ''); return; }
+    banner(`Não consegui falar com o servidor: ${e.message}. Ele está rodando (npm start)?`); return;
+  }
+  if (!ui.sel || !S.agents.some(a => a.id === ui.sel)) ui.sel = S.agents[0]?.id ?? null;
+  renderAll();
+}
+
+const agent = id => S.agents.find(a => a.id === id);
+const pctOf = a => { const r = a.rule; return r && !r.off && r.cap > 0 ? (a.spent || 0) / r.cap : 0; };
+
+function status(a) {
+  if (a.paused) return {cls:'paused', pill:'muted', text:'Pausado'};
+  const worst = pctOf(a);
+  if (worst >= 1) return {cls:'crit', pill:'crit', text:'Teto atingido'};
+  if (worst >= 0.8) return {cls:'warn', pill:'warn', text:'Perto do teto'};
+  return {cls:'ok', pill:'ok', text:'Dentro do teto'};
+}
+
+function renderKPIs() {
+  let hot = 0, total = 0;
+  for (const a of S.agents) { const r = a.rule; if (!r || r.off || !r.cap) continue; total++; if (pctOf(a) >= 0.8) hot++; }
+  const paused = S.agents.filter(a => a.paused).length;
+  $('kpis').innerHTML = [
+    {lbl:'Gasto hoje', val:fmtUSD(S.totals.today.s), sub:`${S.totals.today.n} pagamentos que saíram`},
+    {lbl:'Gasto no mês', val:fmtUSD(S.totals.month.s), sub:'USDC na Solana e na Base'},
+    {lbl:'Tetos acima de 80%', val:`${hot} de ${total}`, sub:'um teto por agente', cls: hot ? 'warn' : ''},
+    {lbl:'Barrados hoje', val:String(S.totals.blockedToday), sub: paused ? `${paused} agente(s) pausado(s)` : 'nenhum agente pausado', cls: S.totals.blockedToday ? 'crit' : ''}
+  ].map(k => `<div class="kpi ${k.cls||''}"><span class="lbl">${k.lbl}</span><span class="val">${esc(k.val)}</span><span class="sub">${esc(k.sub)}</span></div>`).join('');
+}
+
+const WAX = {
+  nansen: '#EDAE44',
+  vybe: '#6A9BB5',
+  tcg: '#C47A3A'
+};
+const WAX_PALETTE = ['#EDAE44', '#6A9BB5', '#E6D3B4', '#C47A3A', '#8E7355', '#D7B56D'];
+function waxOf(id) {
+  if (WAX[id]) return WAX[id];
+  let h = 0;
+  for (const c of id) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  return WAX_PALETTE[h % WAX_PALETTE.length];
+}
+function eyesOf(a) {
+  const cls = status(a).cls;
+  if (cls === 'paused' || cls === 'crit') return 'shut';
+  if (cls === 'warn') return 'squint';
+  return 'open';
+}
+function faceSvg(wax, eyes) {
+  const look = eyes === 'shut'
+    ? '<rect x="6.7" y="10.7" width="3.5" height="0.62" rx="0.31"/><rect x="13.1" y="10.85" width="3.8" height="0.62" rx="0.31"/>'
+    : eyes === 'squint'
+    ? '<ellipse cx="8.5" cy="11.05" rx="1.85" ry="0.32"/><ellipse cx="15" cy="10.95" rx="2" ry="1.15"/>'
+    : '<ellipse cx="8.5" cy="10.7" rx="1.85" ry="1.05"/><ellipse cx="15" cy="10.95" rx="2" ry="1.15"/>';
+  return `<svg class="face" viewBox="-2 -2 28 28" aria-hidden="true"><polygon class="halo" points="12,1 22,6.5 22,17.5 12,23 2,17.5 2,6.5"/><polygon points="12,1 22,6.5 22,17.5 12,23 2,17.5 2,6.5" fill="${wax}"/><polygon points="12,1 22,6.5 22,17.5 12,23 2,17.5 2,6.5" fill="#031626" transform="translate(12 12) scale(0.62) translate(-12 -12)"/>${look}</svg>`;
+}
+
+function renderTabs() {
+  $('tabs').innerHTML = S.agents.length ? S.agents.map(a => {
+    const st = status(a);
+    return `<button class="tab" role="tab" type="button" data-tab="${esc(a.id)}" aria-selected="${a.id===ui.sel}" aria-label="${esc(a.id)}, ${esc(st.text)}">${faceSvg(waxOf(a.id), eyesOf(a))}<span class="id">${esc(a.id)}</span></button>`;
+  }).join('')
+    : `<p class="empty">Nenhum agente cadastrado. Rode <code>npm run seed</code> para criar os de exemplo.</p>`;
+}
+
+function renderAgent() {
+  const a = agent(ui.sel);
+  if (!a) { $('agent-h').innerHTML = ''; $('caps').innerHTML = ''; return; }
+  const st = status(a);
+  $('agent-h').innerHTML = `<div><h2 id="agent-title">${esc(a.id)}</h2><p>${esc(a.description)}</p></div>
+    <div class="agent-actions"><span class="pill ${st.pill}">${st.text}</span>
+    ${a.paused ? `<button class="btn small primary" type="button" data-act="resume">Retomar agente</button>` : `<button class="btn small danger" type="button" data-act="pause">Pausar agente</button>`}</div>`;
+  const r = a.rule;
+  if (!r || r.off) {
+    $('caps').innerHTML = `<div class="cap off"><div class="cap-h"><span class="cap-name"><span class="sw" style="background:var(--r-x402)"></span>USDC</span><span class="pill muted">Não habilitado</span></div><div class="cap-rules"><span>Toda tentativa é barrada.</span></div></div>`;
+    return;
+  }
+  const s = a.spent || 0, pct = r.cap > 0 ? s / r.cap : 0;
+  const col = pct >= 1 ? 'var(--crit)' : pct >= 0.8 ? 'var(--grad)' : 'var(--r-x402)';
+  const rules = [];
+  if (r.at80) rules.push(`80% → <strong>${ACT[r.at80]}</strong>`);
+  if (r.at100) rules.push(`100% → <strong>${ACT[r.at100]}</strong>`);
+  if (r.perTx) rules.push(`máx. <strong class="num">${fmtUSD(r.perTx)}</strong> por chamada`);
+  if (r.approveAbove) rules.push(`aprovação acima de <strong class="num">${fmtUSD(r.approveAbove)}</strong>`);
+  if (r.allow?.length) rules.push(`<strong>${r.allow.length}</strong> endereços da API`);
+  const editing = ui.editingCap === a.id;
+  $('caps').innerHTML = `<div class="cap">
+      <div class="cap-h"><span class="cap-name"><span class="sw" style="background:var(--r-x402)"></span>USDC por chamada</span><span class="period">${r.period==='dia'?'Diário':'Mensal'}</span></div>
+      <div class="cap-fig"><span><span class="spent">${fmtUSD(s)}</span> <span class="of">de <span class="num">${fmtUSD(r.cap)}</span></span></span><span class="pct" style="${pct>=1?'color:var(--crit)':pct>=0.8?'color:var(--warn)':''}">${Math.round(pct*100)}%</span></div>
+      <div class="bar" role="img" aria-label="${Math.round(pct*100)}% do teto usado"><i style="width:${Math.min(pct,1)*100}%;background:${col}"></i><b style="left:50%"></b><b style="left:80%"></b></div>
+      <div class="cap-rules">${rules.map(x => `<span>${x}</span>`).join('')}</div>
+      <div class="cap-foot"><span>${pct>=1 ? 'Teto atingido' : `Restam <span class="num">${fmtUSD(Math.max(r.cap - s, 0))}</span> ${PERIOD[r.period]}`} · Solana e Base no mesmo teto</span>
+      ${editing ? `<span class="cap-edit"><label class="period" for="cap-in">Novo teto</label><input id="cap-in" type="number" min="0" step="any" value="${r.cap}"><button class="btn small primary" type="button" data-act="save-cap">Salvar</button><button class="btn small" type="button" data-act="cancel-cap">Cancelar</button></span>`
+        : `<button class="btn small" type="button" data-act="edit-cap">Editar teto</button>`}</div>
+    </div>`;
+}
+
+function renderChart() {
+  const a = agent(ui.sel); if (!a) { $('chart').innerHTML = ''; return; }
+  const days = [];
+  for (let i = 13; i >= 0; i--) { const d = new Date(); d.setUTCDate(d.getUTCDate() - i); days.push(d.toISOString().slice(0,10)); }
+  const rows = days.map(day => { const v = {solana:0, base:0};
+    for (const r of S.daily) if (r.agent_id === a.id && r.day === day && v[r.network] !== undefined) v[r.network] += r.total;
+    return {day, v, total: NET_KEYS.reduce((t,k) => t + v[k], 0)}; });
+  const max = Math.max(...rows.map(x => x.total), 0);
+  const steps = [0.5,1,2,5,10,20,25,50,100,200,250,500,1000,2000,5000,10000];
+  const step = steps.find(s => (max || 1) / s <= 5) || 10000, topV = Math.max(step, Math.ceil(max / step) * step);
+  const W = 640, H = 220, L = 56, Rm = 8, T = 16, B = 26, cw = (W-L-Rm)/rows.length, bw = Math.min(cw*0.62, 26);
+  const y = v => T + (H-T-B) * (1 - v/topV);
+  let g = '';
+  for (let t = 0; t <= topV + 1e-9; t += step) {
+    g += `<line x1="${L}" x2="${W-Rm}" y1="${y(t)}" y2="${y(t)}" stroke="var(--line)"/><text x="${L-8}" y="${y(t)+4}" text-anchor="end" font-size="11" fill="var(--muted)" font-family="var(--mono)">${t >= 1000 ? (t/1000)+'k' : t}</text>`;
+  }
+  rows.forEach((x, i) => {
+    const cx = L + cw*i + cw/2, last = i === rows.length - 1; let acc = 0;
+    for (const k of NET_KEYS) { const v = x.v[k]; if (v <= 0) continue; const y0 = y(acc), y1 = y(acc+v); acc += v;
+      g += `<rect x="${cx-bw/2}" y="${y1}" width="${bw}" height="${Math.max(y0-y1,0.5)}" fill="var(${NETS[k].color})"><title>${x.day.slice(8)}/${x.day.slice(5,7)} · ${NETS[k].label}: ${fmtUSD(v)}</title></rect>`; }
+    if (last && x.total > 0) g += `<text x="${cx}" y="${y(x.total)-6}" text-anchor="end" font-size="11" fill="var(--ink)" font-family="var(--mono)">${fmtUSD(x.total)}</text>`;
+    if (i % 2 === 1 || last) g += `<text x="${cx}" y="${H-8}" text-anchor="middle" font-size="11" fill="${last?'var(--ink)':'var(--muted)'}" font-family="var(--mono)">${last ? 'hoje' : x.day.slice(8)+'/'+x.day.slice(5,7)}</text>`;
+  });
+  $('chart').innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Gasto diário de ${esc(a.id)} por rede, em dólares">${g}</svg>`;
+  $('chart-hint').textContent = `${a.id} · US$ · últimos 14 dias`;
+  $('legend').innerHTML = NET_KEYS.map(k => `<span><span class="sw" style="background:var(${NETS[k].color})"></span>${NETS[k].label}</span>`).join('');
+}
+
+function renderValidation() {
+  const c = S.validation, fv = $('f-ver').value;
+  const items = [
+    {v:'verified', cls:'ok', t:'Conferidos na rede'},
+    {v:'pending', cls:'', t:'Aguardando a fonte'},
+    {v:'mismatch', cls:(c.mismatch?'warn':''), t:'Divergentes'},
+    {v:'external', cls:(c.external?'crit':''), t:'Fora do registro'}
+  ];
+  $('vstats').innerHTML = items.map(i => `<button class="vstat ${i.cls}" type="button" data-act="vfilter" data-v="${i.v}" aria-pressed="${fv===i.v}"><span class="n">${c[i.v]||0}</span><span class="t">${i.t}</span></button>`).join('');
+  const lv = ui.lastValidation;
+  $('cover').innerHTML = `<span>Cada chamada em USDC é conferida na rede em que saiu: assinatura na Solana devnet ou hash na Base Sepolia. A varredura das duas carteiras acha o que saiu sem passar pelo motor. As duas redes entram no mesmo teto.</span>
+    ${lv ? `<span>Última validação manual: ${lv.checked} conferidos, ${lv.external} fora do registro${lv.errors.length ? ` · <span style="color:var(--crit)">${esc(lv.errors[0])}</span>` : ''}.</span>` : ''}`;
+}
+
+function renderApprovals() {
+  const list = S.payments.filter(p => p.decision === 'needs_approval');
+  $('appr-count').textContent = list.length;
+  $('appr-count').className = 'count' + (list.length ? ' hot' : '');
+  $('approvals').innerHTML = list.length ? list.map(p => `<div class="item">
+      <div class="row"><span class="who">${esc(p.agent_id)} · ${NETS[p.network]?.short ?? esc(p.network || '')}</span><span class="time">${fmtTime(p.created_at)}</span></div>
+      <div class="row"><span class="what"><span class="num">${fmtUSD(p.amount)}</span> para ${esc(p.vendor || shortAddr(p.destination))}</span></div>
+      <div class="acts"><button class="btn small primary" type="button" data-act="approve" data-id="${p.id}">Aprovar</button><button class="btn small" type="button" data-act="reject" data-id="${p.id}">Recusar</button></div>
+    </div>`).join('') : `<p class="empty">Nada pendente. Pagamentos acima do limite de aprovação aparecem aqui.</p>`;
+}
+
+function renderAlerts() {
+  $('alerts').innerHTML = S.alerts.length ? S.alerts.map(x => `<div class="item">
+      <div class="row"><span class="who"><span class="sev ${esc(x.sev)}"></span>${esc(x.agent_id || 'sistema')}</span><span class="time">${fmtTime(x.created_at)}</span></div>
+      <span class="what">${esc(x.text)}</span></div>`).join('') : `<p class="empty">Sem alertas.</p>`;
+}
+
+function chainCard(title, c, lines) {
+  const pill = c.ok === true ? `<span class="pill ok">Conectado</span>` : c.ok === false ? `<span class="pill crit">Sem conexão</span>` : `<span class="pill muted">Não testado</span>`;
+  const body = c.ok === false ? `<ul><li><span class="ck fail">✕</span><span>${esc(c.error || 'RPC indisponível')}</span></li></ul>`
+    : c.ok ? `<ul>${lines}</ul>` : '<p class="empty" style="margin:0">Ainda não testado.</p>';
+  return `<span class="period">${title}${c.at ? ' · ' + fmtTime(c.at) : ''}</span><span class="endpoint">${esc(c.rpc || '')}</span>${pill}${body}`;
+}
+function renderConn() {
+  const sol = S.connection.solana, baseNet = S.connection.base;
+  $('net-chip').textContent = `Dev · Solana ${sol.network} · Base ${baseNet.network}`;
+  const both = sol.ok === true && baseNet.ok === true, anyFail = sol.ok === false || baseNet.ok === false;
+  $('conn-pill').innerHTML = ui.busy.conn ? `<span class="pill muted">Testando…</span>` : both ? `<span class="pill ok">As duas redes</span>` : anyFail ? `<span class="pill crit">Sem conexão</span>` : `<span class="pill muted">Não testado</span>`;
+  $('conn-info').innerHTML = chainCard('Solana', sol, [
+    `<li><span class="ck ok">✓</span><span>Rede <code>${esc(sol.network)}</code> · status <code>${esc(sol.commitment)}</code></span></li>`,
+    `<li><span class="ck ok">✓</span><span>USDC <code>${esc(shortAddr(sol.mint))}</code></span></li>`,
+    sol.ok ? `<li><span class="ck ok">✓</span><span>getSlot → <code>${Number(sol.slot).toLocaleString('pt-BR')}</code> · ${sol.latencyMs} ms</span></li>` : ''
+  ].filter(Boolean).join(''));
+  $('conn-log').innerHTML = chainCard('Base', baseNet, [
+    `<li><span class="ck ok">✓</span><span>Rede <code>${esc(baseNet.network)}</code></span></li>`,
+    `<li><span class="ck ok">✓</span><span>USDC <code>${esc(shortAddr(baseNet.usdc))}</code></span></li>`,
+    baseNet.ok ? `<li><span class="ck ok">✓</span><span>bloco <code>${Number(baseNet.block).toLocaleString('pt-BR')}</code> · ${baseNet.latencyMs} ms</span></li>` : ''
+  ].filter(Boolean).join('')) + `<div><button class="btn small" type="button" data-act="conn-test" ${ui.busy.conn?'disabled':''}>Testar conexão</button></div>`;
+  $('wallets').innerHTML = S.agents.map(a => {
+    const editing = ui.editingWallet === a.id, err = ui.walletErr[a.id];
+    const mine = S.payments.filter(p => p.agent_id === a.id && (p.network === 'solana' || p.network === 'base' || p.decision === 'external'));
+    const n = s => mine.filter(p => p.ver_status === s).length;
+    const res = ui.busy[a.id] ? `<span class="pill muted">Lendo a rede…</span>` :
+      `<span class="num">${n('verified')}</span> conferidos ${n('pending') ? `· <span class="num">${n('pending')}</span> aguardando ` : ''}${n('mismatch') ? `<span class="pill warn">${n('mismatch')} divergente(s)</span> ` : ''}${n('external') ? `<span class="pill crit">${n('external')} fora do registro</span>` : ''}`;
+    const solLink = a.wallet ? `<a class="btn small" href="https://solscan.io/account/${encodeURIComponent(a.wallet)}${sol.network==='devnet'?'?cluster=devnet':''}" target="_blank" rel="noopener">Solscan</a>` : '';
+    const baseHref = baseNet.network === 'sepolia' ? 'https://sepolia.basescan.org/address/' : 'https://basescan.org/address/';
+    const baseLink = a.walletBase ? `<a class="btn small" href="${baseHref}${encodeURIComponent(a.walletBase)}" target="_blank" rel="noopener">Basescan</a>` : '';
+    const cell = editing
+      ? `<div class="wedit"><label class="period" for="w-sol">Solana</label><input id="w-sol" value="${esc(a.wallet || '')}" spellcheck="false" autocomplete="off"><label class="period" for="w-base">Base</label><input id="w-base" value="${esc(a.walletBase || '')}" spellcheck="false" autocomplete="off"><button class="btn small primary" type="button" data-act="w-save" data-id="${esc(a.id)}">Salvar</button><button class="btn small" type="button" data-act="w-cancel">Cancelar</button></div>`
+      : `<div>Solana ${a.wallet ? `<span class="addr" title="${esc(a.wallet)}">${esc(shortAddr(a.wallet))}</span> ${solLink}` : '<span class="note">sem endereço</span>'}</div><div>Base ${a.walletBase ? `<span class="addr" title="${esc(a.walletBase)}">${esc(shortAddr(a.walletBase))}</span> ${baseLink}` : '<span class="note">sem endereço</span>'}</div>`;
+    const canScan = a.wallet || a.walletBase;
+    return `<tr><td class="num">${esc(a.id)}</td><td>${cell}${err ? `<div class="werr">${esc(err)}</div>` : ''}</td><td>${res}</td>
+      <td><div class="wact"><button class="btn small" type="button" data-act="w-scan" data-id="${esc(a.id)}" ${ui.busy[a.id] || !canScan ? 'disabled' : ''}>Validar carteira</button>${editing ? '' : `<button class="btn small" type="button" data-act="w-edit" data-id="${esc(a.id)}">Trocar</button>`}</div></td></tr>`;
+  }).join('');
+}
+
+function renderLedger() {
+  const fa = $('f-agent').value, fd = $('f-dec').value, fv = $('f-ver').value;
+  const sol = S.connection.solana, baseNet = S.connection.base;
+  const rows = S.payments.filter(p => (!fa || p.agent_id === fa) && (!fd || p.decision === fd) && (!fv || p.ver_status === fv)).slice(0, 150);
+  $('ledger').innerHTML = rows.length ? rows.map(p => {
+    const [c, t] = DEC[p.decision] || ['muted', p.decision], [vc, vt] = VER[p.ver_status] || ['muted', p.ver_status], open = ui.open === p.id;
+    const value = p.amount_source != null && Math.abs(p.amount_source - p.amount) > 1e-9
+      ? `<span class="num">${fmtUSD(p.amount_source)}</span><br><span class="note">declarado ${fmtUSD(p.amount)}</span>` : `<span class="num">${fmtUSD(p.amount)}</span>`;
+    const net = NETS[p.network];
+    let html = `<tr class="clickable" data-act="toggle" data-id="${p.id}" tabindex="0" aria-expanded="${open}"><td class="num">${fmtTime(p.created_at)}</td><td class="num">${esc(p.agent_id)}</td>
+      <td><span class="sw" style="display:inline-block;margin-right:6px;background:var(${net?.color || '--line'})"></span>${net?.short ?? esc(p.network || '—')}</td>
+      <td>${esc(p.vendor || shortAddr(p.destination))}</td><td class="r">${value}</td><td><span class="pill ${c}">${t}</span></td><td><span class="pill ${vc}">${vt}</span></td>
+      <td><span class="note">${esc(p.note)}</span></td><td class="expand" aria-hidden="true">${open ? '▾' : '▸'}</td></tr>`;
+    if (open) {
+      const proof = Object.entries(p.ver_proof || {});
+      const sigLink = p.signature ? (p.network === 'base'
+        ? `<div><span class="k">Explorer</span><a class="v" href="${baseNet.network==='sepolia'?'https://sepolia.basescan.org/tx/':'https://basescan.org/tx/'}${encodeURIComponent(p.signature)}" target="_blank" rel="noopener">abrir no Basescan</a></div>`
+        : `<div><span class="k">Explorer</span><a class="v" href="https://solscan.io/tx/${encodeURIComponent(p.signature)}${sol.network==='devnet'?'?cluster=devnet':''}" target="_blank" rel="noopener">abrir no Solscan</a></div>`) : '';
+      html += `<tr class="detail"><td colspan="9"><div class="checks">
+        <div><div class="period" style="margin-bottom:8px">Checagens</div><ul>${(p.ver_checks || []).map(k => `<li><span class="ck ${k.s}" aria-label="${k.s==='ok'?'ok':k.s==='fail'?'falhou':'aguardando'}">${k.s==='ok'?'✓':k.s==='fail'?'✕':'…'}</span><span>${esc(k.text)}</span></li>`).join('')}</ul></div>
+        <div><div class="period" style="margin-bottom:8px">Prova</div>${proof.length || sigLink ? `<div class="proof">${proof.map(([k,v]) => `<div><span class="k">${esc(k)}</span><span class="v">${esc(v)}</span></div>`).join('')}${sigLink}</div>` : `<p class="empty" style="margin:0">Ainda sem prova. Aparece quando a rede confirmar.</p>`}</div>
+      </div></td></tr>`;
+    }
+    return html;
+  }).join('') : `<tr><td colspan="9" class="empty">Nenhum pagamento com esses filtros.</td></tr>`;
+}
+
+function renderSelects() {
+  const keepAgent = $('f-agent').value, keepSim = $('sim-agent').value;
+  $('f-agent').innerHTML = `<option value="">Todos os agentes</option>` + S.agents.map(a => `<option value="${esc(a.id)}">${esc(a.id)}</option>`).join('');
+  $('f-agent').value = keepAgent;
+  $('sim-agent').innerHTML = S.agents.map(a => `<option value="${esc(a.id)}">${esc(a.id)}</option>`).join('');
+  $('sim-agent').value = keepSim && S.agents.some(a => a.id === keepSim) ? keepSim : ui.sel || '';
+}
+
+function renderAll() {
+  if (!S) return;
+  const focusId = document.activeElement?.id;
+  renderKPIs(); renderTabs(); renderAgent(); renderChart(); renderValidation(); renderApprovals(); renderAlerts(); renderConn(); renderLedger(); renderSelects();
+  $('clock').textContent = new Date(S.now).toLocaleString('pt-BR', {day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'});
+  if (focusId && $(focusId) && ['cap-in','w-sol','w-base'].includes(focusId)) $(focusId).focus();
+}
+
+function showResult(r, amount, vendor) {
+  const [c, t] = DEC[r.decision];
+  const box = $('sim-result'); box.hidden = false;
+  box.innerHTML = `<div class="result"><div class="rh"><span class="pill ${c}">${t}</span><span class="num">${fmtUSD(amount)} → ${esc(vendor)}</span></div>
+    <ul>${r.hits.map(h => `<li>${esc(h.text)}${h.action !== 'permitir' ? ` <strong>(${ACT[h.action]})</strong>` : ''}</li>`).join('')}</ul>
+    ${r.hits.length > 1 ? `<span style="font-size:12px;color:var(--muted)">Vale a regra mais restritiva.</span>` : ''}</div>`;
+}
+
+async function act(fn) { try { await fn(); } catch (e) { banner(e.message); } await refresh(); }
+
+document.addEventListener('click', ev => {
+  const tab = ev.target.closest('[data-tab]');
+  if (tab) { ui.sel = tab.dataset.tab; ui.editingCap = null; $('sim-agent').value = ui.sel; renderAll(); return; }
+  const t = ev.target.closest('[data-act]'); if (!t || !S) return;
+  const id = t.dataset.id;
+  switch (t.dataset.act) {
+    case 'pause': return act(() => api('POST', `/api/agents/${encodeURIComponent(ui.sel)}/pause`));
+    case 'resume': return act(() => api('POST', `/api/agents/${encodeURIComponent(ui.sel)}/resume`));
+    case 'edit-cap': ui.editingCap = ui.sel; renderAgent(); $('cap-in')?.focus(); return;
+    case 'cancel-cap': ui.editingCap = null; renderAgent(); return;
+    case 'save-cap': { const v = parseFloat($('cap-in').value); if (!(v >= 0)) { $('cap-in').focus(); return; }
+      ui.editingCap = null; return act(() => api('PUT', `/api/agents/${encodeURIComponent(ui.sel)}/rules`, {cap: v})); }
+    case 'approve': case 'reject': return act(() => api('POST', `/api/payments/${id}/${t.dataset.act}`));
+    case 'toggle': ui.open = ui.open === +id ? null : +id; renderLedger(); document.querySelector(`tr[data-id="${id}"]`)?.focus(); return;
+    case 'vfilter': $('f-ver').value = $('f-ver').value === t.dataset.v ? '' : t.dataset.v; renderValidation(); renderLedger(); return;
+    case 'validate': ui.busy.all = true; t.disabled = true; t.textContent = 'Validando…';
+      return act(async () => { ui.lastValidation = await api('POST', '/api/validate', {}); }).finally(() => { ui.busy.all = false; t.disabled = false; t.textContent = 'Validar agora'; });
+    case 'conn-test': ui.busy.conn = true; renderConn(); return act(() => api('POST', '/api/connection/test')).finally(() => { ui.busy.conn = false; renderConn(); });
+    case 'w-scan': ui.busy[id] = true; renderConn(); return act(async () => { ui.lastValidation = await api('POST', '/api/validate', {agent: id}); }).finally(() => { ui.busy[id] = false; renderConn(); });
+    case 'w-edit': ui.editingWallet = id; ui.walletErr[id] = null; renderConn(); $('w-sol')?.focus(); return;
+    case 'w-cancel': ui.editingWallet = null; renderConn(); return;
+    case 'w-save': { const solana = $('w-sol').value.trim(), baseAddr = $('w-base').value.trim();
+      if ([solana, baseAddr].some(looksLikeSecret)) { ui.walletErr[id] = SECRET_MSG; ui.editingWallet = null; renderConn(); return; }
+      const body = {};
+      if (solana) body.solana = solana;
+      if (baseAddr) body.base = baseAddr;
+      return api('PUT', `/api/agents/${encodeURIComponent(id)}/wallet`, body)
+        .then(() => { ui.editingWallet = null; ui.walletErr[id] = null; return refresh(); })
+        .catch(e => { ui.walletErr[id] = e.message; renderConn(); }); }
+  }
+});
+document.addEventListener('keydown', ev => {
+  const tr = ev.target.closest?.('tr[data-act="toggle"]');
+  if (tr && (ev.key === 'Enter' || ev.key === ' ')) { ev.preventDefault(); tr.click(); }
+});
+['f-agent','f-dec','f-ver'].forEach(id => $(id).addEventListener('change', () => { renderValidation(); renderLedger(); }));
+$('sim-agent').addEventListener('change', e => { ui.sel = e.target.value; renderAll(); });
+
+async function simulateOnce(extraSpent = 0) {
+  const body = { agent: $('sim-agent').value, network: $('sim-network').value, vendor: $('sim-vendor').value.trim(), destination: $('sim-dest').value.trim(), amount: parseFloat($('sim-amount').value), extraSpent };
+  const r = await api('POST', '/api/simulate', body);
+  showResult(r, body.amount, body.vendor || body.destination || '—');
+  return r;
+}
+$('sim').addEventListener('submit', ev => { ev.preventDefault(); if (!(parseFloat($('sim-amount').value) > 0)) { $('sim-amount').focus(); return; } simulateOnce().catch(e => banner(e.message)); });
+$('present').addEventListener('click', async () => {
+  const btn = $('present');
+  btn.disabled = true; btn.textContent = 'Simulando…';
+  try {
+    const r = await api('POST', '/api/demo', {});
+    await refresh();
+    const parts = [`${r.lines.length} tentativas no registro`];
+    if (r.allowed) parts.push(`${r.allowed} permitidas`);
+    if (r.blocked) parts.push(`${r.blocked} barradas`);
+    if (r.needsApproval) parts.push(`${r.needsApproval} para aprovar`);
+    $('present-note').textContent = `${parts.join(', ')}. Nada foi pago.`;
+  } catch (e) { banner(e.message); }
+  btn.disabled = false; btn.textContent = 'Simular pagamentos';
+});
+$('loop').addEventListener('click', async () => {
+  if (ui.looping) { ui.looping = false; return; }
+  ui.looping = true; $('loop').textContent = 'Parar simulação';
+  try {
+    // soma as tentativas só nesta simulação, para mostrar em que chamada o teto barra o agente
+    let extra = 0;
+    for (let n = 1; n <= 200 && ui.looping; n++) {
+      const r = await simulateOnce(extra);
+      if (r.decision !== 'allowed') { $('sim-result').insertAdjacentHTML('beforeend', `<p class="empty" style="margin:8px 0 0">Barrado na chamada nº ${n}, depois de ${fmtUSD(extra)} simulados.</p>`); break; }
+      extra += parseFloat($('sim-amount').value);
+      await new Promise(res => setTimeout(res, matchMedia('(prefers-reduced-motion: reduce)').matches ? 30 : 180));
+    }
+  } catch (e) { banner(e.message); }
+  ui.looping = false; $('loop').textContent = 'Simular agente em loop';
+});
+
+refresh();
+setInterval(() => { if (!ui.looping && !ui.editingCap && !ui.editingWallet) refresh(); }, 5000);
+
+/* Nectrae · token do painel */
+document.getElementById('login-form').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  const t = document.getElementById('login-token').value.trim();
+  if (!t) return;
+  setPanelToken(t, document.getElementById('login-remember').checked);
+  document.getElementById('login-token').value = '';
+  await refresh();
+});
+})();
+</script>
+
+<script>
+/* Nectrae · abas da versão para celular */
+(() => {
+  const TABS = {
+    inicio: ['NECTRAE · BEE IN CONTROL', 'Início'],
+    agentes: ['TETOS POR AGENTE', 'Agentes'],
+    aprovacoes: ['PRECISA DE VOCÊ', 'Aprovações'],
+    registro: ['CADA TENTATIVA DE PAGAMENTO', 'Registro'],
+    protecao: ['VALIDAÇÃO', 'Proteção']
+  };
+  const btns = document.querySelectorAll('.mtabs [data-mtab]');
+  function setTab(t, push) {
+    if (!TABS[t]) t = 'inicio';
+    document.body.dataset.mtab = t;
+    btns.forEach(b => b.setAttribute('aria-current', b.dataset.mtab === t ? 'page' : 'false'));
+    document.getElementById('m-eyebrow').textContent = TABS[t][0];
+    document.getElementById('m-title').textContent = TABS[t][1];
+    if (push) { history.replaceState(null, '', '#' + t); window.scrollTo(0, 0); }
+  }
+  btns.forEach(b => b.addEventListener('click', () => setTab(b.dataset.mtab, true)));
+  document.getElementById('m-pending').addEventListener('click', () => setTab('aprovacoes', true));
+  window.addEventListener('hashchange', () => setTab(location.hash.slice(1)));
+  setTab(location.hash.slice(1));
+
+  // contador de aprovações → selo na aba e atalho no Início
+  const cnt = document.getElementById('appr-count');
+  const sync = () => {
+    const n = parseInt(cnt.textContent, 10) || 0;
+    const badge = document.getElementById('m-badge');
+    badge.textContent = n; badge.hidden = n === 0;
+    const pend = document.getElementById('m-pending');
+    pend.hidden = n === 0;
+    document.getElementById('m-pending-t').textContent = n === 1 ? '1 pagamento espera aprovação' : n + ' pagamentos esperam aprovação';
+  };
+  new MutationObserver(sync).observe(cnt, { childList: true, characterData: true, subtree: true });
+  sync();
+})();
+</script>
+</body>
+</html>
