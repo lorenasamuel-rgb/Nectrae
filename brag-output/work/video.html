@@ -1,0 +1,449 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+/* ---- copied from mvp/public/index.html (Nectrae panel) ---- */
+:root{
+  --bg:#031626; --surface:#06202F; --surface-2:#172C3A; --ink:#FAF8F2; --muted:#BFC3BF; --line:#172C3A;
+  --accent:#EDAE44; --accent-ink:#031626; --accent-soft:#F6C574;
+  --ok:#5FDFA6; --ok-bg:rgba(95,223,166,.12); --warn:#EDAE44; --warn-bg:rgba(237,174,68,.14); --crit:#E8803A; --crit-bg:rgba(232,128,58,.14);
+  --r-x402:#EDAE44; --grad:linear-gradient(90deg,#EDAE44,#E8803A);
+  --sans:"Inter",ui-sans-serif,system-ui,sans-serif; --mono:"Inter",ui-sans-serif,system-ui,sans-serif;
+  --code:"JetBrains Mono",ui-monospace,Menlo,monospace; --serif:"Playfair Display",Georgia,serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;width:1920px;height:1080px;overflow:hidden;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.45}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+h1,h2,h3{margin:0}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px 22px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.panel-h{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.panel-h h2{font-size:16px;font-weight:600}
+.panel-h .hint{color:var(--muted);font-size:12px}
+.tabs{display:flex;gap:8px 16px}
+.tab{display:flex;flex-direction:column;align-items:center;gap:6px;width:112px;border:0;background:transparent;padding:2px;color:var(--muted);font-size:12px;font-weight:500}
+.tab[aria-selected="true"]{color:var(--accent);font-weight:600}
+.tab .face{width:72px;height:72px;display:block}
+.halo{fill:none;stroke:transparent;stroke-width:1.5}
+.tab[aria-selected="true"] .halo{stroke:var(--ink)}
+.face ellipse,.face rect{fill:var(--ink)}
+.agent-h{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.agent-h h2{font-family:var(--mono);font-size:18px;font-weight:600}
+.agent-h p{margin:2px 0 0;color:var(--muted);font-size:13px}
+.pill{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:2px 9px;font-size:12px;font-weight:600;white-space:nowrap}
+.pill.ok{background:var(--ok-bg);color:var(--ok)} .pill.warn{background:var(--warn-bg);color:var(--warn)} .pill.crit{background:var(--crit-bg);color:var(--crit)}
+.cap{border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px;background:var(--bg)}
+.cap-h{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.cap-name{display:flex;align-items:center;gap:8px;font-weight:600;font-size:14px}
+.sw{width:10px;height:10px;border-radius:3px;flex:none}
+.period{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.cap-fig{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.cap-fig .spent{font-family:var(--mono);font-size:20px;font-weight:700;font-variant-numeric:tabular-nums}
+.cap-fig .of{color:var(--muted);font-size:13px}
+.cap-fig .pct{font-family:var(--mono);font-size:13px;font-weight:500}
+.bar{position:relative;height:8px;border-radius:999px;background:var(--surface-2);overflow:hidden}
+.bar i{position:absolute;inset:0 auto 0 0;border-radius:999px}
+.bar b{position:absolute;top:0;bottom:0;width:1px;background:var(--muted);opacity:.35}
+.cap-rules{font-size:12px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 12px}
+.cap-rules strong{color:var(--ink);font-weight:500}
+.cap-foot{font-size:12px;color:var(--muted)}
+.form{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.field{display:flex;flex-direction:column;gap:4px;min-width:0}
+.field.full{grid-column:1/-1}
+.field label{font-size:12px;color:var(--muted);font-weight:500}
+.field .in{border:1px solid var(--line);border-radius:8px;padding:0 10px;background:var(--bg);min-height:44px;display:flex;align-items:center;font-family:var(--mono);white-space:nowrap;overflow:hidden}
+.field .in.sel{font-family:var(--sans);justify-content:space-between}
+.field .in.focus{border-color:var(--accent-soft);box-shadow:0 0 0 1px var(--accent-soft)}
+.form-actions{grid-column:1/-1;display:flex;gap:8px}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 14px;font-weight:600;font-size:13px;color:var(--ink)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.result{border:1px solid var(--line);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px;background:var(--bg)}
+.result ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px;font-size:13px}
+.result .rh{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.result .rh span.num{font-size:12px;color:var(--muted)}
+.watcher{display:inline-flex;align-items:center;gap:10px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 14px 4px 4px}
+.watcher[data-mood="squint"]{box-shadow:0 0 0 1px var(--accent)}
+.watcher[data-mood="shut"]{box-shadow:0 0 0 1px var(--crit)}
+.watcher-face{width:36px;height:36px;display:grid;place-items:center}
+.watcher-face .face{width:36px;height:36px}
+.watcher[data-mood="squint"] .halo{stroke:var(--accent)}
+.watcher[data-mood="shut"] .halo{stroke:var(--crit)}
+.watcher-say{font-size:12px;color:var(--muted);white-space:nowrap}
+.eyebrow{font-size:11px;font-weight:600;letter-spacing:.24em;color:var(--accent)}
+
+/* ---- video layout ---- */
+#bg{position:absolute;inset:0;overflow:hidden}
+#bg svg{position:absolute;inset:-120px;width:2160px;height:1320px}
+#glow{position:absolute;inset:0}
+.scene{position:absolute;inset:0;opacity:0;will-change:opacity,transform}
+.h-big{font-family:var(--serif);font-weight:700;letter-spacing:-.01em;line-height:1.08}
+.kick{font-size:22px;font-weight:600;letter-spacing:.28em;color:var(--accent)}
+
+/* S1 terminal */
+#term{position:absolute;left:340px;top:340px;width:1240px;border-radius:18px;background:var(--surface);border:1px solid var(--line);box-shadow:0 40px 120px rgba(0,0,0,.45);overflow:hidden}
+#term .bar-t{height:52px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;padding:0 22px}
+#term .dot{width:13px;height:13px;border-radius:50%;background:var(--surface-2)}
+#term .title{margin-left:16px;font-family:var(--code);font-size:16px;color:var(--muted)}
+#term .body{padding:26px 34px 30px;font-family:var(--code);font-size:21px;line-height:44px;white-space:pre;height:436px}
+#term .ln{border-radius:6px;margin:0 -12px;padding:0 12px}
+.c-ok{color:var(--ok)} .c-crit{color:var(--crit)} .c-mut{color:var(--muted)} .c-amb{color:var(--accent)}
+.caret{display:inline-block;width:12px;height:24px;background:var(--accent);vertical-align:-4px}
+
+/* logo */
+.logo-wrap{position:absolute;left:50%;transform:translateX(-50%)}
+.logo-wrap canvas{position:absolute;left:0;top:0}
+</style>
+</head>
+<body>
+<div id="bg">
+  <svg viewBox="0 0 2160 1320"><defs>
+    <pattern id="hex" width="84" height="145.5" patternUnits="userSpaceOnUse">
+      <path d="M42 0 L84 24.25 L84 72.75 L42 97 L0 72.75 L0 24.25 Z M42 97 L42 145.5 M0 145.5 L0 72.75 M84 145.5 L84 72.75" fill="none" stroke="#172C3A" stroke-width="1.4"/>
+    </pattern>
+    <radialGradient id="fade" cx="50%" cy="50%" r="60%"><stop offset="0" stop-color="#fff" stop-opacity=".15"/><stop offset="1" stop-color="#fff" stop-opacity="1"/></radialGradient>
+    <mask id="m"><rect width="2160" height="1320" fill="url(#fade)"/></mask>
+  </defs><g id="hexg" mask="url(#m)" opacity=".55"><rect id="hexr" x="-200" y="-300" width="2600" height="1900" fill="url(#hex)"/></g></svg>
+  <div id="glow"></div>
+</div>
+
+<!-- S1 · the demo round -->
+<div class="scene" id="s1">
+  <div class="h-big" id="s1h" style="position:absolute;left:0;right:0;top:150px;text-align:center;font-size:86px">
+    <span id="s1a">8 API calls.</span> <span id="s1b" class="c-crit">2 never got paid.</span>
+  </div>
+  <div id="term">
+    <div class="bar-t"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="title">nectrae/mvp — npm run demo</span></div>
+    <div class="body" id="tbody"></div>
+  </div>
+</div>
+
+<!-- S2 · reveal -->
+<div class="scene" id="s2">
+  <div class="logo-wrap" id="s2logo" style="top:250px"></div>
+  <div id="s2tag" style="position:absolute;left:0;right:0;top:560px;text-align:center;font-size:22px;letter-spacing:.42em;color:var(--muted);font-weight:500">BEE IN CONTROL</div>
+  <div style="position:absolute;left:0;right:0;top:680px;text-align:center">
+    <div id="s2l1" style="font-size:60px;font-weight:700;letter-spacing:-.02em">One USDC cap per API.</div>
+    <div id="s2l2" style="font-size:44px;font-weight:500;color:var(--muted);margin-top:14px">Checked on <span style="color:var(--ink)">Solana</span> and <span style="color:var(--ink)">Base</span>.</div>
+  </div>
+</div>
+
+<!-- S3 · decides before the money leaves -->
+<div class="scene" id="s3">
+  <div style="position:absolute;left:150px;top:300px;width:640px">
+    <div class="kick" id="s3k">RULES ENGINE</div>
+    <div class="h-big" id="s3h" style="font-size:92px;margin-top:22px">Decides before the money leaves.</div>
+  </div>
+  <div id="s3p" style="position:absolute;left:880px;top:118px;width:600px;transform-origin:0 0">
+    <section class="panel">
+      <div class="tabs" id="s3tabs"></div>
+      <div class="agent-h"><div><h2>nansen</h2><p>On-chain data · USDC per call</p></div><span class="pill ok">Within the cap</span></div>
+      <div class="cap">
+        <div class="cap-h"><span class="cap-name"><span class="sw" style="background:var(--r-x402)"></span>USDC per call</span><span class="period">Daily</span></div>
+        <div class="cap-fig"><span><span class="spent" id="s3spent">$0.00</span> <span class="of">of <span class="num">$1.00</span></span></span><span class="pct" id="s3pct">0%</span></div>
+        <div class="bar"><i id="s3bar" style="width:0;background:var(--r-x402)"></i><b style="left:50%"></b><b style="left:80%"></b></div>
+        <div class="cap-rules"><span>80% → <strong>Alert</strong></span><span>100% → <strong>Pause agent</strong></span><span>max <strong class="num">$0.05</strong> per call</span><span><strong>2</strong> API addresses</span></div>
+      </div>
+      <div id="s3feed" style="display:flex;gap:8px;min-height:22px"></div>
+      <div id="s3res" class="result">
+        <div class="rh"><span class="pill crit">Blocked</span><span class="num">$0.20 → api.nansen.ai</span></div>
+        <ul><li>Above the per-transaction maximum ($0.05). <strong>(Block)</strong></li><li>Within the cap: $0.04 + $0.20 = $0.24 of $1.00 today.</li></ul>
+        <span style="font-size:12px;color:var(--muted)">The most restrictive rule wins.</span>
+      </div>
+    </section>
+  </div>
+</div>
+
+<!-- S4 · wrong address -->
+<div class="scene" id="s4">
+  <div style="position:absolute;left:150px;top:300px;width:660px">
+    <div class="kick">ALLOW LIST</div>
+    <div class="h-big" style="font-size:92px;margin-top:22px">Wrong address? Blocked before anyone signs.</div>
+  </div>
+  <div id="s4p" style="position:absolute;left:900px;top:96px;width:560px;transform-origin:0 0">
+    <section class="panel">
+      <div class="panel-h"><h2>Test a payment</h2><span class="hint">simulation: nothing is saved or paid</span></div>
+      <div class="form">
+        <div class="field"><label>Agent</label><div class="in sel">tcg <span class="c-mut">▾</span></div></div>
+        <div class="field"><label>Network</label><div class="in sel">Base <span class="c-mut">▾</span></div></div>
+        <div class="field full"><label>API</label><div class="in">api.tcgapi.dev</div></div>
+        <div class="field full"><label>Receiving address</label><div class="in" id="s4addr"></div></div>
+        <div class="field full"><label>Amount (USD)</label><div class="in">0.01</div></div>
+        <div class="form-actions"><span class="btn primary" id="s4btn">Check</span><span class="btn">Simulate an agent in a loop</span></div>
+      </div>
+      <div id="s4res" class="result">
+        <div class="rh"><span class="pill crit">Blocked</span><span class="num">$0.01 → api.tcgapi.dev</span></div>
+        <ul><li>Destination is not on the allow list. This is not the address this API receives. <strong>(Block)</strong></li><li>Within the cap: $0.02 + $0.01 = $0.03 of $0.40 today.</li></ul>
+      </div>
+    </section>
+    <svg id="cursor" width="22" height="28" viewBox="0 0 22 28" style="position:absolute;left:0;top:0"><path d="M2 2 L2 22 L7.5 17 L11 25.5 L14.5 24 L11 15.8 L18.5 15.8 Z" fill="#FAF8F2" stroke="#031626" stroke-width="1.6" stroke-linejoin="round"/></svg>
+  </div>
+</div>
+
+<!-- S5 · the watcher -->
+<div class="scene" id="s5">
+  <div style="position:absolute;left:0;right:0;top:120px;text-align:center">
+    <div class="kick">THE WATCHER</div>
+    <div class="h-big" style="font-size:92px;margin-top:18px">Its eyes follow the caps.</div>
+  </div>
+  <div id="s5faces" style="position:absolute;left:0;right:0;top:420px;display:flex;justify-content:center;gap:120px"></div>
+  <div style="position:absolute;left:0;right:0;top:880px;display:flex;justify-content:center">
+    <div id="s5w" style="transform:scale(1.7);transform-origin:50% 0"><span class="watcher" id="s5watch" data-mood="open"><span class="watcher-face" id="s5wf"></span><span class="watcher-say" id="s5say">Watching the caps.</span></span></div>
+  </div>
+</div>
+
+<!-- S6 · outro -->
+<div class="scene" id="s6">
+  <div class="logo-wrap" id="s6logo" style="top:270px"></div>
+  <div id="s6tag" style="position:absolute;left:0;right:0;top:580px;text-align:center;font-size:22px;letter-spacing:.42em;color:var(--muted);font-weight:500">BEE IN CONTROL</div>
+  <div id="s6chips" style="position:absolute;left:0;right:0;top:680px;display:flex;justify-content:center;gap:18px"></div>
+  <div id="s6url" style="position:absolute;left:0;right:0;top:800px;text-align:center;font-family:var(--code);font-size:34px;color:var(--accent)">github.com/lorenasamuel-rgb/Nectrae</div>
+</div>
+
+<script>
+// ---------- helpers ----------
+const $ = id => document.getElementById(id);
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const seg = (t, a, b) => clamp((t - a) / (b - a));
+const eo = x => 1 - Math.pow(1 - x, 3);
+const eio = x => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+const eback = x => { const c = 1.6; return 1 + (c + 1) * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2); };
+const fmtUSD = n => new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',minimumFractionDigits:2,maximumFractionDigits:2}).format(n);
+
+// faceSvg() from the panel, unchanged
+function faceSvg(wax, eyes) {
+  const look = eyes === 'shut'
+    ? '<rect x="6.7" y="10.7" width="3.5" height="0.62" rx="0.31"/><rect x="13.1" y="10.85" width="3.8" height="0.62" rx="0.31"/>'
+    : eyes === 'squint'
+    ? '<ellipse cx="8.5" cy="11.05" rx="1.85" ry="0.32"/><ellipse cx="15" cy="10.95" rx="2" ry="1.15"/>'
+    : '<ellipse cx="8.5" cy="10.7" rx="1.85" ry="1.05"/><ellipse cx="15" cy="10.95" rx="2" ry="1.15"/>';
+  return `<svg class="face" viewBox="-2 -2 28 28" aria-hidden="true"><polygon class="halo" points="12,1 22,6.5 22,17.5 12,23 2,17.5 2,6.5"/><polygon points="12,1 22,6.5 22,17.5 12,23 2,17.5 2,6.5" fill="${wax}"/><polygon points="12,1 22,6.5 22,17.5 12,23 2,17.5 2,6.5" fill="#031626" transform="translate(12 12) scale(0.62) translate(-12 -12)"/>${look}</svg>`;
+}
+const WAX = { nansen: '#EDAE44', vybe: '#6A9BB5', tcg: '#C47A3A' };
+
+// ---------- scene windows ----------
+const SC = { s1:[0,4.8], s2:[4.8,9.0], s3:[9.0,13.8], s4:[13.8,18.2], s5:[18.2,21.4], s6:[21.4,24.4] };
+const DUR = 24.4;
+function sceneVis(id, t) {
+  const [a, b] = SC[id];
+  if (t < a || t >= b + (id === 's6' ? 1 : 0)) return { o: 0, y: 0, s: 1 };
+  const i = id === 's1' ? 1 : eo(seg(t, a, a + .4));
+  const o = id === 's6' ? 1 : 1 - eio(seg(t, b - .3, b));
+  return { o: i * o, y: (1 - i) * 26, s: 1 - (1 - o) * .02 };
+}
+
+// ---------- logo: recolor the cream-background master for the navy background ----------
+let logoInk, logoGold, LW, LH;
+function buildLogo(img) {
+  const sx = 280, sy = 345, sw = 1000, sh = 255;
+  LW = sw; LH = sh;
+  const mk = () => { const c = document.createElement('canvas'); c.width = sw; c.height = sh; return c; };
+  const src = mk(), sc = src.getContext('2d'); sc.drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh);
+  const d = sc.getImageData(0, 0, sw, sh).data;
+  logoInk = mk(); logoGold = mk();
+  const ink = logoInk.getContext('2d').createImageData(sw, sh), gold = logoGold.getContext('2d').createImageData(sw, sh);
+  for (let p = 0; p < d.length; p += 4) {
+    const r = d[p], g = d[p+1], b = d[p+2];
+    const diff = Math.max(250 - r, 248 - g, 242 - b);
+    const isGold = (r - b) > 60 && r > 150;
+    if (isGold) { const a = clamp(diff / 150); gold.data.set([237,174,68, a * 255], p); }
+    else { const a = clamp((diff - 6) / 190); ink.data.set([250,248,242, a * 255], p); }
+  }
+  logoInk.getContext('2d').putImageData(ink, 0, 0); logoGold.getContext('2d').putImageData(gold, 0, 0);
+}
+function mountLogo(host, scale) {
+  host.style.width = LW * scale + 'px'; host.style.height = LH * scale + 'px';
+  const a = logoInk.cloneNode(), b = logoGold.cloneNode();
+  a.getContext('2d').drawImage(logoInk, 0, 0); b.getContext('2d').drawImage(logoGold, 0, 0);
+  for (const c of [a, b]) { c.style.width = LW * scale + 'px'; c.style.height = LH * scale + 'px'; host.appendChild(c); }
+  return { ink: a, gold: b };
+}
+function animLogo(L, lt) {
+  // ink wipes in left to right, then the two hexagons drop into place
+  const w = eio(seg(lt, 0, .8));
+  L.ink.style.clipPath = `inset(0 ${100 - w * 100}% 0 0)`;
+  L.ink.style.opacity = clamp(w * 1.4);
+  const g = seg(lt, .35, .95);
+  L.gold.style.opacity = clamp(g * 3);
+  L.gold.style.transform = `translateY(${(1 - eback(g)) * -40}px)`;
+}
+
+// ---------- S1 terminal ----------
+const LINES = [
+  ['nansen','solana','0.01','allowed','Within the cap'],
+  ['nansen','solana','0.01','allowed','Within the cap'],
+  ['nansen','base','0.02','allowed','Within the cap'],
+  ['vybe','base','0.01','allowed','Within the cap'],
+  ['vybe','solana','0.01','allowed','Within the cap'],
+  ['tcg','solana','0.02','allowed','Within the cap'],
+  ['nansen','solana','0.2','blocked','Above the per-transaction maximum ($0.05)'],
+  ['tcg','base','0.01','blocked','Destination is not on the allow list'],
+];
+const LT = [0.9, 1.1, 1.3, 1.5, 1.7, 1.9, 2.35, 2.75];
+const CMD = 'npm run demo', CMD_T = [.15, .7];
+function renderTerm(t) {
+  const n = Math.round(CMD.length * seg(t, CMD_T[0], CMD_T[1]));
+  let html = `<div class="ln"><span class="c-amb">$</span> ${CMD.slice(0, n)}${t < LT[0] ? (Math.floor(t * 3.3) % 2 === 0 || n < CMD.length ? '<span class="caret"></span>' : '') : ''}</div>`;
+  LINES.forEach((L, i) => {
+    if (t < LT[i]) return;
+    const k = eo(seg(t, LT[i], LT[i] + .18));
+    const bad = L[3] === 'blocked';
+    const flash = bad ? Math.exp(-(t - LT[i]) * 1.6) : 0;
+    const bg = bad ? `background:rgba(232,128,58,${.06 + .22 * flash})` : '';
+    html += `<div class="ln" style="opacity:${k};transform:translateX(${(1 - k) * -14}px);${bg}">${L[0].padEnd(8)} <span class="c-mut">${L[1].padEnd(7)}</span> US$ ${L[2].padStart(5)} <span class="c-mut">→</span> <span class="${bad ? 'c-crit' : 'c-ok'}" style="font-weight:${bad ? 700 : 500}">${L[3].padEnd(8)}</span> <span class="c-mut">${L[4]}</span></div>`;
+  });
+  $('tbody').innerHTML = html;
+  let shake = 0;
+  for (const i of [6, 7]) if (t >= LT[i]) shake += Math.sin((t - LT[i]) * 70) * 7 * Math.exp(-(t - LT[i]) * 14);
+  const push = 1 + .03 * eio(seg(t, 0, 4.8));
+  $('term').style.transform = `translateX(${shake}px) scale(${push})`;
+  const a = eo(seg(t, .2, .6)), b = eo(seg(t, 2.95, 3.3));
+  $('s1a').style.opacity = a;
+  $('s1b').style.opacity = b;
+  $('s1b').style.display = 'inline-block';
+  $('s1b').style.transform = `translateY(${(1 - b) * 20}px) scale(${1 + (1 - b) * .08})`;
+}
+
+// ---------- S3 ----------
+function renderS3(lt) {
+  $('s3tabs').innerHTML = ['nansen','vybe','tcg'].map(id =>
+    `<span class="tab" aria-selected="${id === 'nansen'}">${faceSvg(WAX[id], 'open')}<span class="id">${id}</span></span>`).join('');
+  const steps = [[.7, .01, 'Solana'], [1.0, .02, 'Solana'], [1.3, .04, 'Base']];
+  let spent = 0, feed = '';
+  steps.forEach(([at, total, net], i) => {
+    if (lt >= at) {
+      const k = eo(seg(lt, at, at + .25));
+      const prev = i ? steps[i - 1][1] : 0;
+      spent = prev + (total - prev) * k;
+      const amt = i === 2 ? 0.02 : 0.01;
+      feed += `<span class="pill ok" style="opacity:${k};transform:translateY(${(1 - k) * 8}px)">${net} ${fmtUSD(amt)} ✓</span>`;
+    }
+  });
+  const ck = eo(seg(lt, 1.6, 1.85));
+  if (lt >= 1.6) feed += `<span class="pill crit" style="opacity:${ck};transform:translateY(${(1 - ck) * 8}px)">Solana ${fmtUSD(.2)} ✕</span>`;
+  $('s3feed').innerHTML = feed;
+  $('s3spent').textContent = fmtUSD(spent);
+  $('s3pct').textContent = Math.round(spent * 100) + '%';
+  $('s3bar').style.width = (spent * 100) + '%';
+  const r = eo(seg(lt, 2.0, 2.3));
+  $('s3res').style.opacity = r;
+  $('s3res').style.transform = `translateY(${(1 - r) * 18}px)`;
+  const glow = lt >= 2.0 ? Math.exp(-(lt - 2.0) * 2.2) : 0;
+  $('s3res').style.boxShadow = `0 0 0 ${1 + glow * 2}px rgba(232,128,58,${.25 + glow * .6})`;
+  const pk = eo(seg(lt, .1, .55));
+  $('s3p').style.transform = `translateY(${(1 - pk) * 30}px) scale(1.52)`;
+}
+
+// ---------- S4 ----------
+const BAD = '0x9999999999999999999999999999999999999999';
+function renderS4(lt) {
+  const n = Math.round(BAD.length * eio(seg(lt, .5, 1.3)));
+  const typing = lt >= .45 && lt < 1.5;
+  $('s4addr').innerHTML = n ? BAD.slice(0, n) + (typing ? '<span style="display:inline-block;width:1.5px;height:18px;background:var(--accent-soft);margin-left:1px"></span>' : '')
+    : '<span class="c-mut" style="font-family:var(--sans)">the 402 address</span>';
+  $('s4addr').classList.toggle('focus', typing);
+  // cursor: from the address field to Check, then click
+  const from = [380, 330], to = [52, 438];
+  const m = eio(seg(lt, 1.2, 1.55));
+  const cx = from[0] + (to[0] - from[0]) * m, cy = from[1] + (to[1] - from[1]) * m;
+  const press = lt >= 1.55 && lt < 1.7;
+  $('cursor').style.transform = `translate(${cx}px,${cy}px) scale(${press ? .86 : 1})`;
+  $('cursor').style.opacity = clamp(seg(lt, .9, 1.1)) * (1 - seg(lt, 2.4, 2.7));
+  $('s4btn').style.filter = press ? 'brightness(.82)' : 'none';
+  $('s4btn').style.transform = press ? 'scale(.96)' : 'none';
+  const r = eo(seg(lt, 1.75, 2.0));
+  $('s4res').style.opacity = r;
+  $('s4res').style.transform = `translateY(${(1 - r) * 18}px)`;
+  const glow = lt >= 1.75 ? Math.exp(-(lt - 1.75) * 2.2) : 0;
+  $('s4res').style.boxShadow = `0 0 0 ${1 + glow * 2}px rgba(232,128,58,${.25 + glow * .6})`;
+  const pk = eo(seg(lt, .1, .55));
+  $('s4p').style.transform = `translateY(${(1 - pk) * 30}px) scale(1.45)`;
+}
+
+// ---------- S5 ----------
+function blinkAt(lt, phase) { const p = ((lt + phase) % 2.2) / 2.2; return p > .9 && p < .96; }
+function renderS5(lt) {
+  const nPct = lt < .7 ? .42 : lt < 1.6 ? .42 + (.86 - .42) * eio(seg(lt, .7, 1.0)) : .86 + .14 * eio(seg(lt, 1.6, 1.85));
+  const mood = nPct >= 1 ? 'shut' : nPct >= .8 ? 'squint' : 'open';
+  const agents = [
+    ['nansen', nPct, mood, 0],
+    ['vybe', .24, blinkAt(lt, .5) ? 'shut' : 'open', .12],
+    ['tcg', .08, blinkAt(lt, 1.4) ? 'shut' : 'open', .24],
+  ];
+  $('s5faces').innerHTML = agents.map(([id, pct, eyes, d], i) => {
+    const k = eback(seg(lt, .15 + d, .6 + d));
+    const bob = Math.sin((lt + i) * 2.2) * 4;
+    const col = pct >= 1 ? 'var(--crit)' : pct >= .8 ? 'var(--grad)' : 'var(--r-x402)';
+    const pc = pct >= 1 ? 'color:var(--crit)' : pct >= .8 ? 'color:var(--warn)' : '';
+    const halo = id === 'nansen' ? (eyes === 'shut' ? 'var(--crit)' : eyes === 'squint' ? 'var(--accent)' : 'transparent') : 'transparent';
+    return `<div style="display:flex;flex-direction:column;align-items:center;gap:22px;opacity:${clamp(k)};transform:translateY(${(1 - k) * 40}px)">
+      <div style="width:250px;height:250px;transform:translateY(${bob}px)">${faceSvg(WAX[id], eyes).replace('class="face"', 'class="face" style="width:250px;height:250px"').replace('class="halo"', `class="halo" style="stroke:${halo};stroke-width:.9"`)}</div>
+      <div style="font-family:var(--mono);font-size:30px;font-weight:600">${id}</div>
+      <div style="width:240px;display:flex;flex-direction:column;gap:10px">
+        <div class="bar" style="height:12px"><i style="width:${pct * 100}%;background:${col}"></i><b style="left:50%"></b><b style="left:80%"></b></div>
+        <div style="font-family:var(--mono);font-size:22px;text-align:center;${pc}">${Math.round(pct * 100)}%</div>
+      </div></div>`;
+  }).join('');
+  $('s5watch').dataset.mood = mood;
+  $('s5wf').innerHTML = faceSvg('#EDAE44', mood);
+  $('s5say').textContent = mood === 'shut' ? 'nansen reached the cap.' : mood === 'squint' ? 'nansen is near the cap.' : 'Watching the caps.';
+  const w = eo(seg(lt, .3, .7));
+  $('s5w').style.opacity = w;
+}
+
+// ---------- S6 ----------
+function renderS6(lt) {
+  const t = eo(seg(lt, .7, 1.1));
+  $('s6tag').style.opacity = t;
+  $('s6chips').innerHTML = ['Solana devnet', 'Base Sepolia', 'Never holds your private key'].map((c, i) => {
+    const k = eo(seg(lt, .9 + i * .12, 1.3 + i * .12));
+    return `<span style="opacity:${k};transform:translateY(${(1 - k) * 14}px);display:inline-flex;align-items:center;gap:12px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:12px 26px;font-size:26px;font-weight:500"><svg width="20" height="20" viewBox="0 0 24 24"><polygon points="12,1 22,6.5 22,17.5 12,23 2,17.5 2,6.5" fill="${i === 2 ? '#5FDFA6' : '#EDAE44'}"/></svg>${c}</span>`;
+  }).join('');
+  const u = eo(seg(lt, 1.3, 1.7));
+  $('s6url').style.opacity = u;
+  $('s6url').style.transform = `translateY(${(1 - u) * 14}px)`;
+}
+
+// ---------- frame ----------
+let L2, L6;
+window.seek = function (t) {
+  // background drift + glow
+  $('hexr').setAttribute('transform', `translate(${(t * 7) % 84} ${(-t * 5) % 145.5})`);
+  const gx = 50 + Math.sin(t * .25) * 18, gy = 40 + Math.cos(t * .2) * 10;
+  const hot = t >= SC.s1[0] + 2.35 && t < 4.8 ? .5 : 0;
+  $('glow').style.background = `radial-gradient(900px 620px at ${gx}% ${gy}%, rgba(237,174,68,${.09 + hot * .04}), transparent 70%), radial-gradient(1200px 800px at 80% 110%, rgba(105,169,210,.06), transparent 70%)`;
+  for (const id of Object.keys(SC)) {
+    const v = sceneVis(id, t), el = $(id);
+    el.style.opacity = v.o;
+    el.style.visibility = v.o > 0 ? 'visible' : 'hidden';
+    el.style.transform = `translateY(${v.y}px) scale(${v.s})`;
+  }
+  const lt = id => t - SC[id][0];
+  if (t < SC.s1[1]) renderTerm(t);
+  if (t >= SC.s2[0] && t < SC.s2[1]) {
+    animLogo(L2, lt('s2') - .1);
+    $('s2tag').style.opacity = eo(seg(lt('s2'), .7, 1.1));
+    const a = eo(seg(lt('s2'), 1.2, 1.55)), b = eo(seg(lt('s2'), 1.4, 1.75));
+    $('s2l1').style.opacity = a; $('s2l1').style.transform = `translateY(${(1 - a) * 22}px)`;
+    $('s2l2').style.opacity = b; $('s2l2').style.transform = `translateY(${(1 - b) * 22}px)`;
+  }
+  if (t >= SC.s3[0] && t < SC.s3[1]) renderS3(lt('s3'));
+  if (t >= SC.s4[0] && t < SC.s4[1]) renderS4(lt('s4'));
+  if (t >= SC.s5[0] && t < SC.s5[1]) renderS5(lt('s5'));
+  if (t >= SC.s6[0]) { animLogo(L6, lt('s6') - .05); renderS6(lt('s6')); }
+};
+
+window.ready = (async () => {
+  const img = new Image(); img.src = 'logo-big.png'; await img.decode();
+  buildLogo(img);
+  L2 = mountLogo($('s2logo'), 1.12);
+  L6 = mountLogo($('s6logo'), 1.12);
+  await document.fonts.ready;
+  await Promise.all(['700 20px "Playfair Display"','400 20px Inter','600 20px Inter','700 20px Inter','400 20px "JetBrains Mono"','700 20px "JetBrains Mono"'].map(f => document.fonts.load(f)));
+  window.seek(0);
+  return true;
+})();
+window.DUR = DUR;
+</script>
+</body>
+</html>

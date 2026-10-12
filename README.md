@@ -12,6 +12,9 @@ To run the MVP:
 
 ```bash
 cd mvp
+npm install
 npm run seed
 npm start
 ```
+
+The manual is `mvp/README.md`.
