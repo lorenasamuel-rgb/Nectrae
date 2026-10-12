@@ -30,10 +30,104 @@ export function loadConfig(env = process.env) {
     panelToken: env.PANEL_TOKEN || '',
     panelName: (env.PANEL_NAME || '').trim(),
     validateEverySec: Number(env.VALIDATE_EVERY_SECONDS ?? 60),
+    xaiKey: env.XAI_API_KEY || '',
+    xaiModel: env.XAI_MODEL || 'grok-4',
   };
 }
 
-export function createApp(config, { store = openStore({ path: config.dbPath }), rpc = createRpc(config.rpcUrl), baseRpc = createRpc(config.baseRpcUrl) } = {}) {
+function scrubSecrets(text) {
+  return String(text ?? '')
+    .replace(/0x[a-fA-F0-9]{8,}/g, '0x…')
+    .replace(/[1-9A-HJ-NP-Za-km-z]{32,}/g, '…');
+}
+
+export function watcherMood(agents = [], payments = []) {
+  const cls = a => {
+    if (a.paused) return 'paused';
+    const r = a.rule;
+    if (!r || r.off || !(r.cap > 0)) return 'ok';
+    const pct = (a.spent || 0) / r.cap;
+    if (pct >= 1) return 'crit';
+    if (pct >= 0.8) return 'warn';
+    return 'ok';
+  };
+  if (agents.some(a => { const c = cls(a); return c === 'paused' || c === 'crit'; })) return 'shut';
+  if (agents.some(a => cls(a) === 'warn') || payments.some(p => p.decision === 'needs_approval')) return 'squint';
+  return 'open';
+}
+
+export function watcherSnapshot(state) {
+  const payments = state.payments || [];
+  return {
+    agents: (state.agents || []).map(a => ({
+      id: a.id,
+      paused: !!a.paused,
+      spent: Math.round((a.spent || 0) * 10000) / 10000,
+      cap: a.rule && !a.rule.off ? a.rule.cap : null,
+      period: a.rule?.period || null,
+    })),
+    pendingApprovals: payments.filter(p => p.decision === 'needs_approval').length,
+    blockedToday: state.totals?.blockedToday ?? 0,
+    spentToday: state.totals?.today?.s ?? 0,
+    offLedger: payments.filter(p => p.decision === 'external').length,
+    mismatched: payments.filter(p => p.ver_status === 'mismatch').length,
+    recentAlerts: (state.alerts || []).slice(0, 5).map(a => ({
+      sev: a.sev,
+      agent: a.agent_id,
+      text: scrubSecrets(a.text).slice(0, 140),
+    })),
+  };
+}
+
+export function localWatcherLine(mood, snap) {
+  const agents = snap.agents || [];
+  if (mood === 'shut') {
+    const paused = agents.filter(a => a.paused).map(a => a.id);
+    if (paused.length === 1) return `${paused[0]} is paused.`;
+    if (paused.length > 1) return `${paused.join(', ')} are paused.`;
+    const full = agents.filter(a => a.cap && a.spent >= a.cap).map(a => a.id);
+    if (full.length === 1) return `${full[0]} reached the cap.`;
+    if (full.length > 1) return `${full.join(', ')} reached the cap.`;
+    return 'Cap reached.';
+  }
+  if (mood === 'squint') {
+    const n = snap.pendingApprovals || 0;
+    if (n === 1) return '1 payment is waiting for approval.';
+    if (n > 1) return `${n} payments are waiting for approval.`;
+    const near = agents.filter(a => a.cap && a.spent / a.cap >= 0.8).map(a => a.id);
+    if (near.length === 1) return `${near[0]} is near the cap.`;
+    if (near.length > 1) return `${near.join(', ')} are near the cap.`;
+    return 'Near the cap.';
+  }
+  return 'Watching the caps.';
+}
+
+function sanitizeLine(raw) {
+  const line = scrubSecrets(String(raw ?? '').replace(/[`*#]/g, '').replace(/\s+/g, ' ').trim()).slice(0, 180);
+  return line;
+}
+
+async function askXai(config, snapshot, mood) {
+  const res = await fetch('https://api.x.ai/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', authorization: `Bearer ${config.xaiKey}` },
+    body: JSON.stringify({
+      model: config.xaiModel,
+      temperature: 0.4,
+      max_tokens: 80,
+      messages: [
+        { role: 'system', content: 'You watch USDC spend caps for API agents. Reply with one short English sentence, under 18 words, in the voice of a calm operator. Do not give payment instructions, addresses, or secrets. Do not use markdown.' },
+        { role: 'user', content: JSON.stringify({ mood, ...snapshot }) },
+      ],
+    }),
+    signal: AbortSignal.timeout(12000),
+  });
+  if (!res.ok) throw new Error('Grok did not answer.');
+  const data = await res.json();
+  return data.choices?.[0]?.message?.content || '';
+}
+
+export function createApp(config, { store = openStore({ path: config.dbPath }), rpc = createRpc(config.rpcUrl), baseRpc = createRpc(config.baseRpcUrl), askWatcher } = {}) {
   const solanaConn = { ok: null, slot: null, latencyMs: null, version: null, at: null, error: null };
   const baseConn = { ok: null, block: null, chainId: null, latencyMs: null, at: null, error: null };
 
@@ -70,10 +164,10 @@ export function createApp(config, { store = openStore({ path: config.dbPath }), 
 
   async function body(req) {
     let size = 0; const chunks = [];
-    for await (const c of req) { size += c.length; if (size > 64 * 1024) throw new HttpError(413, 'Corpo da requisição grande demais.'); chunks.push(c); }
+    for await (const c of req) { size += c.length; if (size > 64 * 1024) throw new HttpError(413, 'Request body is too large.'); chunks.push(c); }
     if (!chunks.length) return {};
     try { return JSON.parse(Buffer.concat(chunks).toString('utf8')); }
-    catch { throw new HttpError(400, 'JSON inválido.'); }
+    catch { throw new HttpError(400, 'Invalid JSON.'); }
   }
 
   const live = new Map();
@@ -149,6 +243,21 @@ export function createApp(config, { store = openStore({ path: config.dbPath }), 
     ['POST', /^\/api\/demo$/, 'panel', async () => store.runPresentation()],
     ['POST', /^\/api\/validate$/, 'panel', async (req) => validate((await body(req)).agent || null)],
     ['POST', /^\/api\/connection\/test$/, 'panel', async () => checkConnection()],
+    ['POST', /^\/api\/watcher$/, 'panel', async () => {
+      const state = store.state();
+      const snapshot = watcherSnapshot(state);
+      const mood = watcherMood(state.agents, state.payments);
+      const fallback = localWatcherLine(mood, snapshot);
+      const configured = Boolean(config.xaiKey || askWatcher);
+      if (!configured) return { mood, line: fallback, source: 'local', configured: false };
+      try {
+        const raw = askWatcher ? await askWatcher({ mood, snapshot }) : await askXai(config, snapshot, mood);
+        const line = sanitizeLine(raw) || fallback;
+        return { mood, line, source: 'grok', configured: true };
+      } catch {
+        return { mood, line: fallback, source: 'local', configured: true, warning: 'Grok did not answer.' };
+      }
+    }],
   ];
 
   async function handle(req, res) {
@@ -172,22 +281,22 @@ export function createApp(config, { store = openStore({ path: config.dbPath }), 
       for (const [method, re, scope, fn] of routes) {
         const m = url.pathname.match(re);
         if (!m || req.method !== method) continue;
-        if (scope === 'agent' && !sameToken(bearer(req), config.agentToken)) throw new HttpError(401, 'Token do agente ausente ou inválido.');
+        if (scope === 'agent' && !sameToken(bearer(req), config.agentToken)) throw new HttpError(401, 'Agent token is missing or invalid.');
         if (scope === 'panel') {
           // bloqueia sites de terceiros (CSRF) e DNS rebinding contra o painel local
           const origin = req.headers.origin;
-          if (origin && origin !== `http://${req.headers.host}`) throw new HttpError(403, 'Origem não permitida.');
+          if (origin && origin !== `http://${req.headers.host}`) throw new HttpError(403, 'Origin not allowed.');
           if (req.method !== 'GET' && !String(req.headers['content-type'] || '').startsWith('application/json')) throw new HttpError(415, 'Use Content-Type: application/json.');
-          if (!config.panelToken && !/^(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/.test(req.headers.host || '')) throw new HttpError(403, 'Sem PANEL_TOKEN, o painel só responde em localhost.');
-          if (config.panelToken && !sameToken(req.headers['x-panel-token'], config.panelToken)) throw new HttpError(401, 'Token do painel ausente ou inválido.');
+          if (!config.panelToken && !/^(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/.test(req.headers.host || '')) throw new HttpError(403, 'Without PANEL_TOKEN, the panel only responds on localhost.');
+          if (config.panelToken && !sameToken(req.headers['x-panel-token'], config.panelToken)) throw new HttpError(401, 'Panel token is missing or invalid.');
         }
         return send(200, await fn(req, m.slice(1)));
       }
-      throw new HttpError(404, 'Rota não encontrada.');
+      throw new HttpError(404, 'Route not found.');
     } catch (e) {
       const status = e instanceof HttpError ? e.status : 500;
       if (status === 500) console.error(e);
-      send(status, { error: status === 500 ? 'Erro interno.' : e.message });
+      send(status, { error: status === 500 ? 'Internal error.' : e.message });
     }
   }
 
@@ -199,13 +308,13 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   if (existsSync(join(ROOT, '.env'))) process.loadEnvFile(join(ROOT, '.env'));
   const config = loadConfig();
   if (!/^(127\.0\.0\.1|localhost|::1)$/.test(config.host) && !config.panelToken) {
-    console.error('HOST aberto para a rede exige PANEL_TOKEN no .env. Saindo sem iniciar.');
+    console.error('A HOST open to the network requires PANEL_TOKEN in .env. Exiting without starting.');
     process.exit(1);
   }
   if (!config.agentToken) {
     config.agentToken = randomBytes(18).toString('base64url');
-    console.log(`AGENT_TOKEN não definido. Token temporário desta execução: ${config.agentToken}`);
-    console.log('Defina AGENT_TOKEN no arquivo .env para manter o mesmo token entre execuções.');
+    console.log(`AGENT_TOKEN is not set. Temporary token for this run: ${config.agentToken}`);
+    console.log('Set AGENT_TOKEN in .env to keep the same token across runs.');
   }
   config.liveRunner = {
     enabled: true,
@@ -216,19 +325,20 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   };
   const app = createApp(config);
   createServer(app.handle).listen(config.port, config.host, () => {
-    console.log(`Nectrae Spend Control em http://${config.host}:${config.port}`);
-    console.log(`Solana ${config.network} · RPC ${maskUrl(config.rpcUrl)} · status mínimo ${config.commitment}`);
+    console.log(`Nectrae Spend Control at http://${config.host}:${config.port}`);
+    console.log(`Solana ${config.network} · RPC ${maskUrl(config.rpcUrl)} · minimum status ${config.commitment}`);
     console.log(`Base ${config.baseNetwork} · RPC ${maskUrl(config.baseRpcUrl)}`);
+    console.log(config.xaiKey ? `Grok watcher · ${config.xaiModel}` : 'Grok watcher · local lines (set XAI_API_KEY to let Grok write them)');
   });
   app.checkConnection().then(c => {
-    console.log(c.solana.ok ? `Solana ok · slot ${c.solana.slot} · ${c.solana.latencyMs} ms` : `Solana indisponível: ${c.solana.error}`);
-    console.log(c.base.ok ? `Base ok · bloco ${c.base.block} · ${c.base.latencyMs} ms` : `Base indisponível: ${c.base.error}`);
+    console.log(c.solana.ok ? `Solana ok · slot ${c.solana.slot} · ${c.solana.latencyMs} ms` : `Solana unavailable: ${c.solana.error}`);
+    console.log(c.base.ok ? `Base ok · block ${c.base.block} · ${c.base.latencyMs} ms` : `Base unavailable: ${c.base.error}`);
   });
   if (config.validateEverySec > 0) {
     let running = false;
     setInterval(async () => {
       if (running) return; running = true;
-      try { await app.validate(null); } catch (e) { console.error('Validação:', e.message); } finally { running = false; }
+      try { await app.validate(null); } catch (e) { console.error('Validation:', e.message); } finally { running = false; }
     }, config.validateEverySec * 1000).unref();
   }
 }

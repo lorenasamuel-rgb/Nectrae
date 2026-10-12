@@ -11,7 +11,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 export class SpendControl {
   constructor({ url, token, agent, fetchImpl = fetch }) {
-    if (!url || !token || !agent) throw new Error('SpendControl precisa de url, token e agent.');
+    if (!url || !token || !agent) throw new Error('SpendControl needs url, token, and agent.');
     Object.assign(this, { url: url.replace(/\/$/, ''), token, agent, fetchImpl });
   }
 

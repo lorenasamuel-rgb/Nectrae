@@ -37,7 +37,7 @@ test('recebedor diferente na Base fica divergente', async () => {
   const rpc = async () => receipt(0.02);
   const r = await validateBasePayment(rpc, { hash: HASH, wallet: FROM, amount: 0.02, destination: '0x9999999999999999999999999999999999999999', usdc: USDC });
   assert.equal(r.status, 'mismatch');
-  assert.match(r.checks.map(c => c.text).join(' '), /Recebedor diferente/);
+  assert.match(r.checks.map(c => c.text).join(' '), /Recipient differs/);
 });
 
 test('transação que falhou na Base não conta como paga', async () => {

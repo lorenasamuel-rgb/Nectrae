@@ -1,124 +1,174 @@
 # Nectrae Spend Control · MVP
 
-Teto de USDC por API. Cada agente é uma API. Solana devnet e Base Sepolia só conferem o pagamento. As duas redes entram no mesmo teto.
+One USDC cap per API. Each agent is one API. Solana devnet and Base Sepolia only check the payment. Both networks count toward the same cap.
 
-- **Motor de regras:** decide antes de o dinheiro sair (permitir, bloquear, pedir aprovação, pausar o agente).
-- **Registro único:** cada tentativa fica gravada, permitida ou não.
-- **Validação na fonte:** confere a assinatura na Solana ou o hash na Base, e varre as duas carteiras atrás de USDC que não passou pelo motor.
-- **Painel:** um teto por agente, aprovações, alertas, validação e registro.
+- **Rules engine:** decides before money leaves (allow, block, ask for approval, pause the agent).
+- **Single ledger:** every attempt is recorded, whether it was allowed or not.
+- **Source validation:** checks the Solana signature or the Base hash, and scans both wallets for USDC that skipped the engine.
+- **Panel:** one cap per agent, approvals, alerts, validation, and the ledger.
+- **Mrs. N:** the bee in the header. Tap her for alert balloons. Caps still drive her mood. An xAI key can still write one extra sentence; Grok is never on `POST /v1/check`.
+- **Hosted live agent:** Start / Stop on the agent card. The loop runs in the panel process, checks the cap, and waits in Approvals. It does not store a key.
+- **Automatic payer:** `npm run agent` can still sign test USDC from a local key file. The panel never reads that file.
 
-Não precisa instalar nada além do Node 22.13 ou mais novo (testado no Node 24). Não há dependências: o banco é o SQLite que já vem no Node.
+You need Node 22.13 or newer (tested on Node 24). The database is the SQLite that ships with Node. The automatic payer also uses `@solana/web3.js` and `@solana/spl-token`.
 
-## Rodar
+## Run
 
 ```bash
-cp .env.example .env      # depois preencha AGENT_TOKEN com um valor longo e aleatório
-npm run seed              # cria os 3 agentes de exemplo e suas regras
-npm start                 # painel em http://127.0.0.1:8787 — Ligar agente vivo nos cartões
-npm run demo              # em outro terminal: um agente de exemplo chama o SDK algumas vezes
-npm run agent             # opcional: runner à parte com chave, para assinar USDC de teste
-npm test                  # regras, chaves, validadores Solana e Base, e API
+npm install
+cp .env.example .env      # then set AGENT_TOKEN to a long random value
+npm run seed              # creates the 3 example agents and their rules
+npm start                 # panel at http://127.0.0.1:8787 — Start live agent on a card
+npm run demo              # in another terminal: an example agent calls the SDK a few times
+npm run agent             # optional: local signer from data/keys/
+npm test                  # rules, keys, Solana and Base validators, the API, and the payer plan
 ```
 
-O banco fica em `data/nectrae.db`. Para começar do zero, apague essa pasta e rode `npm run seed` de novo.
+The database is `data/nectrae.db`. `npm run seed` wipes the demo ledger and recreates agents `nansen`, `vybe`, and `tcg`, each with a daily USDC cap. The addresses it writes are examples, not a Phantom wallet.
 
-## Visual e versão para celular
+`npm run demo` records attempts and does not pay. Those rows stay **Allowed** and **Waiting** until a real signature arrives.
 
-O painel segue a identidade do site oficial (nectrae.lovable.app) e o guia visual: fundo navy `#031626`, cards `#06202F` com borda `#172C3A`, âmbar `#EDAE44` só nos destaques, verde `#5FDFA6` para o que está seguro e laranja `#E8803A` para bloqueios. O wordmark é a arte oficial (hexágonos dourados no N). Interface, títulos, tagline e números em Manrope; endereços e provas em JetBrains Mono. As cores ficam em variáveis CSS no começo de `public/index.html`.
+## Visual and phone layout
 
-Cores do gráfico: âmbar para USDC que saiu na Solana, azul para USDC que saiu na Base. A barra do teto vira o degradê âmbar → laranja a partir de 80%.
+The panel follows the official site (nectrae.lovable.app): navy `#031626`, cards `#06202F`, border `#172C3A`, amber `#EDAE44`, green `#5FDFA6`, orange `#E8803A`. The wordmark is the official art (gold hexagons in the N). Interface and titles use Manrope; addresses and proofs use JetBrains Mono. Colors live in CSS variables at the top of `public/index.html`.
 
-**Versão para celular.** Em telas de até 700 px o painel segue o desenho da Apple (tab bar, títulos grandes, área segura, alvos de 44 pt). A logo oficial fica no topo. Há cinco abas:
+Chart colors: amber for USDC that left on Solana, blue for USDC that left on Base. The cap bar switches to the amber-to-orange gradient from 80% up.
 
-| Aba | O que mostra |
+The header bee is **Mrs. N**. She breathes and blinks while every cap is inside the limit. Near 80%, or when a payment is waiting for approval, the eye squints. At the cap, or when an agent is paused, the eye shuts. Tap her to open alert balloons. Home still lists alerts as a ledger. Optional: `XAI_API_KEY` in `.env` (`XAI_MODEL` defaults to `grok-4`) writes one extra sentence. Wallet addresses are stripped before Grok.
+
+**Phone layout.** On screens up to 700 px the panel follows Apple HIG (tab bar, large titles, 44 pt targets, safe area). The official logo stays in the header. Five tabs:
+
+| Tab | What it shows |
 | --- | --- |
-| Início | gasto do dia e do mês, tetos acima de 80%, barrados, alertas e atalho para aprovações pendentes |
-| Agentes | agentes, teto de USDC e gráfico por rede |
-| Aprovações | pedidos com Aprovar e Recusar; a aba mostra quantos estão pendentes |
-| Registro | validação do registro e registro único com filtros |
-| Mais | Testar um pagamento, Proteção e Admin, como ecrãs filhos com voltar |
+| Home | today's and this month's spend, caps above 80%, blocks, alerts, and a shortcut to pending approvals |
+| Agents | agents, the USDC cap, and the chart by network |
+| Approvals | requests with Approve and Reject; the tab shows how many are pending |
+| Ledger | ledger validation and the single ledger with filters |
+| More | Test a payment, Protection, and Admin as child screens with Back |
 
-Dá para abrir uma aba direto pelo endereço: `http://127.0.0.1:8787/#aprovacoes` (também `#inicio`, `#agentes`, `#registro`, `#mais`, `#sim`, `#protecao`, `#admin`). No computador o painel continua numa página só.
+Open a tab directly: `http://127.0.0.1:8787/#aprovacoes` (also `#inicio`, `#agentes`, `#registro`, `#mais`, `#sim`, `#protecao`, `#admin`). On a computer the panel stays on one page. Preview the phone chrome with `?phone=1`.
 
-Para ver a versão de celular no Mac: abra o painel no Chrome, aperte Cmd+Option+I e ligue o modo dispositivo (ícone de celular).
+To see the phone layout on a Mac: open the panel in Chrome, press Cmd+Option+I, and turn on device mode (the phone icon).
 
-### Abrir no celular de verdade
+### Open it on a real phone
 
-1. No `.env`, troque `HOST=127.0.0.1` por `HOST=0.0.0.0` e preencha `PANEL_TOKEN` com um valor longo e aleatório. Sem `PANEL_TOKEN` o servidor não sobe nesse modo.
-2. Rode `npm start` e descubra o IP do Mac na rede (Ajustes do Sistema › Wi-Fi › Detalhes, ou `ipconfig getifaddr en0`).
-3. No celular, na mesma rede Wi-Fi, abra `http://<IP do Mac>:8787`.
-4. O painel pede o token: cole o valor de `PANEL_TOKEN`. Marque "Lembrar neste aparelho" para não precisar digitar de novo; sem marcar, ele vale só até fechar a aba.
+1. In `.env`, change `HOST=127.0.0.1` to `HOST=0.0.0.0` and set `PANEL_TOKEN` to a long random value. Without `PANEL_TOKEN` the server will not start in that mode.
+2. Run `npm start` and find the Mac's IP on the network (System Settings › Wi-Fi › Details, or `ipconfig getifaddr en0`).
+3. On the phone, on the same Wi-Fi, open `http://<Mac IP>:8787`.
+4. The panel asks for the token: paste the `PANEL_TOKEN` value. Check "Remember on this device" so you do not have to type it again; otherwise it lasts only until the tab closes.
 
-Cuidado: a conexão é HTTP sem criptografia, então o token passa aberto pela rede. Use só em rede de confiança (casa ou escritório), nunca em Wi-Fi público. Para acesso de fora, coloque o painel atrás de HTTPS.
+The connection is plain HTTP, so the token travels in the clear. Use it only on a trusted network (home or office), never on public Wi-Fi. For access from outside, put the panel behind HTTPS.
 
-Com `PANEL_TOKEN` preenchido, o painel pede o token também no próprio Mac.
+With `PANEL_TOKEN` set, the panel also asks for the token on the Mac itself.
 
-## Integrar um agente
+## Someone else using the app
+
+`PANEL_TOKEN` lets another person open this panel and see the same agents, caps, and ledger. It does not hand them a signing key.
+
+To pay from their own wallet, they use their own copy, or they replace the public addresses on this one:
+
+1. In Phantom, switch to Devnet and copy the public address only.
+2. In Protection, on that agent's row, choose **Change**, paste the address in **Solana**, and save. The same field on Base takes the `0x` test address.
+3. Put the receiving address on the agent's allow list (see below). The seed destinations are example program ids. They cannot receive USDC.
+4. If they want the automatic payer, they save their own signing key in `data/keys/` on their machine.
+
+Do not share a private key, a 12- or 24-word phrase, or a file from `data/keys/`. Each person generates their own `PANEL_TOKEN` and `AGENT_TOKEN`.
+
+## Integrate an agent
 
 ```js
 import { SpendControl } from './sdk/client.mjs';
 
 const spend = new SpendControl({ url: 'http://127.0.0.1:8787', token: process.env.AGENT_TOKEN, agent: 'nansen' });
 
-const ok = await spend.check({ network: 'solana', amount: 0.01, vendor: 'api.nansen.ai', destination: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' });
+const ok = await spend.check({ network: 'solana', amount: 0.01, vendor: 'api.nansen.ai', destination: RECEIVER });
 const ready = ok.decision === 'needs_approval' ? await spend.waitForApproval(ok.paymentId) : ok;
-if (ready.decision !== 'allowed') return;          // 'blocked' ou recusado no painel
-const signature = await pagar();                   // a carteira do agente assina; o SDK nunca vê chave privada
-await spend.confirm(ready.paymentId, signature);   // o validador confere na rede
+if (ready.decision !== 'allowed') return;         // 'blocked' or rejected in the panel
+const signature = await pay();                    // the agent's wallet signs; the SDK never sees a private key
+await spend.confirm(ready.paymentId, signature);  // the validator checks the chain
 ```
 
-`network` é `solana` ou `base`. `destination` é o endereço que a API pediu no 402. As duas redes entram no mesmo teto.
+`network` is `solana` or `base`. `destination` is the address the API requested in the 402. Both networks count toward the same cap.
 
-## Agente vivo
+The allow list is part of the rule. In Admin, put one receiving address per line. A destination that is not on the list is blocked before anyone signs. The same change can be sent to the panel API, from the same machine:
 
-Depois do deploy, ninguém precisa de terminal. No cartão do agente: **Ligar agente vivo** / **Parar agente vivo**. O loop corre no mesmo processo do painel, consulta o teto a cada 12 s e espera em Aprovações. **Não guarda chave e não paga a API** — o x402 de produção continua no agente de cada cliente, via SDK.
+```bash
+curl -s -X PUT http://127.0.0.1:8787/api/agents/tcg/rules \
+  -H 'content-type: application/json' \
+  -d '{"allow":["<solana receiver>","<0x base receiver>"]}'
+```
 
-O servidor tem de ficar ligado (Node sempre no ar: Fly, Railway, um VPS). Funções serverless (um request e acabou) não aguentam este loop.
+A destination that is not on the list is blocked before anyone signs.
 
-`npm run agent` ainda existe se quiseres um runner **à parte** com `AGENT_SOLANA_SECRET` para assinar USDC de teste. A chave nunca entra no painel.
+## Hosted live agent
 
-## Validar na rede de teste
+After deploy, nobody needs a second terminal. On the agent card: **Start live agent** / **Stop live agent**. The loop runs in the same Node process as the panel, checks the cap about every 12 s, and waits in Approvals. It does **not** store a key and does **not** pay the production x402 API — that stays in each customer’s agent, via the SDK.
 
-Solana fica em **devnet**. Base fica em **Sepolia**. O USDC dessas redes não tem valor.
+The server has to stay up (Fly, Railway, a VPS). Serverless functions that die after one request cannot keep this loop.
 
-1. Na Phantom, mude para Devnet e copie o endereço público. Na Base, copie o endereço `0x` da carteira de teste.
-2. No painel, em Proteção, troque os endereços de exemplo do agente. Não cole chave privada nem as 12 ou 24 palavras.
-3. Faça uma transferência de USDC de teste com essa carteira:
-   - **Passando pelo SDK** (`check` → pagar → `confirm`): o pagamento aparece como "Conferido".
-   - **Sem passar pelo SDK:** a varredura marca como "Fora do registro" e soma ao teto.
+`npm run live` is an optional extra runner with `AGENT_SOLANA_SECRET` for test USDC. The key never enters the panel.
 
-A validação roda sozinha a cada `VALIDATE_EVERY_SECONDS` (padrão 60) e pelo botão "Validar agora".
+## Pay automatically
 
-## Segurança
+The payer reads the public addresses already stored for the agent: the Solana address in Protection is the wallet that sends, and the first Solana address on the allow list is the wallet that receives.
 
-- O produto **nunca** pede nem guarda chave privada. Os campos de carteira recusam chave privada, keypair em JSON e frase de 12/24 palavras.
-- A chave do provedor de RPC fica só no `.env`; o painel mostra no máximo os 4 últimos caracteres.
-- A API do agente (`/v1`) exige `Authorization: Bearer <AGENT_TOKEN>`.
-- `AGENT_SOLANA_SECRET` fica só no `.env` do runner. O painel recusa chave privada; o heartbeat não a envia.
-- A API do painel (`/api`) só responde em localhost, recusa pedidos de outros sites e exige `Content-Type: application/json`. Para abrir o servidor na rede (`HOST=0.0.0.0`), defina `PANEL_TOKEN`; sem ele, o servidor não sobe.
-- Toda mudança de regra fica em `rule_audit`, com o valor anterior e o novo.
+```bash
+npm run agent -- tcg     # one agent
+npm run agent            # every agent
+```
 
-## O que fica para a fase 2
+Each call sends `AGENT_AMOUNT` USDC (default `0.01`) every `AGENT_EVERY_SECONDS` (default 20). `AGENT_MAX=0` keeps going until the cap blocks the call. The runner refuses to start when `SOLANA_NETWORK` is not `devnet`.
 
-- Proxy compatível com OpenAI para medir e cortar gasto com modelos de IA, e conferência na API de uso do provedor.
-- Alertas por e-mail, Slack e webhook.
-- Teto aplicado na própria rede: `approve` do token SPL com revogação agendada (o `approve` não expira sozinho).
-- Login no painel com usuários e papéis, no lugar de "só localhost".
+The signing key is a file in `data/keys/`. Any `*.json` in that folder is tried. The public key inside it must match the address in Protection. Agents that pay from the same wallet can share one file. The folder is gitignored. The panel never reads it.
 
-## Estrutura
+Accepted formats: a JSON array of 64 bytes, a JSON array of 32 seed bytes, or the base58 secret Phantom exports. Do not paste that secret into the panel or into a chat.
+
+Devnet USDC uses mint `4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU`. The wallet also needs a little devnet SOL for fees.
+
+## Validate on a test network
+
+Solana stays on **devnet**. Base stays on **Sepolia**. USDC on those networks has no value.
+
+1. In Phantom, switch to Devnet and copy the public address. On Base, copy the `0x` address of the test wallet.
+2. In the panel, under Protection, replace the agent's example addresses. Do not paste a private key or the 12 or 24 words.
+3. Send a test USDC transfer from that wallet:
+   - **Through the SDK** (`check` → pay → `confirm`): the payment shows as **Checked**.
+   - **Without the SDK:** the scan marks it **Outside the ledger** and adds it to the cap.
+
+**Allowed** means the rule let the attempt through. **Waiting** means the chain check does not have a signature or hash yet. **Checked** means the RPC confirmed the amount, the wallet, and the recipient. A transfer that lands on chain before `confirm` can be scanned as **Outside the ledger**. `confirm` has to carry the same signature for the row to become **Checked**.
+
+Validation runs on its own every `VALIDATE_EVERY_SECONDS` (default 60) and from the **Validate now** button. Solana is read at `finalized` unless `SOLANA_COMMITMENT=confirmed`.
+
+## Security
+
+- The product **never** asks for or stores a private key. Wallet fields refuse a private key, a JSON keypair, and a 12/24-word phrase.
+- The signing key for `npm run agent` stays in `data/keys/` on that machine. It is not in SQLite and it is not in the panel. `AGENT_SOLANA_SECRET` for `npm run live` stays only in `.env`.
+- The RPC provider key and `XAI_API_KEY` stay only in `.env`. The panel shows at most the last 4 characters of an RPC URL.
+- The agent API (`/v1`) requires `Authorization: Bearer <AGENT_TOKEN>`.
+- The panel API (`/api`) only responds on localhost, refuses requests from other sites, and requires `Content-Type: application/json`. To open the server on the network (`HOST=0.0.0.0`), set `PANEL_TOKEN`; without it, the server does not start.
+- Every rule change is stored in `rule_audit`, with the previous value and the new one.
+
+## Left for phase 2
+
+- Mainnet. The default today is Solana devnet and Base Sepolia; production x402 APIs will not accept that test USDC. The automatic payer will not run unless the network is devnet.
+- Alerts by email, Slack, and webhook.
+- Prove the public address by signing a message in the wallet. The key never enters the app, and this does not replace `PANEL_TOKEN`.
+
+## Layout
 
 ```
-src/rules.mjs    motor de regras (puro, sem I/O)
-src/solana.mjs   cliente JSON-RPC da Solana, validação e varredura
-src/base.mjs     cliente JSON-RPC da Base, validação e varredura
-src/catalog.mjs  agentes de exemplo e a rodada de apresentação
-src/keys.mjs     endereço Solana, recusa de chave privada, máscara de URL
-src/store.mjs    banco SQLite e operações (check, assinatura, aprovação, validação)
-src/server.mjs   API do agente, API do painel e servidor do painel
-src/hosted-live.mjs  loop do agente vivo ligado no painel
-public/          painel (index.html: visual Nectrae, abas de celular e pedido de token)
-sdk/client.mjs   SDK do agente (check, waitForApproval, confirm)
-sdk/live.mjs     um ciclo do agente vivo
-scripts/         seed, demo, agente vivo e assinatura Solana
-test/            testes (node --test)
+src/rules.mjs       rules engine (pure, no I/O)
+src/solana.mjs      Solana JSON-RPC client, validation, and scan
+src/base.mjs        Base JSON-RPC client, validation, and scan
+src/catalog.mjs     example agents and the demo round
+src/keys.mjs        Solana and Base addresses, private-key refusal, URL mask
+src/agent-plan.mjs  payer plan: source wallet, receiver, local key bytes
+src/hosted-live.mjs live-agent loop started from the panel
+src/store.mjs       SQLite database and operations (check, signature, approval, validation)
+src/server.mjs      agent API, panel API, watcher, and the panel server
+public/             panel (index.html: official wordmark, Mrs. N, phone tabs)
+sdk/client.mjs      agent SDK (check, waitForApproval, confirm)
+sdk/live.mjs        one live-agent cycle
+scripts/            seed, demo, automatic payer, and optional live signer
+test/               tests (node --test)
 ```

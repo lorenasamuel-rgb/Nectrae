@@ -27,7 +27,7 @@ test('passar do teto aplica a ação de 100% (pausar)', () => {
 test('máximo por transação bloqueia mesmo com teto sobrando', () => {
   const r = evaluate({ agent, rule: x402, spent: 0, payment: pay(0.9) });
   assert.equal(r.decision, 'blocked');
-  assert.match(r.note, /máximo por transação/);
+  assert.match(r.note, /per-transaction maximum/);
 });
 
 test('vale a regra mais restritiva: aprovação + teto estourado = bloqueio', () => {

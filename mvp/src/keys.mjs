@@ -67,8 +67,8 @@ export function looksLikeSecret(value) {
 }
 
 export const SECRET_REFUSAL =
-  'Isto parece uma chave privada ou frase de recuperação. A validação só precisa do endereço público, então nada foi guardado. ' +
-  'Se essa chave for real, considere que ela vazou e mova os fundos.';
+  'This looks like a private key or a recovery phrase. Validation only needs the public address, so nothing was saved. ' +
+  'If this key is real, treat it as leaked and move the funds.';
 
 export const shortAddr = a => (a && a.length > 14 ? `${a.slice(0, 4)}…${a.slice(-4)}` : a || '');
 
@@ -80,7 +80,7 @@ export function maskUrl(raw) {
     const path = u.pathname.split('/').map(seg => (seg.length >= 16 ? mask(seg) : seg)).join('/');
     return `${u.protocol}//${u.host}${path === '/' ? '' : path}${params.length ? '?' + params.join('&') : ''}`;
   } catch {
-    return '(URL inválida)';
+    return '(invalid URL)';
   }
 }
 const mask = v => (v ? `••••${v.slice(-4)}` : v);

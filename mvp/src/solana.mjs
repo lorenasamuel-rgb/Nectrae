@@ -23,7 +23,7 @@ export function createRpc(url, { fetchImpl = fetch, timeoutMs = 10000, retries =
         await sleep(Number.isFinite(after) && after > 0 ? Math.min(after, 30) * 1000 : 500 * 2 ** attempt);
         continue;
       }
-      if (!res.ok) throw new Error(`RPC respondeu HTTP ${res.status}${res.status === 429 ? ' (limite de chamadas: use um provedor pago)' : ''}`);
+      if (!res.ok) throw new Error(`RPC returned HTTP ${res.status}${res.status === 429 ? ' (rate limit: use a paid provider)' : ''}`);
       const body = await res.json();
       if (body.error) throw new Error(`RPC ${body.error.code}: ${body.error.message}`);
       return body.result;
@@ -70,7 +70,7 @@ export function tokenFlows(tx, wallet, mint) {
 }
 
 const round6 = n => Math.round(n * 1e6) / 1e6;
-const usd = n => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 6 }).format(n);
+const usd = n => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 6 }).format(n);
 const ok = text => ({ s: 'ok', text });
 const fail = text => ({ s: 'fail', text });
 const wait = text => ({ s: 'wait', text });
@@ -81,33 +81,33 @@ const wait = text => ({ s: 'wait', text });
  */
 export async function validatePayment(rpc, { signature, wallet, amount, destination, mint, commitment = 'finalized' }) {
   if (!signature) {
-    return { status: 'pending', checks: [ok('Registrado pelo SDK antes do pagamento.'), wait('Aguardando o agente informar a assinatura da transação.')], proof: {} };
+    return { status: 'pending', checks: [ok('Recorded by the SDK before payment.'), wait('Waiting for the agent to submit the transaction signature.')], proof: {} };
   }
   const tx = await rpc('getTransaction', [signature, { encoding: 'jsonParsed', maxSupportedTransactionVersion: 0, commitment }]);
   if (!tx) {
-    return { status: 'pending', checks: [ok('Assinatura recebida do agente.'), wait(`Transação ainda não aparece no RPC com status ${commitment}.`)], proof: { Assinatura: signature } };
+    return { status: 'pending', checks: [ok('Signature received from the agent.'), wait(`Transaction is not on the RPC yet at status ${commitment}.`)], proof: { Signature: signature } };
   }
-  const proof = { Assinatura: signature, Slot: String(tx.slot), Hora: tx.blockTime ? new Date(tx.blockTime * 1000).toISOString() : '—', Fonte: `RPC · getTransaction (${commitment})` };
+  const proof = { Signature: signature, Slot: String(tx.slot), Time: tx.blockTime ? new Date(tx.blockTime * 1000).toISOString() : '—', Source: `RPC · getTransaction (${commitment})` };
   if (tx.meta?.err) {
-    return { status: 'mismatch', sourceAmount: 0, checks: [ok('Assinatura encontrada no RPC.'), fail('A transação falhou na rede: nada foi pago.')], proof };
+    return { status: 'mismatch', sourceAmount: 0, checks: [ok('Signature found on the RPC.'), fail('The transaction failed on-chain: nothing was paid.')], proof };
   }
   const { outflow, byOwner } = tokenFlows(tx, wallet, mint);
-  const checks = [ok('Assinatura encontrada no RPC.'), ok(`Status ${commitment} (slot ${tx.slot}).`)];
+  const checks = [ok('Signature found on the RPC.'), ok(`Status ${commitment} (slot ${tx.slot}).`)];
   if (outflow === 0) {
-    checks.push(fail('Nenhum USDC saiu da carteira do agente nessa transação.'));
+    checks.push(fail('No USDC left the agent wallet in this transaction.'));
     return { status: 'mismatch', sourceAmount: 0, checks, proof };
   }
   let status = 'verified';
-  if (Math.abs(outflow - amount) <= EPS) checks.push(ok(`Valor bate: ${usd(outflow)} saíram da carteira.`));
-  else { status = 'mismatch'; checks.push(fail(`Saíram ${usd(outflow)} da carteira; o agente declarou ${usd(amount)}. O registro passa a usar o valor da rede.`)); }
+  if (Math.abs(outflow - amount) <= EPS) checks.push(ok(`Amount matches: ${usd(outflow)} left the wallet.`));
+  else { status = 'mismatch'; checks.push(fail(`${usd(outflow)} left the wallet; the agent declared ${usd(amount)}. The ledger now uses the on-chain amount.`)); }
 
   const receivers = [...byOwner].filter(([owner, d]) => owner !== wallet && d > 0).map(([owner]) => owner);
   if (destination) {
-    if (receivers.includes(destination)) checks.push(ok('Recebedor igual ao destino pedido.'));
-    else { status = 'mismatch'; checks.push(fail(`Recebedor diferente do pedido: ${receivers.join(', ') || 'nenhum'}.`)); }
+    if (receivers.includes(destination)) checks.push(ok('Recipient matches the requested destination.'));
+    else { status = 'mismatch'; checks.push(fail(`Recipient differs from the request: ${receivers.join(', ') || 'none'}.`)); }
   }
-  checks.push(ok('Token é USDC.'));
-  return { status, sourceAmount: outflow, checks, proof: { ...proof, Recebedor: receivers.join(', ') || '—' } };
+  checks.push(ok('Token is USDC.'));
+  return { status, sourceAmount: outflow, checks, proof: { ...proof, Recipient: receivers.join(', ') || '—' } };
 }
 
 /**
