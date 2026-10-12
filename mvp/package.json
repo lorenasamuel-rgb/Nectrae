@@ -9,6 +9,7 @@
     "start": "node src/server.mjs",
     "seed": "node scripts/seed.mjs",
     "demo": "node scripts/demo.mjs",
-    "test": "node --test \"test/*.test.mjs\""
+    "agent": "node scripts/live-agent.mjs",
+    "test": "node --test test/api.test.mjs test/live.test.mjs test/rules.test.mjs test/keys.test.mjs test/solana.test.mjs test/base.test.mjs"
   }
 }

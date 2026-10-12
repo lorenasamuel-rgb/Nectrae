@@ -14,8 +14,9 @@ Não precisa instalar nada além do Node 22.13 ou mais novo (testado no Node 24)
 ```bash
 cp .env.example .env      # depois preencha AGENT_TOKEN com um valor longo e aleatório
 npm run seed              # cria os 3 agentes de exemplo e suas regras
-npm start                 # painel em http://127.0.0.1:8787
+npm start                 # painel em http://127.0.0.1:8787 — Ligar agente vivo nos cartões
 npm run demo              # em outro terminal: um agente de exemplo chama o SDK algumas vezes
+npm run agent             # opcional: runner à parte com chave, para assinar USDC de teste
 npm test                  # regras, chaves, validadores Solana e Base, e API
 ```
 
@@ -23,21 +24,21 @@ O banco fica em `data/nectrae.db`. Para começar do zero, apague essa pasta e ro
 
 ## Visual e versão para celular
 
-O painel segue o guia de identidade visual da Nectrae: fundo navy `#031626`, cards `#06202F` com borda `#172C3A`, âmbar `#EDAE44` só nos destaques, verde `#5FDFA6` para o que está seguro e laranja `#E8803A` para bloqueios. Títulos e logo em Playfair Display, interface e números em Inter; endereços e provas em JetBrains Mono. As cores ficam em variáveis CSS no começo de `public/index.html`.
+O painel segue a identidade do site oficial (nectrae.lovable.app) e o guia visual: fundo navy `#031626`, cards `#06202F` com borda `#172C3A`, âmbar `#EDAE44` só nos destaques, verde `#5FDFA6` para o que está seguro e laranja `#E8803A` para bloqueios. O wordmark é a arte oficial (hexágonos dourados no N). Interface, títulos, tagline e números em Manrope; endereços e provas em JetBrains Mono. As cores ficam em variáveis CSS no começo de `public/index.html`.
 
 Cores do gráfico: âmbar para USDC que saiu na Solana, azul para USDC que saiu na Base. A barra do teto vira o degradê âmbar → laranja a partir de 80%.
 
-**Versão para celular.** Em telas de até 700 px de largura o painel vira um app com barra de abas embaixo:
+**Versão para celular.** Em telas de até 700 px o painel segue o desenho da Apple (tab bar, títulos grandes, área segura, alvos de 44 pt). A logo oficial fica no topo. Há cinco abas:
 
 | Aba | O que mostra |
 | --- | --- |
 | Início | gasto do dia e do mês, tetos acima de 80%, barrados, alertas e atalho para aprovações pendentes |
-| Agentes | agentes, teto de USDC, gráfico por rede e teste de pagamento |
+| Agentes | agentes, teto de USDC e gráfico por rede |
 | Aprovações | pedidos com Aprovar e Recusar; a aba mostra quantos estão pendentes |
 | Registro | validação do registro e registro único com filtros |
-| Proteção | conexão Solana devnet, Base Sepolia e endereços públicos |
+| Mais | Testar um pagamento, Proteção e Admin, como ecrãs filhos com voltar |
 
-Dá para abrir uma aba direto pelo endereço: `http://127.0.0.1:8787/#aprovacoes` (também `#inicio`, `#agentes`, `#registro`, `#protecao`). No computador o painel continua numa página só.
+Dá para abrir uma aba direto pelo endereço: `http://127.0.0.1:8787/#aprovacoes` (também `#inicio`, `#agentes`, `#registro`, `#mais`, `#sim`, `#protecao`, `#admin`). No computador o painel continua numa página só.
 
 Para ver a versão de celular no Mac: abra o painel no Chrome, aperte Cmd+Option+I e ligue o modo dispositivo (ícone de celular).
 
@@ -60,12 +61,21 @@ import { SpendControl } from './sdk/client.mjs';
 const spend = new SpendControl({ url: 'http://127.0.0.1:8787', token: process.env.AGENT_TOKEN, agent: 'nansen' });
 
 const ok = await spend.check({ network: 'solana', amount: 0.01, vendor: 'api.nansen.ai', destination: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' });
-if (ok.decision !== 'allowed') return;            // 'blocked' ou 'needs_approval'
+const ready = ok.decision === 'needs_approval' ? await spend.waitForApproval(ok.paymentId) : ok;
+if (ready.decision !== 'allowed') return;          // 'blocked' ou recusado no painel
 const signature = await pagar();                   // a carteira do agente assina; o SDK nunca vê chave privada
-await spend.confirm(ok.paymentId, signature);      // o validador confere na rede
+await spend.confirm(ready.paymentId, signature);   // o validador confere na rede
 ```
 
 `network` é `solana` ou `base`. `destination` é o endereço que a API pediu no 402. As duas redes entram no mesmo teto.
+
+## Agente vivo
+
+Depois do deploy, ninguém precisa de terminal. No cartão do agente: **Ligar agente vivo** / **Parar agente vivo**. O loop corre no mesmo processo do painel, consulta o teto a cada 12 s e espera em Aprovações. **Não guarda chave e não paga a API** — o x402 de produção continua no agente de cada cliente, via SDK.
+
+O servidor tem de ficar ligado (Node sempre no ar: Fly, Railway, um VPS). Funções serverless (um request e acabou) não aguentam este loop.
+
+`npm run agent` ainda existe se quiseres um runner **à parte** com `AGENT_SOLANA_SECRET` para assinar USDC de teste. A chave nunca entra no painel.
 
 ## Validar na rede de teste
 
@@ -84,6 +94,7 @@ A validação roda sozinha a cada `VALIDATE_EVERY_SECONDS` (padrão 60) e pelo b
 - O produto **nunca** pede nem guarda chave privada. Os campos de carteira recusam chave privada, keypair em JSON e frase de 12/24 palavras.
 - A chave do provedor de RPC fica só no `.env`; o painel mostra no máximo os 4 últimos caracteres.
 - A API do agente (`/v1`) exige `Authorization: Bearer <AGENT_TOKEN>`.
+- `AGENT_SOLANA_SECRET` fica só no `.env` do runner. O painel recusa chave privada; o heartbeat não a envia.
 - A API do painel (`/api`) só responde em localhost, recusa pedidos de outros sites e exige `Content-Type: application/json`. Para abrir o servidor na rede (`HOST=0.0.0.0`), defina `PANEL_TOKEN`; sem ele, o servidor não sobe.
 - Toda mudança de regra fica em `rule_audit`, com o valor anterior e o novo.
 
@@ -104,8 +115,10 @@ src/catalog.mjs  agentes de exemplo e a rodada de apresentação
 src/keys.mjs     endereço Solana, recusa de chave privada, máscara de URL
 src/store.mjs    banco SQLite e operações (check, assinatura, aprovação, validação)
 src/server.mjs   API do agente, API do painel e servidor do painel
+src/hosted-live.mjs  loop do agente vivo ligado no painel
 public/          painel (index.html: visual Nectrae, abas de celular e pedido de token)
-sdk/client.mjs   SDK do agente
-scripts/         seed e demo
+sdk/client.mjs   SDK do agente (check, waitForApproval, confirm)
+sdk/live.mjs     um ciclo do agente vivo
+scripts/         seed, demo, agente vivo e assinatura Solana
 test/            testes (node --test)
 ```

@@ -13,4 +13,5 @@ Para rodar o MVP:
 cd mvp
 npm run seed
 npm start
+# noutro terminal: npm run agent   # agente vivo (check + espera aprovação)
 ```

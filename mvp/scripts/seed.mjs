@@ -29,6 +29,7 @@ for (const a of DEMO_AGENTS) {
     period: 'dia',
     cap: a.cap,
     perTx: a.perTx,
+    approveAbove: a.approveAbove,
     allow: [a.pay.solana, a.pay.base],
     at80: 'alertar',
     at100: a.id === 'nansen' ? 'pausar_agente' : 'bloquear',
