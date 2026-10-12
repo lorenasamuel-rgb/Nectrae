@@ -1,16 +1,22 @@
 # Nectrae
 
-Agent Spend Control: per-API USDC spending controls for AI agents, with budget checks before signing and payment verification on Solana and Base.
-| Pasta ou arquivo | O que é |
-| --- | --- |
-| `mvp/` | O MVP que funciona: motor de regras, SDK do agente, registro em SQLite, validador Solana e painel (com o visual da Nectrae e versão para celular). Veja `mvp/README.md`. |
-| `docs/PRD-v2-Agent-Spend-Control.md` |  Our website (https://nectrae.lovable.app/)|
-| `painel-teto.html` | Protótipo clicável do painel, só com dados de exemplo. Abra no navegador. |
+Agent Spend Control: one USDC cap per API, checked on Solana devnet and Base Sepolia.
 
-Para rodar o MVP:
+| Path | What it is |
+| --- | --- |
+| `mvp/` | The working MVP: one USDC cap per API, SDK, SQLite ledger, validation on Solana devnet and Base Sepolia, and a panel with a phone layout. See `mvp/README.md`. |
+| `docs/PRD-v2-Agent-Spend-Control.md` | PRD v2, revised on 11 Oct 2026. |
+| `painel-teto.html` | Clickable panel prototype, example data only. Open it in a browser. |
+
+Website: https://nectrae.lovable.app/
+
+To run the MVP:
 
 ```bash
 cd mvp
+npm install
 npm run seed
 npm start
 ```
+
+The manual is `mvp/README.md`.

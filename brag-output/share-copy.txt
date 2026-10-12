@@ -1,0 +1,1 @@
+3 agents made 8 paid API calls. Nectrae let 6 through and stopped 2 before anyone signed: one over the $0.05 per-call max, one sent to an address the API doesn't receive. One USDC cap per API, checked on Solana and Base, and it never holds your private key. github.com/lorenasamuel-rgb/Nectrae

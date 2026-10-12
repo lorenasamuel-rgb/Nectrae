@@ -10,7 +10,7 @@ const TRANSFER = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523
 const EPS = 0.000001;
 
 const round6 = n => Math.round(n * 1e6) / 1e6;
-const usd = n => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 6 }).format(n);
+const usd = n => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 6 }).format(n);
 const ok = text => ({ s: 'ok', text });
 const fail = text => ({ s: 'fail', text });
 const wait = text => ({ s: 'wait', text });
@@ -60,32 +60,32 @@ export function usdcOutflows(logs, { wallet, usdc }) {
 export async function validateBasePayment(rpc, { hash, wallet, amount, destination, usdc }) {
   const txHash = normAddr(hash);
   if (!txHash) {
-    return { status: 'pending', checks: [ok('Registrado pelo SDK antes do pagamento.'), wait('Aguardando o agente informar o hash da transação.')], proof: {} };
+    return { status: 'pending', checks: [ok('Recorded by the SDK before payment.'), wait('Waiting for the agent to submit the transaction hash.')], proof: {} };
   }
   const receipt = await rpc('eth_getTransactionReceipt', [txHash]);
   if (!receipt) {
-    return { status: 'pending', checks: [ok('Hash recebido do agente.'), wait('Transação ainda não aparece no RPC da Base.')], proof: { Transação: txHash } };
+    return { status: 'pending', checks: [ok('Hash received from the agent.'), wait('Transaction is not on the Base RPC yet.')], proof: { Transaction: txHash } };
   }
   const block = receipt.blockNumber ? String(Number(BigInt(receipt.blockNumber))) : '—';
-  const proof = { Transação: txHash, Bloco: block, Fonte: 'RPC · eth_getTransactionReceipt' };
+  const proof = { Transaction: txHash, Block: block, Source: 'RPC · eth_getTransactionReceipt' };
   if (receipt.status === '0x0' || receipt.status === '0x') {
-    return { status: 'mismatch', sourceAmount: 0, checks: [ok('Recibo encontrado no RPC.'), fail('A transação falhou na Base: nada foi pago.')], proof };
+    return { status: 'mismatch', sourceAmount: 0, checks: [ok('Receipt found on the RPC.'), fail('The transaction failed on Base: nothing was paid.')], proof };
   }
   const [flow] = usdcOutflows(receipt.logs, { wallet, usdc });
-  const checks = [ok('Recibo encontrado no RPC.'), ok(`Bloco ${block}.`)];
+  const checks = [ok('Receipt found on the RPC.'), ok(`Block ${block}.`)];
   if (!flow || flow.outflow === 0) {
-    checks.push(fail('Nenhum USDC saiu da carteira do agente nessa transação.'));
+    checks.push(fail('No USDC left the agent wallet in this transaction.'));
     return { status: 'mismatch', sourceAmount: 0, checks, proof };
   }
   let status = 'verified';
-  if (Math.abs(flow.outflow - amount) <= EPS) checks.push(ok(`Valor bate: ${usd(flow.outflow)} saíram da carteira.`));
-  else { status = 'mismatch'; checks.push(fail(`Saíram ${usd(flow.outflow)} da carteira; o agente declarou ${usd(amount)}. O registro passa a usar o valor da rede.`)); }
+  if (Math.abs(flow.outflow - amount) <= EPS) checks.push(ok(`Amount matches: ${usd(flow.outflow)} left the wallet.`));
+  else { status = 'mismatch'; checks.push(fail(`${usd(flow.outflow)} left the wallet; the agent declared ${usd(amount)}. The ledger now uses the on-chain amount.`)); }
   if (destination) {
-    if (flow.receivers.includes(normAddr(destination))) checks.push(ok('Recebedor igual ao destino pedido.'));
-    else { status = 'mismatch'; checks.push(fail(`Recebedor diferente do pedido: ${flow.receivers.join(', ') || 'nenhum'}.`)); }
+    if (flow.receivers.includes(normAddr(destination))) checks.push(ok('Recipient matches the requested destination.'));
+    else { status = 'mismatch'; checks.push(fail(`Recipient differs from the request: ${flow.receivers.join(', ') || 'none'}.`)); }
   }
-  checks.push(ok('Token é USDC.'));
-  return { status, sourceAmount: flow.outflow, checks, proof: { ...proof, Recebedor: flow.receivers.join(', ') || '—' } };
+  checks.push(ok('Token is USDC.'));
+  return { status, sourceAmount: flow.outflow, checks, proof: { ...proof, Recipient: flow.receivers.join(', ') || '—' } };
 }
 
 /**

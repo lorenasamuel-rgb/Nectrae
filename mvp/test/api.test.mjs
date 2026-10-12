@@ -62,7 +62,7 @@ const panel = (path, init = {}) => fetch(base + path, { ...init, headers: { 'con
 
 test('SDK sem token é recusado', async () => {
   const bad = new SpendControl({ url: base, token: 'errado', agent: 'pesquisa-mercado' });
-  await assert.rejects(bad.check({ network: 'solana', amount: 0.1, destination: SHOP }), /Token do agente/);
+  await assert.rejects(bad.check({ network: 'solana', amount: 0.1, destination: SHOP }), /Agent token/);
 });
 
 test('fluxo completo: checar, pagar, informar assinatura, validar na rede', async () => {
@@ -80,7 +80,7 @@ test('fluxo completo: checar, pagar, informar assinatura, validar na rede', asyn
   assert.equal(paid.ver_status, 'verified');
   const ext = body.payments.find(p => p.decision === 'external');
   assert.equal(ext.amount, 75);
-  assert.ok(body.alerts.some(a => /sem passar pelo motor/.test(a.text)));
+  assert.ok(body.alerts.some(a => /without going through the rules engine/.test(a.text)));
 });
 
 test('loop de USDC pausa o agente ao estourar o teto diário', async () => {
@@ -107,7 +107,7 @@ test('painel recusa chave privada no campo da carteira', async () => {
   const secret = JSON.stringify(Array.from({ length: 64 }, (_, i) => i));
   const res = await panel('/api/agents/pesquisa-mercado/wallet', { method: 'PUT', body: JSON.stringify({ wallet: secret }) });
   assert.equal(res.status, 422);
-  assert.match(res.body.error, /chave privada/);
+  assert.match(res.body.error, /private key/);
 });
 
 test('painel recusa pedido vindo de outro site', async () => {
@@ -128,8 +128,94 @@ test('simulação da apresentação grava tentativas e não paga', async () => {
   assert.ok(res.body.lines.some(l => l.network === 'base' && l.decision === 'allowed'));
 });
 
+test('vigia sem chave responde com a frase local', async () => {
+  const res = await panel('/api/watcher', { method: 'POST', body: '{}' });
+  assert.equal(res.status, 200);
+  assert.equal(res.body.source, 'local');
+  assert.equal(res.body.configured, false);
+  assert.match(res.body.mood, /^(open|squint|shut)$/);
+  assert.equal(typeof res.body.line, 'string');
+  assert.ok(res.body.line.length > 0);
+  assert.equal(JSON.stringify(res.body).includes(WALLET), false);
+});
+
+test('vigia manda ao Grok só o resumo e corta endereço', async () => {
+  const store = openStore();
+  store.upsertAgent({ id: 'nansen', description: 'api', wallet: WALLET, walletBase: BASE_FROM });
+  store.setRule('nansen', { period: 'dia', cap: 1, perTx: 0.5, at80: 'alertar', at100: 'pausar_agente' });
+  store.db.prepare('INSERT INTO alerts (sev, agent_id, text, created_at) VALUES (?, ?, ?, ?)').run('warn', 'nansen', `sent to ${WALLET}`, new Date().toISOString());
+  let seen = null;
+  const local = createApp({ ...config, xaiKey: 'secret-key', xaiModel: 'grok-4' }, {
+    store, rpc, baseRpc,
+    askWatcher: async ({ mood, snapshot }) => { seen = { mood, snapshot }; return `Look at ${WALLET} and ${BASE_FROM}`; },
+  });
+  const srv = createServer(local.handle);
+  await new Promise(r => srv.listen(0, '127.0.0.1', r));
+  try {
+    const res = await fetch(`http://127.0.0.1:${srv.address().port}/api/watcher`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' });
+    const body = await res.json();
+    assert.equal(res.status, 200);
+    assert.equal(body.source, 'grok');
+    assert.equal(body.line.includes(WALLET), false);
+    assert.equal(body.line.includes(BASE_FROM), false);
+    const dumped = JSON.stringify(seen);
+    assert.equal(dumped.includes(WALLET), false);
+    assert.equal(dumped.includes(BASE_FROM), false);
+    assert.equal(dumped.includes('secret-key'), false);
+    assert.equal(seen.snapshot.agents[0].id, 'nansen');
+    assert.equal(seen.snapshot.agents[0].wallet, undefined);
+  } finally { srv.close(); }
+});
+
+test('vigia cai na frase local quando o Grok falha', async () => {
+  const store = openStore();
+  store.upsertAgent({ id: 'nansen', description: 'api', wallet: WALLET });
+  store.setRule('nansen', { period: 'dia', cap: 1, perTx: 0.5, at80: 'alertar', at100: 'pausar_agente' });
+  const local = createApp({ ...config, xaiKey: 'secret-key' }, {
+    store, rpc, baseRpc,
+    askWatcher: async () => { throw new Error('timeout'); },
+  });
+  const srv = createServer(local.handle);
+  await new Promise(r => srv.listen(0, '127.0.0.1', r));
+  try {
+    const res = await fetch(`http://127.0.0.1:${srv.address().port}/api/watcher`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' });
+    const body = await res.json();
+    assert.equal(res.status, 200);
+    assert.equal(body.source, 'local');
+    assert.equal(body.line, 'Watching the caps.');
+    assert.equal(body.warning, 'Grok did not answer.');
+  } finally { srv.close(); }
+});
+
 test('alterar teto fica registrado na auditoria', async () => {
   const res = await panel('/api/agents/pesquisa-mercado/rules', { method: 'PUT', body: JSON.stringify({ cap: 30 }) });
   assert.equal(res.body.cap, 30);
   assert.equal(app.store.db.prepare('SELECT COUNT(*) AS n FROM rule_audit WHERE agent_id = ?').get('pesquisa-mercado').n, 2);
+});
+
+test('cadastro de agente novo grava carteiras, teto e destinos', async () => {
+  const created = await panel('/api/agents', { method: 'POST', body: JSON.stringify({
+    id: 'nova-api', description: 'cartas', wallet: WALLET, walletBase: BASE_FROM,
+  }) });
+  assert.equal(created.status, 200);
+  assert.equal(created.body.id, 'nova-api');
+  assert.equal(created.body.wallet, WALLET);
+  const rules = await panel('/api/agents/nova-api/rules', { method: 'PUT', body: JSON.stringify({
+    period: 'mes', cap: 2, perTx: 0.1, allow: [SHOP, BASE_FROM], at80: 'alertar', at100: 'bloquear',
+  }) });
+  assert.equal(rules.status, 200);
+  assert.equal(rules.body.period, 'mes');
+  assert.equal(rules.body.cap, 2);
+  assert.deepEqual(rules.body.allow, [SHOP, BASE_FROM]);
+  const { body } = await panel('/api/state');
+  const agent = body.agents.find(a => a.id === 'nova-api');
+  assert.equal(agent.description, 'cartas');
+  assert.equal(agent.walletBase, BASE_FROM);
+  assert.equal(agent.rule.cap, 2);
+
+  const bad = await panel('/api/agents/nova-api/rules', { method: 'PUT', body: JSON.stringify({ cap: 2, allow: ['not-an-address'] }) });
+  assert.equal(bad.status, 400);
+  const phrase = `${'abandon '.repeat(11)}abandon`;
+  const refused = await panel('/api/agents/nova-api/rules', { method: 'PUT', body: JSON.stringify({ cap: 2, allow: [phrase] }) });
+  assert.equal(refused.status, 422);
 });

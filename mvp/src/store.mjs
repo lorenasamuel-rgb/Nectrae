@@ -5,7 +5,7 @@ import { dirname } from 'node:path';
 import { RAIL, ACTIONS, evaluate, crossedThresholds, periodStart, validateRuleInput } from './rules.mjs';
 import { validatePayment, scanWallet } from './solana.mjs';
 import { validateBasePayment, scanBaseWallet, normAddr } from './base.mjs';
-import { NETWORKS, PRESENTATION } from './catalog.mjs';
+import { NETWORKS, PRESENTATION, receiverFor } from './catalog.mjs';
 import { isSolanaAddress, isEvmAddress, looksLikeSecret, SECRET_REFUSAL, shortAddr } from './keys.mjs';
 
 const SCHEMA = `
@@ -74,7 +74,7 @@ export class HttpError extends Error {
   constructor(status, message) { super(message); this.status = status; }
 }
 
-const usd = n => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 6 }).format(n);
+const usd = n => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 6 }).format(n);
 const iso = (d = new Date()) => d.toISOString();
 
 function addColumn(db, table, name, type) {
@@ -108,7 +108,7 @@ export function openStore({ path = ':memory:', now = () => new Date() } = {}) {
 
   function getAgent(id) {
     const a = q.agent.get(id);
-    if (!a) throw new HttpError(404, `Agente "${id}" não existe.`);
+    if (!a) throw new HttpError(404, `Agent "${id}" does not exist.`);
     return a;
   }
 
@@ -129,17 +129,17 @@ export function openStore({ path = ':memory:', now = () => new Date() } = {}) {
     const start = iso(periodStart(rule.period, now())).slice(0, 10);
     for (const th of crossedThresholds(rule.cap, before, after)) {
       if (q.fired.run(`${agentId}|${RAIL}|${start}|${th}`).changes === 0) continue;
-      if (th === 1) alert('crit', agentId, `USDC chegou a 100% do teto (${usd(rule.cap)}). Ação: ${rule.monitor ? 'Alertar' : ACTIONS[rule.at100 || 'bloquear']}.`);
-      else if (th === 0.8) alert('warn', agentId, `USDC passou de 80% do teto. Ação: ${ACTIONS[rule.at80 || 'alertar']}.`);
-      else alert('info', agentId, 'USDC passou de 50% do teto.');
+      if (th === 1) alert('crit', agentId, `USDC reached 100% of the cap (${usd(rule.cap)}). Action: ${rule.monitor ? 'Alert' : ACTIONS[rule.at100 || 'bloquear']}.`);
+      else if (th === 0.8) alert('warn', agentId, `USDC passed 80% of the cap. Action: ${ACTIONS[rule.at80 || 'alertar']}.`);
+      else alert('info', agentId, 'USDC passed 50% of the cap.');
     }
   }
 
   function initialVerification(decision) {
-    if (decision === 'needs_approval') return ['na', [{ s: 'wait', text: 'Aguarda decisão humana. Nada saiu da carteira.' }]];
-    if (decision === 'blocked') return ['na', [{ s: 'ok', text: 'Barrado antes de sair: não há o que conferir.' }]];
-    const where = 'Aguardando o agente informar a assinatura (Solana) ou o hash (Base).';
-    return ['pending', [{ s: 'ok', text: 'Registrado pelo SDK antes do pagamento.' }, { s: 'wait', text: where }]];
+    if (decision === 'needs_approval') return ['na', [{ s: 'wait', text: 'Waiting for a human decision. Nothing left the wallet.' }]];
+    if (decision === 'blocked') return ['na', [{ s: 'ok', text: 'Blocked before it left: nothing to check.' }]];
+    const where = 'Waiting for the agent to submit the signature (Solana) or the hash (Base).';
+    return ['pending', [{ s: 'ok', text: 'Recorded by the SDK before payment.' }, { s: 'wait', text: where }]];
   }
 
   function cleanDest(destination) {
@@ -149,18 +149,32 @@ export function openStore({ path = ':memory:', now = () => new Date() } = {}) {
   }
 
   function assertNetwork(network) {
-    if (!NETWORKS[network]) throw new HttpError(400, 'network precisa ser "solana" ou "base".');
+    if (!NETWORKS[network]) throw new HttpError(400, 'network must be "solana" or "base".');
   }
 
   function assertAmount(amount) {
-    if (typeof amount !== 'number' || !Number.isFinite(amount)) throw new HttpError(400, 'amount precisa ser um número em US$.');
+    if (typeof amount !== 'number' || !Number.isFinite(amount)) throw new HttpError(400, 'amount must be a number in USD.');
   }
 
   function assertDestination(destination) {
     const d = cleanDest(destination);
-    if (!d) throw new HttpError(400, 'destination é o endereço que a API pediu no 402.');
+    if (!d) throw new HttpError(400, 'destination is the address the API requested in the 402.');
     if (looksLikeSecret(d)) throw new HttpError(422, SECRET_REFUSAL);
     return d;
+  }
+
+  function cleanAllow(list) {
+    if (list == null) return undefined;
+    if (!Array.isArray(list)) return list;
+    return list.map(raw => {
+      const d = String(raw).trim();
+      if (!d) return '';
+      if (looksLikeSecret(d)) throw new HttpError(422, SECRET_REFUSAL);
+      const cleaned = d.startsWith('0x') || d.startsWith('0X') ? '0x' + d.slice(2).toLowerCase() : d;
+      const ok = cleaned.startsWith('0x') ? isEvmAddress(cleaned) : isSolanaAddress(cleaned);
+      if (!ok) throw new HttpError(400, `Invalid API address (${shortAddr(d) || 'empty'}). Use a Solana public address or a 0x address.`);
+      return cleaned;
+    }).filter(Boolean);
   }
 
   function knownSigs() {
@@ -172,14 +186,14 @@ export function openStore({ path = ':memory:', now = () => new Date() } = {}) {
     db.prepare('UPDATE payments SET ver_status = ?, ver_checks = ?, ver_proof = ?, amount_source = ?, verified_at = ? WHERE id = ?')
       .run(r.status, JSON.stringify(r.checks), JSON.stringify(r.proof), r.status === 'pending' ? null : r.sourceAmount ?? null,
         r.status === 'pending' ? null : iso(now()), id);
-    if (r.status === 'mismatch') alert('warn', agentId, `Validação: pagamento ${id} diverge da rede (${usd(declared)} declarado, ${usd(r.sourceAmount ?? 0)} na rede).`);
+    if (r.status === 'mismatch') alert('warn', agentId, `Validation: payment ${id} does not match the chain (${usd(declared)} declared, ${usd(r.sourceAmount ?? 0)} on-chain).`);
   }
 
   return {
     db,
 
     upsertAgent({ id, description = '', wallet = null, walletBase = null }) {
-      if (!/^[a-z0-9][a-z0-9-]{1,40}$/.test(id ?? '')) throw new HttpError(400, 'Use um id em minúsculas, números e hífens (ex.: nansen).');
+      if (!/^[a-z0-9][a-z0-9-]{1,40}$/.test(id ?? '')) throw new HttpError(400, 'Use a lowercase id with numbers and hyphens (for example nansen).');
       if (wallet) this.assertSolana(wallet);
       if (walletBase) this.assertBase(walletBase);
       db.prepare(`INSERT INTO agents (id, description, wallet, wallet_base, created_at) VALUES (?, ?, ?, ?, ?)
@@ -192,12 +206,12 @@ export function openStore({ path = ':memory:', now = () => new Date() } = {}) {
 
     assertSolana(wallet) {
       if (looksLikeSecret(wallet)) throw new HttpError(422, SECRET_REFUSAL);
-      if (!isSolanaAddress(wallet)) throw new HttpError(400, 'Endereço Solana inválido. Use o endereço público (32 a 44 caracteres base58).');
+      if (!isSolanaAddress(wallet)) throw new HttpError(400, 'Invalid Solana address. Use the public address (32 to 44 base58 characters).');
     },
 
     assertBase(wallet) {
       if (looksLikeSecret(wallet)) throw new HttpError(422, SECRET_REFUSAL);
-      if (!isEvmAddress(wallet)) throw new HttpError(400, 'Endereço Base inválido. Use o endereço público que começa com 0x.');
+      if (!isEvmAddress(wallet)) throw new HttpError(400, 'Invalid Base address. Use the public address that starts with 0x.');
     },
 
     assertWallet(wallet) { this.assertSolana(wallet); },
@@ -205,24 +219,25 @@ export function openStore({ path = ':memory:', now = () => new Date() } = {}) {
     setWallets(agentId, { solana, base } = {}) {
       getAgent(agentId);
       if ((solana === undefined || solana === '') && (base === undefined || base === '')) {
-        throw new HttpError(400, 'Informe o endereço público da Solana, da Base, ou os dois.');
+        throw new HttpError(400, 'Enter the Solana public address, the Base public address, or both.');
       }
       if (solana) { this.assertSolana(solana); db.prepare('UPDATE agents SET wallet = ? WHERE id = ?').run(solana.trim(), agentId); }
       if (base) { this.assertBase(base); db.prepare('UPDATE agents SET wallet_base = ? WHERE id = ?').run(normAddr(base.trim()), agentId); }
       const parts = [solana ? `Solana ${shortAddr(solana.trim())}` : '', base ? `Base ${shortAddr(base.trim())}` : ''].filter(Boolean);
-      alert('info', agentId, `Carteira vigiada trocada: ${parts.join(' · ')}.`);
+      alert('info', agentId, `Watched wallet changed: ${parts.join(' · ')}.`);
     },
 
     setPaused(agentId, paused, why) {
       getAgent(agentId);
       db.prepare('UPDATE agents SET paused = ? WHERE id = ?').run(paused ? 1 : 0, agentId);
-      alert(paused ? 'warn' : 'ok', agentId, why ?? (paused ? 'Agente pausado pelo painel.' : 'Agente retomado pelo painel.'));
+      alert(paused ? 'warn' : 'ok', agentId, why ?? (paused ? 'Agent paused from the panel.' : 'Agent resumed from the panel.'));
     },
 
-    setRule(agentId, input, actor = 'painel') {
+    setRule(agentId, input, actor = 'panel') {
       getAgent(agentId);
       const before = ruleOf(q.rule.get(agentId, RAIL));
       const next = { period: 'dia', ...before, ...input };
+      if (Object.hasOwn(input, 'allow')) next.allow = cleanAllow(input.allow);
       const errors = validateRuleInput(next);
       if (errors.length) throw new HttpError(400, errors.join('; '));
       db.prepare(`INSERT INTO rules (agent_id, rail, period, cap, per_tx, approve_above, allow, at80, at100, monitor, off)
@@ -234,7 +249,7 @@ export function openStore({ path = ':memory:', now = () => new Date() } = {}) {
           next.allow ? JSON.stringify(next.allow) : null, next.at80 ?? null, next.at100 ?? null, next.monitor ? 1 : 0, next.off ? 1 : 0);
       db.prepare('INSERT INTO rule_audit (agent_id, rail, before, after, actor, created_at) VALUES (?, ?, ?, ?, ?, ?)')
         .run(agentId, RAIL, before ? JSON.stringify(before) : null, JSON.stringify(next), actor, iso(now()));
-      if (before && before.cap !== next.cap) alert('info', agentId, `Teto de USDC alterado de ${usd(before.cap)} para ${usd(next.cap)}.`);
+      if (before && before.cap !== next.cap) alert('info', agentId, `USDC cap changed from ${usd(before.cap)} to ${usd(next.cap)}.`);
       return ruleOf(q.rule.get(agentId, RAIL));
     },
 
@@ -257,11 +272,11 @@ export function openStore({ path = ':memory:', now = () => new Date() } = {}) {
       if (res.decision === 'blocked') {
         if (res.action === 'pausar_agente' && !agent.paused) {
           db.prepare('UPDATE agents SET paused = 1 WHERE id = ?').run(agentId);
-          alert('crit', agentId, `Agente pausado: USDC atingiu o teto de ${usd(rule.cap)}.`);
+          alert('crit', agentId, `Agent paused: USDC hit the ${usd(rule.cap)} cap.`);
         }
-        alert('crit', agentId, `Barrado: ${usd(amount)} para ${vendor || dest}. ${res.note}.`);
+        alert('crit', agentId, `Blocked: ${usd(amount)} to ${vendor || dest}. ${res.note}.`);
       }
-      if (res.decision === 'needs_approval') alert('info', agentId, `${usd(amount)} para ${vendor || dest} aguarda aprovação.`);
+      if (res.decision === 'needs_approval') alert('info', agentId, `${usd(amount)} to ${vendor || dest} is waiting for approval.`);
       return { paymentId: id, ...res };
     },
 
@@ -273,8 +288,11 @@ export function openStore({ path = ':memory:', now = () => new Date() } = {}) {
       const lines = [];
       for (const [agent, call] of PRESENTATION) {
         if (!q.agent.get(agent)) continue;
-        const r = this.check({ agent, ...call });
-        lines.push({ agent, network: call.network, amount: call.amount, vendor: call.vendor, destination: call.destination, decision: r.decision, note: r.note });
+        const rule = ruleOf(q.rule.get(agent, RAIL));
+        const destination = call.destination || receiverFor(rule?.allow, call.network);
+        if (!destination) continue;
+        const r = this.check({ agent, ...call, destination });
+        lines.push({ agent, network: call.network, amount: call.amount, vendor: call.vendor, destination, decision: r.decision, note: r.note });
       }
       const count = decision => lines.filter(l => l.decision === decision).length;
       return { paid: false, lines, allowed: count('allowed'), blocked: count('blocked'), needsApproval: count('needs_approval') };
@@ -294,39 +312,39 @@ export function openStore({ path = ':memory:', now = () => new Date() } = {}) {
     /** O agente informa a assinatura (Solana) ou o hash (Base) depois de pagar. */
     attachSignature(paymentId, signature, agentId) {
       const p = q.payment.get(paymentId);
-      if (!p || (agentId && p.agent_id !== agentId)) throw new HttpError(404, 'Pagamento não encontrado.');
-      if (p.decision !== 'allowed') throw new HttpError(409, 'Só pagamentos permitidos recebem assinatura.');
+      if (!p || (agentId && p.agent_id !== agentId)) throw new HttpError(404, 'Payment not found.');
+      if (p.decision !== 'allowed') throw new HttpError(409, 'Only allowed payments can receive a signature.');
       const sig = p.network === 'base' ? normAddr(signature) : signature;
       const valid = p.network === 'base'
         ? /^0x[0-9a-f]{64}$/.test(sig ?? '')
         : /^[1-9A-HJ-NP-Za-km-z]{64,90}$/.test(sig ?? '');
-      if (!valid) throw new HttpError(400, p.network === 'base' ? 'Hash de transação da Base inválido.' : 'Assinatura de transação inválida.');
+      if (!valid) throw new HttpError(400, p.network === 'base' ? 'Invalid Base transaction hash.' : 'Invalid transaction signature.');
       const dupe = db.prepare('SELECT id FROM payments WHERE signature = ?').get(sig);
-      if (dupe && dupe.id !== paymentId) throw new HttpError(409, `Essa assinatura já está no registro (pagamento ${dupe.id}).`);
+      if (dupe && dupe.id !== paymentId) throw new HttpError(409, `That signature is already in the ledger (payment ${dupe.id}).`);
       db.prepare(`UPDATE payments SET signature = ?, ver_status = 'pending', ver_checks = ? WHERE id = ?`)
-        .run(sig, JSON.stringify([{ s: 'ok', text: p.network === 'base' ? 'Hash recebido do agente.' : 'Assinatura recebida do agente.' }, { s: 'wait', text: 'Aguardando conferência na rede.' }]), paymentId);
+        .run(sig, JSON.stringify([{ s: 'ok', text: p.network === 'base' ? 'Hash received from the agent.' : 'Signature received from the agent.' }, { s: 'wait', text: 'Waiting for the on-chain check.' }]), paymentId);
       return q.payment.get(paymentId);
     },
 
     decideApproval(paymentId, approve) {
       const p = q.payment.get(paymentId);
-      if (!p || p.decision !== 'needs_approval') throw new HttpError(404, 'Não há aprovação pendente com esse id.');
-      const t = new Date(now()).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+      if (!p || p.decision !== 'needs_approval') throw new HttpError(404, 'No pending approval with that id.');
+      const t = new Date(now()).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
       const [verStatus, verChecks] = initialVerification(approve ? 'allowed' : 'blocked');
       db.prepare('UPDATE payments SET decision = ?, action = ?, note = ?, ver_status = ?, ver_checks = ? WHERE id = ?')
-        .run(approve ? 'allowed' : 'blocked', approve ? 'permitir' : 'bloquear', `${approve ? 'Aprovado' : 'Recusado'} no painel às ${t}`,
+        .run(approve ? 'allowed' : 'blocked', approve ? 'permitir' : 'bloquear', `${approve ? 'Approved' : 'Rejected'} in the panel at ${t}`,
           verStatus, JSON.stringify(verChecks), paymentId);
       if (approve) {
         const rule = ruleOf(q.rule.get(p.agent_id, RAIL));
         if (rule) { const after = spentFor(p.agent_id, rule.period); fireThresholds(p.agent_id, rule, after - p.amount, after); }
       }
-      alert(approve ? 'ok' : 'crit', p.agent_id, `${usd(p.amount)} para ${p.vendor || p.destination} ${approve ? 'aprovado' : 'recusado'}.`);
+      alert(approve ? 'ok' : 'crit', p.agent_id, `${usd(p.amount)} to ${p.vendor || p.destination} ${approve ? 'approved' : 'rejected'}.`);
       return q.payment.get(paymentId);
     },
 
     /** Confere pagamentos pendentes e varre as duas carteiras atrás de USDC que saiu sem pedido. */
     async runValidation({ solana = null, base = null, agentId = null } = {}) {
-      if (!solana?.rpc && !base?.rpc) throw new HttpError(503, 'Validação sem RPC configurado.');
+      if (!solana?.rpc && !base?.rpc) throw new HttpError(503, 'Validation has no RPC configured.');
       const summary = { checked: 0, verified: 0, mismatch: 0, pending: 0, external: 0, errors: [] };
       const pending = db.prepare(`SELECT p.*, a.wallet, a.wallet_base FROM payments p JOIN agents a ON a.id = p.agent_id
                                   WHERE p.ver_status IN ('pending') AND p.signature IS NOT NULL ${agentId ? 'AND p.agent_id = ?' : ''}`)
@@ -335,17 +353,17 @@ export function openStore({ path = ':memory:', now = () => new Date() } = {}) {
         try {
           let r;
           if (p.network === 'base') {
-            if (!base?.rpc) { summary.errors.push(`pagamento ${p.id}: validação Base sem RPC.`); continue; }
-            if (!p.wallet_base) { summary.errors.push(`pagamento ${p.id}: agente sem endereço Base.`); continue; }
+            if (!base?.rpc) { summary.errors.push(`payment ${p.id}: Base validation has no RPC.`); continue; }
+            if (!p.wallet_base) { summary.errors.push(`payment ${p.id}: agent has no Base address.`); continue; }
             r = await validateBasePayment(base.rpc, { hash: p.signature, wallet: p.wallet_base, amount: p.amount, destination: p.destination, usdc: base.usdc });
           } else {
-            if (!solana?.rpc) { summary.errors.push(`pagamento ${p.id}: validação Solana sem RPC.`); continue; }
-            if (!p.wallet) { summary.errors.push(`pagamento ${p.id}: agente sem endereço Solana.`); continue; }
+            if (!solana?.rpc) { summary.errors.push(`payment ${p.id}: Solana validation has no RPC.`); continue; }
+            if (!p.wallet) { summary.errors.push(`payment ${p.id}: agent has no Solana address.`); continue; }
             r = await validatePayment(solana.rpc, { signature: p.signature, wallet: p.wallet, amount: p.amount, destination: p.destination, mint: solana.mint, commitment: solana.commitment });
           }
           summary.checked++; summary[r.status]++;
           applyVerification(p.id, p.agent_id, p.amount, r);
-        } catch (e) { summary.errors.push(`pagamento ${p.id}: ${e.message}`); }
+        } catch (e) { summary.errors.push(`payment ${p.id}: ${e.message}`); }
       }
 
       const agents = (agentId ? [getAgent(agentId)] : q.agents.all());
@@ -353,19 +371,19 @@ export function openStore({ path = ':memory:', now = () => new Date() } = {}) {
       const recordExternal = (a, network, f, proof) => {
         const created = f.blockTime ? iso(new Date(f.blockTime * 1000)) : iso(now());
         const checks = [
-          { s: 'ok', text: network === 'base' ? `Transação encontrada no RPC (bloco ${f.block}).` : `Transação encontrada no RPC (slot ${f.slot}).` },
-          { s: 'fail', text: 'Nenhum pedido correspondente no SDK: o pagamento não passou pelo motor de regras.' },
-          { s: 'ok', text: 'O valor já entra no gasto do agente.' },
+          { s: 'ok', text: network === 'base' ? `Transaction found on the RPC (block ${f.block}).` : `Transaction found on the RPC (slot ${f.slot}).` },
+          { s: 'fail', text: 'No matching SDK request: this payment did not go through the rules engine.' },
+          { s: 'ok', text: 'The amount already counts toward the agent spend.' },
         ];
         const info = db.prepare(`INSERT OR IGNORE INTO payments (agent_id, rail, network, vendor, destination, amount, amount_source, decision, action, note, created_at,
                         signature, ver_status, ver_checks, ver_proof, verified_at)
-                      VALUES (?, ?, ?, ?, ?, ?, ?, 'external', 'bloquear', 'Saiu da carteira sem passar pelo motor de regras', ?, ?, 'external', ?, ?, ?)`)
-          .run(a.id, RAIL, network, f.receivers.map(shortAddr).join(', ') || 'desconhecido', f.receivers[0] ?? null, f.outflow, f.outflow, created,
+                      VALUES (?, ?, ?, ?, ?, ?, ?, 'external', 'bloquear', 'Left the wallet without going through the rules engine', ?, ?, 'external', ?, ?, ?)`)
+          .run(a.id, RAIL, network, f.receivers.map(shortAddr).join(', ') || 'unknown', f.receivers[0] ?? null, f.outflow, f.outflow, created,
             f.signature, JSON.stringify(checks), JSON.stringify(proof), iso(now()));
         if (info.changes === 0) return;
         known.add(f.signature);
         summary.external++;
-        alert('crit', a.id, `Validação: ${usd(f.outflow)} saíram da carteira ${network === 'base' ? 'Base' : 'Solana'} sem passar pelo motor de regras.`);
+        alert('crit', a.id, `Validation: ${usd(f.outflow)} left the ${network === 'base' ? 'Base' : 'Solana'} wallet without going through the rules engine.`);
       };
 
       for (const a of agents) {
@@ -373,19 +391,19 @@ export function openStore({ path = ':memory:', now = () => new Date() } = {}) {
           try {
             const scan = await scanWallet(solana.rpc, { wallet: a.wallet, mint: solana.mint, known, since: periodStart('mes', now()), commitment: solana.commitment });
             for (const f of scan.found) {
-              recordExternal(a, 'solana', f, { Assinatura: f.signature, Slot: String(f.slot), Fonte: 'RPC · varredura da carteira Solana' });
+              recordExternal(a, 'solana', f, { Signature: f.signature, Slot: String(f.slot), Source: 'RPC · Solana wallet scan' });
             }
             summary.scanned = (summary.scanned ?? 0) + 1;
-          } catch (e) { summary.errors.push(`carteira Solana de ${a.id}: ${e.message}`); }
+          } catch (e) { summary.errors.push(`Solana wallet of ${a.id}: ${e.message}`); }
         }
         if (a.wallet_base && base?.rpc) {
           try {
             const scan = await scanBaseWallet(base.rpc, { wallet: a.wallet_base, usdc: base.usdc, known });
             for (const f of scan.found) {
-              recordExternal(a, 'base', f, { Transação: f.signature, Bloco: String(f.block ?? '—'), Fonte: 'RPC · varredura da carteira Base' });
+              recordExternal(a, 'base', f, { Transaction: f.signature, Block: String(f.block ?? '—'), Source: 'RPC · Base wallet scan' });
             }
             summary.scanned = (summary.scanned ?? 0) + 1;
-          } catch (e) { summary.errors.push(`carteira Base de ${a.id}: ${e.message}`); }
+          } catch (e) { summary.errors.push(`Base wallet of ${a.id}: ${e.message}`); }
         }
       }
       return summary;
