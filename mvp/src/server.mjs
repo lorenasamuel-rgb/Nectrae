@@ -18,7 +18,7 @@ export function loadConfig(env = process.env) {
   return {
     host: env.HOST || '127.0.0.1',
     port: Number(env.PORT || 8787),
-    dbPath: env.DB_PATH || join(ROOT, 'data', 'nectrae.db'),
+    dbPath: env.DB_PATH || (env.VERCEL ? '/tmp/nectrae.db' : join(ROOT, 'data', 'nectrae.db')),
     network,
     rpcUrl: env.SOLANA_RPC_URL || (network === 'mainnet' ? 'https://api.mainnet-beta.solana.com' : 'https://api.devnet.solana.com'),
     mint: env.USDC_MINT || USDC_MINTS[network],
@@ -285,7 +285,8 @@ export function createApp(config, { store = openStore({ path: config.dbPath }), 
         if (scope === 'panel') {
           // bloqueia sites de terceiros (CSRF) e DNS rebinding contra o painel local
           const origin = req.headers.origin;
-          if (origin && origin !== `http://${req.headers.host}`) throw new HttpError(403, 'Origin not allowed.');
+          const host = req.headers.host || '';
+          if (origin && origin !== `http://${host}` && origin !== `https://${host}`) throw new HttpError(403, 'Origin not allowed.');
           if (req.method !== 'GET' && !String(req.headers['content-type'] || '').startsWith('application/json')) throw new HttpError(415, 'Use Content-Type: application/json.');
           if (!config.panelToken && !/^(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/.test(req.headers.host || '')) throw new HttpError(403, 'Without PANEL_TOKEN, the panel only responds on localhost.');
           if (config.panelToken && !sameToken(req.headers['x-panel-token'], config.panelToken)) throw new HttpError(401, 'Panel token is missing or invalid.');
