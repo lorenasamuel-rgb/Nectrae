@@ -326,6 +326,27 @@ export function openStore({ path = ':memory:', now = () => new Date() } = {}) {
       return q.payment.get(paymentId);
     },
 
+    getPaymentForAgent(paymentId, agentId) {
+      if (!agentId) throw new HttpError(400, 'agent é obrigatório.');
+      const p = q.payment.get(paymentId);
+      if (!p || p.agent_id !== agentId) throw new HttpError(404, 'Pagamento não encontrado.');
+      return {
+        paymentId: p.id, agent: p.agent_id, decision: p.decision, action: p.action, note: p.note,
+        amount: p.amount, network: p.network, destination: p.destination, vendor: p.vendor,
+        signature: p.signature, ver_status: p.ver_status,
+      };
+    },
+
+    agentForSdk(agentId) {
+      const a = getAgent(agentId);
+      const rule = ruleOf(q.rule.get(agentId, RAIL));
+      return {
+        id: a.id, description: a.description, paused: !!a.paused,
+        wallet: a.wallet, walletBase: a.wallet_base, rule: rule ?? null,
+        spent: rule ? spentFor(agentId, rule.period) : 0,
+      };
+    },
+
     decideApproval(paymentId, approve) {
       const p = q.payment.get(paymentId);
       if (!p || p.decision !== 'needs_approval') throw new HttpError(404, 'No pending approval with that id.');

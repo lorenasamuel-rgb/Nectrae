@@ -4,11 +4,12 @@ import { readFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { randomBytes, timingSafeEqual } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
-import { join, dirname } from 'node:path';
+import { join, dirname, basename, extname } from 'node:path';
 import { openStore, HttpError } from './store.mjs';
 import { createRpc, testConnection, USDC_MINTS } from './solana.mjs';
 import { testBaseConnection, USDC_BASE } from './base.mjs';
 import { maskUrl } from './keys.mjs';
+import { createHostedLive } from './hosted-live.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -27,6 +28,7 @@ export function loadConfig(env = process.env) {
     baseUsdc: env.BASE_USDC || USDC_BASE[env.BASE_NETWORK === 'mainnet' ? 'mainnet' : 'sepolia'],
     agentToken: env.AGENT_TOKEN || '',
     panelToken: env.PANEL_TOKEN || '',
+    panelName: (env.PANEL_NAME || '').trim(),
     validateEverySec: Number(env.VALIDATE_EVERY_SECONDS ?? 60),
     xaiKey: env.XAI_API_KEY || '',
     xaiModel: env.XAI_MODEL || 'grok-4',
@@ -168,9 +170,48 @@ export function createApp(config, { store = openStore({ path: config.dbPath }), 
     catch { throw new HttpError(400, 'Invalid JSON.'); }
   }
 
+  const live = new Map();
+  const LIVE_TTL_MS = 15_000;
+  const query = req => new URL(req.url, 'http://localhost').searchParams;
+  const ping = (id, info) => {
+    if (!info) { live.delete(id); return; }
+    live.set(id, { status: String(info.status || 'idle').slice(0, 40), paymentId: info.paymentId ?? null, note: String(info.note || '').slice(0, 240), at: Date.now() });
+  };
+  const hosted = createHostedLive({ store, ping, runner: config.liveRunner || {} });
+  const liveView = () => {
+    const now = Date.now(), out = {};
+    for (const [id, v] of live) {
+      if (now - v.at > LIVE_TTL_MS && !hosted.isRunning(id)) continue;
+      out[id] = { status: v.status, paymentId: v.paymentId ?? null, note: v.note ?? '', at: new Date(v.at).toISOString(), running: hosted.isRunning(id), paying: hosted.isPaying(id) };
+    }
+    for (const id of hosted.ids()) {
+      if (!out[id]) out[id] = { status: 'idle', paymentId: null, note: '', at: new Date().toISOString(), running: true, paying: hosted.isPaying(id) };
+      else { out[id].running = true; out[id].paying = hosted.isPaying(id); }
+    }
+    return out;
+  };
+
   const routes = [
     // ---- API do agente (SDK) ----
     ['POST', /^\/v1\/check$/, 'agent', async (req) => store.check(await body(req))],
+    ['GET', /^\/v1\/payments\/(\d+)$/, 'agent', async (req, [id]) => store.getPaymentForAgent(Number(id), query(req).get('agent'))],
+    ['GET', /^\/v1\/agent$/, 'agent', async (req) => {
+      const agent = query(req).get('agent');
+      if (!agent) throw new HttpError(400, 'agent é obrigatório.');
+      return store.agentForSdk(agent);
+    }],
+    ['POST', /^\/v1\/heartbeat$/, 'agent', async (req) => {
+      const b = await body(req);
+      store.agentForSdk(b.agent);
+      ping(b.agent, { status: b.status, paymentId: b.paymentId, note: b.note });
+      return { ok: true };
+    }],
+    ['PUT', /^\/v1\/wallet$/, 'agent', async (req) => {
+      const b = await body(req);
+      store.agentForSdk(b.agent);
+      store.setWallets(b.agent, { solana: b.solana ?? b.wallet, base: b.base });
+      return { ok: true };
+    }],
     ['POST', /^\/v1\/payments\/(\d+)\/signature$/, 'agent', async (req, [id]) => {
       const { signature, agent } = await body(req);
       const p = store.attachSignature(Number(id), signature, agent);
@@ -181,10 +222,16 @@ export function createApp(config, { store = openStore({ path: config.dbPath }), 
     // ---- API do painel ----
     ['GET', /^\/api\/state$/, 'panel', async () => ({
       ...store.state(),
+      live: liveView(),
       connection: connectionView(),
+      operatorName: config.panelName || '',
     })],
     ['POST', /^\/api\/agents$/, 'panel', async (req) => store.upsertAgent(await body(req))],
     ['POST', /^\/api\/agents\/([\w-]+)\/(pause|resume)$/, 'panel', async (_req, [id, op]) => (store.setPaused(id, op === 'pause'), { ok: true })],
+    ['POST', /^\/api\/agents\/([\w-]+)\/live\/(start|stop)$/, 'panel', async (req, [id, op]) => {
+      const opts = await body(req);
+      return op === 'stop' ? hosted.stop(id) : hosted.start(id, opts);
+    }],
     ['PUT', /^\/api\/agents\/([\w-]+)\/wallet$/, 'panel', async (req, [id]) => {
       const b = await body(req);
       store.setWallets(id, { solana: b.solana ?? b.wallet, base: b.base });
@@ -223,6 +270,14 @@ export function createApp(config, { store = openStore({ path: config.dbPath }), 
       if (req.method === 'GET' && (url.pathname === '/' || url.pathname === '/index.html')) {
         return send(200, await readFile(join(ROOT, 'public', 'index.html')), 'text/html; charset=utf-8');
       }
+      if (req.method === 'GET' && (url.pathname === '/favicon.png' || url.pathname.startsWith('/brand/'))) {
+        const name = url.pathname === '/favicon.png' ? 'favicon.png' : basename(url.pathname);
+        if (!/^[a-z0-9._-]+$/i.test(name)) throw new HttpError(404, 'Rota não encontrada.');
+        const file = join(ROOT, 'public', 'brand', name);
+        if (!existsSync(file)) throw new HttpError(404, 'Rota não encontrada.');
+        const mime = { '.png': 'image/png', '.svg': 'image/svg+xml', '.ico': 'image/x-icon' }[extname(name).toLowerCase()] || 'application/octet-stream';
+        return send(200, await readFile(file), mime);
+      }
       for (const [method, re, scope, fn] of routes) {
         const m = url.pathname.match(re);
         if (!m || req.method !== method) continue;
@@ -245,7 +300,7 @@ export function createApp(config, { store = openStore({ path: config.dbPath }), 
     }
   }
 
-  return { handle, store, checkConnection, validate, connectionView };
+  return { handle, store, checkConnection, validate, connectionView, hosted };
 }
 
 // ---- execução direta: npm start ----
@@ -261,6 +316,13 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
     console.log(`AGENT_TOKEN is not set. Temporary token for this run: ${config.agentToken}`);
     console.log('Set AGENT_TOKEN in .env to keep the same token across runs.');
   }
+  config.liveRunner = {
+    enabled: true,
+    hasSecret: !!process.env.AGENT_SOLANA_SECRET,
+    agentToken: config.agentToken,
+    host: config.host,
+    port: config.port,
+  };
   const app = createApp(config);
   createServer(app.handle).listen(config.port, config.host, () => {
     console.log(`Nectrae Spend Control at http://${config.host}:${config.port}`);

@@ -17,6 +17,7 @@ cd mvp
 npm install
 npm run seed
 npm start
+# noutro terminal: npm run agent   # agente vivo (check + espera aprovação)
 ```
 
 The manual is `mvp/README.md`.

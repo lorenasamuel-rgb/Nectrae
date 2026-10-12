@@ -47,7 +47,7 @@ before(async () => {
   store.setRule('pesquisa-mercado', { period: 'dia', cap: 1, perTx: 0.5, at80: 'alertar', at100: 'pausar_agente' });
   const nansen = DEMO_AGENTS[0];
   store.upsertAgent({ id: nansen.id, description: nansen.description, walletBase: BASE_FROM });
-  store.setRule(nansen.id, { period: 'dia', cap: nansen.cap, perTx: nansen.perTx, allow: [nansen.pay.solana, nansen.pay.base], at80: 'alertar', at100: 'pausar_agente' });
+  store.setRule(nansen.id, { period: 'dia', cap: nansen.cap, perTx: nansen.perTx, approveAbove: nansen.approveAbove, allow: [nansen.pay.solana, nansen.pay.base], at80: 'alertar', at100: 'pausar_agente' });
   const tcg = DEMO_AGENTS[2];
   store.upsertAgent({ id: tcg.id, description: tcg.description, walletBase: '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb' });
   store.setRule(tcg.id, { period: 'dia', cap: tcg.cap, perTx: tcg.perTx, allow: [tcg.pay.solana, tcg.pay.base], at80: 'alertar', at100: 'bloquear' });
@@ -56,7 +56,7 @@ before(async () => {
   await new Promise(r => server.listen(0, '127.0.0.1', r));
   base = `http://127.0.0.1:${server.address().port}`;
 });
-after(() => server.close());
+after(() => { app.hosted?.stopAll(); server.close(); });
 
 const panel = (path, init = {}) => fetch(base + path, { ...init, headers: { 'content-type': 'application/json', ...(init.headers || {}) } }).then(async r => ({ status: r.status, body: await r.json() }));
 
@@ -99,8 +99,31 @@ test('aprovação humana', async () => {
   const spendBox = new SpendControl({ url: base, token: 'tok-agent', agent: 'caixa' });
   const r = await spendBox.check({ network: 'solana', amount: 2, destination: SHOP });
   assert.equal(r.decision, 'needs_approval');
+  const waiting = spendBox.waitForApproval(r.paymentId, { intervalMs: 20, timeoutMs: 2000 });
+  const got = await spendBox.get(r.paymentId);
+  assert.equal(got.decision, 'needs_approval');
+  await spendBox.heartbeat({ status: 'waiting_approval', paymentId: r.paymentId, note: 'espera o painel' });
+  const live = await panel('/api/state');
+  assert.equal(live.body.live.caixa.status, 'waiting_approval');
   const res = await panel(`/api/payments/${r.paymentId}/approve`, { method: 'POST' });
   assert.equal(res.body.decision, 'allowed');
+  const done = await waiting;
+  assert.equal(done.decision, 'allowed');
+  assert.equal(done.paymentId, r.paymentId);
+});
+
+test('nansen acima de approveAbove pede aprovação', async () => {
+  const spend = new SpendControl({ url: base, token: 'tok-agent', agent: 'nansen' });
+  const r = await spend.check({ network: 'solana', amount: 0.04, vendor: 'api.nansen.ai', destination: DEMO_AGENTS[0].pay.solana });
+  assert.equal(r.decision, 'needs_approval');
+});
+
+test('o runner anuncia o endereço público em Proteção', async () => {
+  const spend = new SpendControl({ url: base, token: 'tok-agent', agent: 'pesquisa-mercado' });
+  await spend.announceWallet({ solana: WALLET });
+  const st = await panel('/api/state');
+  const a = st.body.agents.find(x => x.id === 'pesquisa-mercado');
+  assert.equal(a.wallet, WALLET);
 });
 
 test('painel recusa chave privada no campo da carteira', async () => {
@@ -126,6 +149,22 @@ test('simulação da apresentação grava tentativas e não paga', async () => {
   assert.equal(wrong.decision, 'blocked');
   assert.ok(res.body.lines.some(l => l.network === 'solana' && l.decision === 'allowed'));
   assert.ok(res.body.lines.some(l => l.network === 'base' && l.decision === 'allowed'));
+});
+
+test('painel liga e para o agente vivo sem terminal', async () => {
+  const on = await panel('/api/agents/nansen/live/start', { method: 'POST', body: JSON.stringify({ every: 0.12 }) });
+  assert.equal(on.status, 200);
+  assert.equal(on.body.running, true);
+  assert.equal(on.body.paying, false);
+  assert.equal(on.body.reason, 'no_secret');
+  await new Promise(r => setTimeout(r, 280));
+  const live = await panel('/api/state');
+  assert.equal(live.body.live.nansen.running, true);
+  assert.ok(live.body.payments.some(p => p.agent_id === 'nansen'));
+  const off = await panel('/api/agents/nansen/live/stop', { method: 'POST', body: '{}' });
+  assert.equal(off.body.running, false);
+  const afterStop = await panel('/api/state');
+  assert.ok(!afterStop.body.live.nansen?.running);
 });
 
 test('vigia sem chave responde com a frase local', async () => {
@@ -191,6 +230,17 @@ test('alterar teto fica registrado na auditoria', async () => {
   const res = await panel('/api/agents/pesquisa-mercado/rules', { method: 'PUT', body: JSON.stringify({ cap: 30 }) });
   assert.equal(res.body.cap, 30);
   assert.equal(app.store.db.prepare('SELECT COUNT(*) AS n FROM rule_audit WHERE agent_id = ?').get('pesquisa-mercado').n, 2);
+});
+
+test('logo e favicon oficiais são servidos', async () => {
+  const logo = await fetch(base + '/brand/nectrae-logo-on-dark.png');
+  assert.equal(logo.status, 200);
+  assert.equal(logo.headers.get('content-type'), 'image/png');
+  assert.ok((await logo.arrayBuffer()).byteLength > 1000);
+  const icon = await fetch(base + '/favicon.png');
+  assert.equal(icon.status, 200);
+  const missing = await fetch(base + '/brand/missing.png');
+  assert.equal(missing.status, 404);
 });
 
 test('cadastro de agente novo grava carteiras, teto e destinos', async () => {

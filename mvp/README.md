@@ -6,8 +6,9 @@ One USDC cap per API. Each agent is one API. Solana devnet and Base Sepolia only
 - **Single ledger:** every attempt is recorded, whether it was allowed or not.
 - **Source validation:** checks the Solana signature or the Base hash, and scans both wallets for USDC that skipped the engine.
 - **Panel:** one cap per agent, approvals, alerts, validation, and the ledger.
-- **Watcher:** a face in the header that follows the caps. With an xAI key it asks Grok for one sentence. Without the key it still animates and speaks a local line.
-- **Automatic payer:** an agent process that calls `check`, sends the USDC, and calls `confirm`. The signing key stays in a local file. The panel never reads it.
+- **Mrs. N:** the bee in the header. Tap her for alert balloons. Caps still drive her mood. An xAI key can still write one extra sentence; Grok is never on `POST /v1/check`.
+- **Hosted live agent:** Start / Stop on the agent card. The loop runs in the panel process, checks the cap, and waits in Approvals. It does not store a key.
+- **Automatic payer:** `npm run agent` can still sign test USDC from a local key file. The panel never reads that file.
 
 You need Node 22.13 or newer (tested on Node 24). The database is the SQLite that ships with Node. The automatic payer also uses `@solana/web3.js` and `@solana/spl-token`.
 
@@ -17,8 +18,9 @@ You need Node 22.13 or newer (tested on Node 24). The database is the SQLite tha
 npm install
 cp .env.example .env      # then set AGENT_TOKEN to a long random value
 npm run seed              # creates the 3 example agents and their rules
-npm start                 # panel at http://127.0.0.1:8787
+npm start                 # panel at http://127.0.0.1:8787 — Start live agent on a card
 npm run demo              # in another terminal: an example agent calls the SDK a few times
+npm run agent             # optional: local signer from data/keys/
 npm test                  # rules, keys, Solana and Base validators, the API, and the payer plan
 ```
 
@@ -28,26 +30,23 @@ The database is `data/nectrae.db`. `npm run seed` wipes the demo ledger and recr
 
 ## Visual and phone layout
 
-The panel follows the Nectrae visual identity: navy background `#031626`, cards `#06202F` with border `#172C3A`, amber `#EDAE44` only on highlights, green `#5FDFA6` for what is safe, and orange `#E8803A` for blocks. Titles and the logo use Playfair Display; the interface and numbers use Inter; addresses and proofs use JetBrains Mono. The colors live in CSS variables at the top of `public/index.html`.
+The panel follows the official site (nectrae.lovable.app): navy `#031626`, cards `#06202F`, border `#172C3A`, amber `#EDAE44`, green `#5FDFA6`, orange `#E8803A`. The wordmark is the official art (gold hexagons in the N). Interface and titles use Manrope; addresses and proofs use JetBrains Mono. Colors live in CSS variables at the top of `public/index.html`.
 
 Chart colors: amber for USDC that left on Solana, blue for USDC that left on Base. The cap bar switches to the amber-to-orange gradient from 80% up.
 
-The header has a watcher: the same hexagon as the agents. It breathes and blinks while every cap is inside the limit. Near 80%, or when a payment is waiting for approval, the eye squints and the amber ring speeds up. At the cap, or when an agent is paused, the eye shuts. Click it for a fresh line. The eyes follow the ledger on the panel's 5-second refresh. Grok is not on the path of `POST /v1/check`.
+The header bee is **Mrs. N**. She breathes and blinks while every cap is inside the limit. Near 80%, or when a payment is waiting for approval, the eye squints. At the cap, or when an agent is paused, the eye shuts. Tap her to open alert balloons. Home still lists alerts as a ledger. Optional: `XAI_API_KEY` in `.env` (`XAI_MODEL` defaults to `grok-4`) writes one extra sentence. Wallet addresses are stripped before Grok.
 
-Set `XAI_API_KEY` in `.env` to let Grok write the line. `XAI_MODEL` defaults to `grok-4`. The key stays in `.env`. The request sent to Grok is a short summary of caps, alerts, and approvals. Wallet addresses are stripped out.
-
-**Phone layout.** On screens up to 700 px wide the panel becomes an app with a tab bar at the bottom:
+**Phone layout.** On screens up to 700 px the panel follows Apple HIG (tab bar, large titles, 44 pt targets, safe area). The official logo stays in the header. Five tabs:
 
 | Tab | What it shows |
 | --- | --- |
 | Home | today's and this month's spend, caps above 80%, blocks, alerts, and a shortcut to pending approvals |
-| Agents | agents, the USDC cap, the chart by network, and the payment test |
+| Agents | agents, the USDC cap, and the chart by network |
 | Approvals | requests with Approve and Reject; the tab shows how many are pending |
 | Ledger | ledger validation and the single ledger with filters |
-| Protection | Solana devnet and Base Sepolia connection, plus public addresses |
-| Admin | register a new agent, or edit its description, wallets, cap, and API addresses |
+| More | Test a payment, Protection, and Admin as child screens with Back |
 
-Open a tab directly: `http://127.0.0.1:8787/#approvals` (also `#home`, `#agents`, `#ledger`, `#protection`, `#admin`). On a computer the panel stays on one page. Admin is the form that registers a new agent and edits an existing one.
+Open a tab directly: `http://127.0.0.1:8787/#aprovacoes` (also `#inicio`, `#agentes`, `#registro`, `#mais`, `#sim`, `#protecao`, `#admin`). On a computer the panel stays on one page. Preview the phone chrome with `?phone=1`.
 
 To see the phone layout on a Mac: open the panel in Chrome, press Cmd+Option+I, and turn on device mode (the phone icon).
 
@@ -83,9 +82,10 @@ import { SpendControl } from './sdk/client.mjs';
 const spend = new SpendControl({ url: 'http://127.0.0.1:8787', token: process.env.AGENT_TOKEN, agent: 'nansen' });
 
 const ok = await spend.check({ network: 'solana', amount: 0.01, vendor: 'api.nansen.ai', destination: RECEIVER });
-if (ok.decision !== 'allowed') return;            // 'blocked' or 'needs_approval'
+const ready = ok.decision === 'needs_approval' ? await spend.waitForApproval(ok.paymentId) : ok;
+if (ready.decision !== 'allowed') return;         // 'blocked' or rejected in the panel
 const signature = await pay();                    // the agent's wallet signs; the SDK never sees a private key
-await spend.confirm(ok.paymentId, signature);     // the validator checks the chain
+await spend.confirm(ready.paymentId, signature);  // the validator checks the chain
 ```
 
 `network` is `solana` or `base`. `destination` is the address the API requested in the 402. Both networks count toward the same cap.
@@ -99,6 +99,14 @@ curl -s -X PUT http://127.0.0.1:8787/api/agents/tcg/rules \
 ```
 
 A destination that is not on the list is blocked before anyone signs.
+
+## Hosted live agent
+
+After deploy, nobody needs a second terminal. On the agent card: **Start live agent** / **Stop live agent**. The loop runs in the same Node process as the panel, checks the cap about every 12 s, and waits in Approvals. It does **not** store a key and does **not** pay the production x402 API — that stays in each customer’s agent, via the SDK.
+
+The server has to stay up (Fly, Railway, a VPS). Serverless functions that die after one request cannot keep this loop.
+
+`npm run live` is an optional extra runner with `AGENT_SOLANA_SECRET` for test USDC. The key never enters the panel.
 
 ## Pay automatically
 
@@ -134,7 +142,7 @@ Validation runs on its own every `VALIDATE_EVERY_SECONDS` (default 60) and from 
 ## Security
 
 - The product **never** asks for or stores a private key. Wallet fields refuse a private key, a JSON keypair, and a 12/24-word phrase.
-- The signing key for `npm run agent` stays in `data/keys/` on that machine. It is not in SQLite and it is not in the panel.
+- The signing key for `npm run agent` stays in `data/keys/` on that machine. It is not in SQLite and it is not in the panel. `AGENT_SOLANA_SECRET` for `npm run live` stays only in `.env`.
 - The RPC provider key and `XAI_API_KEY` stay only in `.env`. The panel shows at most the last 4 characters of an RPC URL.
 - The agent API (`/v1`) requires `Authorization: Bearer <AGENT_TOKEN>`.
 - The panel API (`/api`) only responds on localhost, refuses requests from other sites, and requires `Content-Type: application/json`. To open the server on the network (`HOST=0.0.0.0`), set `PANEL_TOKEN`; without it, the server does not start.
@@ -155,10 +163,12 @@ src/base.mjs        Base JSON-RPC client, validation, and scan
 src/catalog.mjs     example agents and the demo round
 src/keys.mjs        Solana and Base addresses, private-key refusal, URL mask
 src/agent-plan.mjs  payer plan: source wallet, receiver, local key bytes
+src/hosted-live.mjs live-agent loop started from the panel
 src/store.mjs       SQLite database and operations (check, signature, approval, validation)
 src/server.mjs      agent API, panel API, watcher, and the panel server
-public/             panel (index.html: Nectrae visual, watcher, phone tabs, token prompt)
-sdk/client.mjs      agent SDK
-scripts/            seed, demo, and the automatic payer
+public/             panel (index.html: official wordmark, Mrs. N, phone tabs)
+sdk/client.mjs      agent SDK (check, waitForApproval, confirm)
+sdk/live.mjs        one live-agent cycle
+scripts/            seed, demo, automatic payer, and optional live signer
 test/               tests (node --test)
 ```

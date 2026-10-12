@@ -12,6 +12,7 @@
     "seed": "node scripts/seed.mjs",
     "demo": "node scripts/demo.mjs",
     "agent": "node scripts/agent.mjs",
+    "live": "node scripts/live-agent.mjs",
     "test": "node --test \"test/*.test.mjs\""
   },
   "dependencies": {

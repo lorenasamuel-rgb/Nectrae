@@ -11,9 +11,10 @@ export const NETWORKS = {
 export const DEMO_AGENTS = [
   {
     id: 'nansen',
-    description: 'On-chain data · USDC per call',
+    description: 'Dados on Chain',
     cap: 1,
     perTx: 0.05,
+    approveAbove: 0.03,
     pay: {
       solana: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
       base: '0x1111111111111111111111111111111111111111',
@@ -21,7 +22,7 @@ export const DEMO_AGENTS = [
   },
   {
     id: 'vybe',
-    description: 'Solana data · USDC per call',
+    description: 'Dados de Solana',
     cap: 0.5,
     perTx: 0.03,
     pay: {
@@ -31,7 +32,7 @@ export const DEMO_AGENTS = [
   },
   {
     id: 'tcg',
-    description: 'Cards and prices · USDC per call',
+    description: 'Cartas & Preços',
     cap: 0.4,
     perTx: 0.05,
     pay: {
@@ -42,6 +43,19 @@ export const DEMO_AGENTS = [
 ];
 
 const WRONG_BASE = '0x9999999999999999999999999999999999999999';
+
+const EXAMPLE_DEST = new Set(DEMO_AGENTS.flatMap(a => [a.pay.solana, a.pay.base.toLowerCase()]));
+
+/** Destinos do catálogo (Tokenkeg, 0x111…) não recebem USDC. O runner recusa assinar para eles. */
+export function isExampleDestination(dest, network) {
+  if (!dest) return true;
+  const d = network === 'base' ? dest.toLowerCase() : dest;
+  if (EXAMPLE_DEST.has(d)) return true;
+  if (network === 'base' && /^0x1{40}$|^0x2{40}$|^0x3{40}$/.test(d)) return true;
+  return d === 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'
+    || d === 'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'
+    || d === 'ComputeBudget111111111111111111111111111111';
+}
 
 /** Primeiro endereço da lista de destinos que serve nesta rede. */
 export function receiverFor(allow, network) {
