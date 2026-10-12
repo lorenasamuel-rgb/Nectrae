@@ -5,7 +5,7 @@ import { dirname } from 'node:path';
 import { RAIL, ACTIONS, evaluate, crossedThresholds, periodStart, validateRuleInput } from './rules.mjs';
 import { validatePayment, scanWallet } from './solana.mjs';
 import { validateBasePayment, scanBaseWallet, normAddr } from './base.mjs';
-import { NETWORKS, PRESENTATION } from './catalog.mjs';
+import { NETWORKS, PRESENTATION, receiverFor } from './catalog.mjs';
 import { isSolanaAddress, isEvmAddress, looksLikeSecret, SECRET_REFUSAL, shortAddr } from './keys.mjs';
 
 const SCHEMA = `
@@ -163,6 +163,20 @@ export function openStore({ path = ':memory:', now = () => new Date() } = {}) {
     return d;
   }
 
+  function cleanAllow(list) {
+    if (list == null) return undefined;
+    if (!Array.isArray(list)) return list;
+    return list.map(raw => {
+      const d = String(raw).trim();
+      if (!d) return '';
+      if (looksLikeSecret(d)) throw new HttpError(422, SECRET_REFUSAL);
+      const cleaned = d.startsWith('0x') || d.startsWith('0X') ? '0x' + d.slice(2).toLowerCase() : d;
+      const ok = cleaned.startsWith('0x') ? isEvmAddress(cleaned) : isSolanaAddress(cleaned);
+      if (!ok) throw new HttpError(400, `Invalid API address (${shortAddr(d) || 'empty'}). Use a Solana public address or a 0x address.`);
+      return cleaned;
+    }).filter(Boolean);
+  }
+
   function knownSigs() {
     return new Set(db.prepare('SELECT signature FROM payments WHERE signature IS NOT NULL').all()
       .map(r => (r.signature.startsWith('0x') ? r.signature.toLowerCase() : r.signature)));
@@ -223,6 +237,7 @@ export function openStore({ path = ':memory:', now = () => new Date() } = {}) {
       getAgent(agentId);
       const before = ruleOf(q.rule.get(agentId, RAIL));
       const next = { period: 'dia', ...before, ...input };
+      if (Object.hasOwn(input, 'allow')) next.allow = cleanAllow(input.allow);
       const errors = validateRuleInput(next);
       if (errors.length) throw new HttpError(400, errors.join('; '));
       db.prepare(`INSERT INTO rules (agent_id, rail, period, cap, per_tx, approve_above, allow, at80, at100, monitor, off)
@@ -273,8 +288,11 @@ export function openStore({ path = ':memory:', now = () => new Date() } = {}) {
       const lines = [];
       for (const [agent, call] of PRESENTATION) {
         if (!q.agent.get(agent)) continue;
-        const r = this.check({ agent, ...call });
-        lines.push({ agent, network: call.network, amount: call.amount, vendor: call.vendor, destination: call.destination, decision: r.decision, note: r.note });
+        const rule = ruleOf(q.rule.get(agent, RAIL));
+        const destination = call.destination || receiverFor(rule?.allow, call.network);
+        if (!destination) continue;
+        const r = this.check({ agent, ...call, destination });
+        lines.push({ agent, network: call.network, amount: call.amount, vendor: call.vendor, destination, decision: r.decision, note: r.note });
       }
       const count = decision => lines.filter(l => l.decision === decision).length;
       return { paid: false, lines, allowed: count('allowed'), blocked: count('blocked'), needsApproval: count('needs_approval') };

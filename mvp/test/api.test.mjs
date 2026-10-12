@@ -192,3 +192,30 @@ test('alterar teto fica registrado na auditoria', async () => {
   assert.equal(res.body.cap, 30);
   assert.equal(app.store.db.prepare('SELECT COUNT(*) AS n FROM rule_audit WHERE agent_id = ?').get('pesquisa-mercado').n, 2);
 });
+
+test('cadastro de agente novo grava carteiras, teto e destinos', async () => {
+  const created = await panel('/api/agents', { method: 'POST', body: JSON.stringify({
+    id: 'nova-api', description: 'cartas', wallet: WALLET, walletBase: BASE_FROM,
+  }) });
+  assert.equal(created.status, 200);
+  assert.equal(created.body.id, 'nova-api');
+  assert.equal(created.body.wallet, WALLET);
+  const rules = await panel('/api/agents/nova-api/rules', { method: 'PUT', body: JSON.stringify({
+    period: 'mes', cap: 2, perTx: 0.1, allow: [SHOP, BASE_FROM], at80: 'alertar', at100: 'bloquear',
+  }) });
+  assert.equal(rules.status, 200);
+  assert.equal(rules.body.period, 'mes');
+  assert.equal(rules.body.cap, 2);
+  assert.deepEqual(rules.body.allow, [SHOP, BASE_FROM]);
+  const { body } = await panel('/api/state');
+  const agent = body.agents.find(a => a.id === 'nova-api');
+  assert.equal(agent.description, 'cartas');
+  assert.equal(agent.walletBase, BASE_FROM);
+  assert.equal(agent.rule.cap, 2);
+
+  const bad = await panel('/api/agents/nova-api/rules', { method: 'PUT', body: JSON.stringify({ cap: 2, allow: ['not-an-address'] }) });
+  assert.equal(bad.status, 400);
+  const phrase = `${'abandon '.repeat(11)}abandon`;
+  const refused = await panel('/api/agents/nova-api/rules', { method: 'PUT', body: JSON.stringify({ cap: 2, allow: [phrase] }) });
+  assert.equal(refused.status, 422);
+});

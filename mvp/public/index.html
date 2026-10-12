@@ -121,8 +121,10 @@ button,select,input{font:inherit;color:inherit}
 .field{display:flex;flex-direction:column;gap:4px;min-width:0}
 .field.full{grid-column:1/-1}
 .field label{font-size:12px;color:var(--muted);font-weight:500}
-.field select,.field input{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--surface);width:100%;min-width:0}
-.field input{font-family:var(--mono)}
+.field select,.field input,.field textarea{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--surface);width:100%;min-width:0}
+.field input,.field textarea{font-family:var(--mono)}
+.field textarea{min-height:96px;resize:vertical;font-family:var(--code)}
+.field input[readonly]{opacity:.72}
 .form-actions{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap}
 .present{display:flex;flex-direction:column;align-items:flex-start;gap:6px;padding-bottom:12px;border-bottom:1px solid var(--line)}
 .present .hint{margin:0;color:var(--muted);font-size:12px}
@@ -199,7 +201,18 @@ tr.detail td{background:var(--surface-2)}
 .wedit{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
 .wedit input{width:340px;max-width:100%;border:1px solid var(--line);border-radius:6px;padding:4px 8px;background:var(--surface);font-family:var(--mono);font-size:12px}
 .werr{color:var(--crit);font-size:12px;margin-top:4px}
-@media (max-width:760px){ .conn{grid-template-columns:minmax(0,1fr)} }
+.agent-tools{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.agent-tools .tabs{flex:1}
+.admin{display:grid;grid-template-columns:minmax(180px,240px) minmax(0,1fr);gap:18px;align-items:start}
+.admin-side{display:flex;flex-direction:column;gap:8px;min-width:0}
+.admin-list{display:flex;flex-direction:column;gap:4px;max-height:480px;overflow:auto}
+.pick{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;text-align:left;border:1px solid transparent;background:transparent;border-radius:8px;padding:8px 10px;cursor:pointer;color:var(--muted)}
+.pick strong{color:var(--ink);font-weight:600;font-family:var(--mono);font-size:13px}
+.pick small{font-size:12px;color:var(--muted)}
+.pick[aria-selected="true"]{background:var(--bg);border-color:var(--line);color:var(--ink)}
+.pick:hover{background:var(--bg)}
+#admin-note{grid-column:1/-1;margin:0}
+@media (max-width:760px){ .conn{grid-template-columns:minmax(0,1fr)} .admin{grid-template-columns:minmax(0,1fr)} }
 
 .foot{color:var(--muted);font-size:12px;border-top:1px solid var(--line);padding-top:14px}
 
@@ -272,7 +285,7 @@ body{padding-inline:24px}
 .bar{height:8px;border-radius:999px}
 .bar i{border-radius:999px}
 .bar b{background:var(--muted);opacity:.35}
-.field select,.field input,.filters select,.cap-edit input,.wedit input{background:var(--bg);border-color:var(--line);border-radius:8px;color:var(--ink)}
+.field select,.field input,.field textarea,.filters select,.cap-edit input,.wedit input{background:var(--bg);border-color:var(--line);border-radius:8px;color:var(--ink)}
 .field select,.field input{min-height:44px}
 .result{background:var(--bg)}
 .vstat{background:var(--bg);border-radius:10px}
@@ -314,7 +327,7 @@ body:has(#login:not([hidden])) .mtabs{display:none!important}
   body[data-mtab] [data-m]{display:none}
   body[data-mtab="home"] [data-m="home"],body[data-mtab="agents"] [data-m="agents"],
   body[data-mtab="approvals"] [data-m="approvals"],body[data-mtab="ledger"] [data-m="ledger"],
-  body[data-mtab="protection"] [data-m="protection"]{display:flex}
+  body[data-mtab="protection"] [data-m="protection"],body[data-mtab="admin"] [data-m="admin"]{display:flex}
   body[data-mtab="home"] .kpis[data-m]{display:grid}
   body[data-mtab="protection"] .foot[data-m]{display:block}
   .m-pending[hidden]{display:none!important}
@@ -325,11 +338,11 @@ body:has(#login:not([hidden])) .mtabs{display:none!important}
   .grid,.col{display:contents}
   .panel{border-radius:20px}
   .kpi{border-radius:18px}
-  .mtabs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));position:fixed;left:0;right:0;bottom:0;z-index:20;
+  .mtabs{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));position:fixed;left:0;right:0;bottom:0;z-index:20;
     padding:6px 6px calc(10px + env(safe-area-inset-bottom));background:rgba(6,32,47,.86);
     -webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);border-top:1px solid var(--line)}
   .mtabs button{position:relative;border:0;background:transparent;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:3px;
-    font-size:10px;font-weight:500;padding:6px 0;min-height:52px;cursor:pointer}
+    font-size:10px;font-weight:500;line-height:1.15;padding:6px 2px;min-height:56px;cursor:pointer;text-align:center}
   .mtabs button[aria-current="page"]{color:var(--accent);font-weight:600}
   .m-badge{position:absolute;top:2px;left:50%;margin-left:6px;min-width:18px;height:18px;border-radius:9px;background:var(--accent);color:var(--accent-ink);
     font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 4px}
@@ -385,7 +398,10 @@ body:has(#login:not([hidden])) .mtabs{display:none!important}
   <div class="grid">
     <div class="col">
       <section class="panel" aria-labelledby="agent-title" data-m="agents">
-        <div class="tabs" role="tablist" id="tabs" aria-label="Agents"></div>
+        <div class="agent-tools">
+          <div class="tabs" role="tablist" id="tabs" aria-label="Agents"></div>
+          <a class="btn small" href="#admin" data-go="admin">Register agent</a>
+        </div>
         <div class="agent-h" id="agent-h"></div>
         <div class="caps" id="caps"></div>
       </section>
@@ -521,10 +537,90 @@ body:has(#login:not([hidden])) .mtabs{display:none!important}
     </div>
   </section>
 
+  <section class="panel" id="admin" aria-labelledby="admin-title" data-m="admin">
+    <div class="panel-h">
+      <div>
+        <h2 id="admin-title">Admin</h2>
+        <span class="hint">Register an agent, or update its cap, wallets, and the addresses its API can receive</span>
+      </div>
+    </div>
+    <div class="admin">
+      <div class="admin-side">
+        <button class="btn small" type="button" data-act="admin-new">New agent</button>
+        <div class="admin-list" id="admin-list" role="listbox" aria-label="Registered agents"></div>
+      </div>
+      <form class="form" id="admin-form" autocomplete="off">
+        <div class="field">
+          <label for="adm-id">Agent id</label>
+          <input id="adm-id" name="id" required spellcheck="false" autocomplete="off" placeholder="nansen">
+          <span class="help">Lowercase letters, numbers, and hyphens. The SDK sends this id.</span>
+        </div>
+        <div class="field">
+          <label for="adm-desc">Description</label>
+          <input id="adm-desc" name="description" type="text" autocomplete="off" placeholder="On-chain data, USDC per call">
+        </div>
+        <div class="field">
+          <label for="adm-sol">Solana public address</label>
+          <input id="adm-sol" name="solana" spellcheck="false" autocomplete="off" placeholder="devnet address">
+          <span class="help">The wallet that sends. Leave blank to keep the address already saved.</span>
+        </div>
+        <div class="field">
+          <label for="adm-base">Base public address</label>
+          <input id="adm-base" name="base" spellcheck="false" autocomplete="off" placeholder="0x… on Sepolia">
+        </div>
+        <div class="field">
+          <label for="adm-period">Cap period</label>
+          <select id="adm-period" name="period">
+            <option value="dia">Day</option>
+            <option value="mes">Month</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="adm-cap">USDC cap</label>
+          <input id="adm-cap" name="cap" type="number" min="0" step="any" inputmode="decimal" required placeholder="1.00">
+        </div>
+        <div class="field">
+          <label for="adm-pertx">Max per call (USD)</label>
+          <input id="adm-pertx" name="perTx" type="number" min="0" step="any" inputmode="decimal" placeholder="optional">
+        </div>
+        <div class="field">
+          <label for="adm-approve">Ask approval above (USD)</label>
+          <input id="adm-approve" name="approveAbove" type="number" min="0" step="any" inputmode="decimal" placeholder="optional">
+        </div>
+        <div class="field">
+          <label for="adm-80">At 80% of the cap</label>
+          <select id="adm-80" name="at80">
+            <option value="alertar">Alert</option>
+            <option value="pedir_aprovacao">Ask for approval</option>
+            <option value="bloquear">Block</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="adm-100">At 100% of the cap</label>
+          <select id="adm-100" name="at100">
+            <option value="bloquear">Block</option>
+            <option value="pausar_agente">Pause agent</option>
+            <option value="pedir_aprovacao">Ask for approval</option>
+          </select>
+        </div>
+        <div class="field full">
+          <label for="adm-allow">API receiving addresses</label>
+          <textarea id="adm-allow" name="allow" rows="4" spellcheck="false" autocomplete="off" placeholder="one address per line, Solana or 0x"></textarea>
+          <span class="help">The address the API asks for in the 402. Anything else is blocked before anyone signs. Leave this empty to accept any destination.</span>
+        </div>
+        <div class="errbox" id="admin-err" hidden></div>
+        <p class="hint" id="admin-note" hidden></p>
+        <div class="form-actions">
+          <button class="btn primary" type="submit" id="admin-save">Register agent</button>
+        </div>
+      </form>
+    </div>
+  </section>
+
   <p class="foot" data-m="protection">Nectrae Spend Control · MVP. The product never holds funds or private keys. The most restrictive rule always wins. Days and months follow the server clock; the chart groups by UTC day.</p>
 </div>
 
-<nav class="mtabs" aria-label="Sections"><button type="button" data-mtab="home"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="12,2 21,7 21,17 12,22 3,17 3,7"/></svg>Home</button><button type="button" data-mtab="agents"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="12,2 21,7 21,17 12,22 3,17 3,7"/><ellipse cx="9" cy="12" rx="2.15" ry="0.85" fill="currentColor" stroke="none"/><ellipse cx="15" cy="12.3" rx="2.3" ry="0.95" fill="currentColor" stroke="none"/></svg>Agents</button><button type="button" data-mtab="approvals"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg>Approvals<span class="m-badge" id="m-badge" hidden></span></button><button type="button" data-mtab="ledger"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3h8l4 4v14H7z"/><path d="M15 3v4h4"/><path d="M10 12h6M10 16h6"/></svg>Ledger</button><button type="button" data-mtab="protection"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg>Protection</button></nav>
+<nav class="mtabs" aria-label="Sections"><button type="button" data-mtab="home"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="12,2 21,7 21,17 12,22 3,17 3,7"/></svg>Home</button><button type="button" data-mtab="agents"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="12,2 21,7 21,17 12,22 3,17 3,7"/><ellipse cx="9" cy="12" rx="2.15" ry="0.85" fill="currentColor" stroke="none"/><ellipse cx="15" cy="12.3" rx="2.3" ry="0.95" fill="currentColor" stroke="none"/></svg>Agents</button><button type="button" data-mtab="approvals"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg>Approvals<span class="m-badge" id="m-badge" hidden></span></button><button type="button" data-mtab="ledger"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3h8l4 4v14H7z"/><path d="M15 3v4h4"/><path d="M10 12h6M10 16h6"/></svg>Ledger</button><button type="button" data-mtab="protection"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg>Protection</button><button type="button" data-mtab="admin"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="12,2 21,7 21,17 12,22 3,17 3,7"/><path d="M12 8v8M8 12h8"/></svg>Admin</button></nav>
 <script>
 (() => {
 const NETS = {
@@ -548,7 +644,7 @@ const looksLikeSecret = v => { v = v.trim(); if (/^\[\s*\d{1,3}(\s*,\s*\d{1,3}){
   return /^0x[0-9a-fA-F]{64}$/.test(v) || /^[1-9A-HJ-NP-Za-km-z]{80,90}$/.test(v); };
 const SECRET_MSG = 'This looks like a private key or a recovery phrase. Nothing was sent to the server. Use only the public address; if the key is real, treat it as leaked and move the funds.';
 
-const ui = { sel: null, open: null, editingCap: null, editingWallet: null, walletErr: {}, busy: {}, looping: null, lastValidation: null, watcherBusy: false, watcherLine: '', lineMood: '' };
+const ui = { sel: null, open: null, editingCap: null, editingWallet: null, walletErr: {}, busy: {}, looping: null, lastValidation: null, watcherBusy: false, watcherLine: '', lineMood: '', adminId: null, adminDirty: false, adminSaving: false };
 let S = null;
 
 // Token do painel (PANEL_TOKEN). Fica só neste navegador: na aba (sessionStorage) ou no aparelho (localStorage).
@@ -688,7 +784,7 @@ function renderTabs() {
     const st = status(a);
     return `<button class="tab" role="tab" type="button" data-tab="${esc(a.id)}" aria-selected="${a.id===ui.sel}" aria-label="${esc(a.id)}, ${esc(st.text)}">${faceSvg(waxOf(a.id), eyesOf(a))}<span class="id">${esc(a.id)}</span></button>`;
   }).join('')
-    : `<p class="empty">No agents yet. Run <code>npm run seed</code> to create the examples.</p>`;
+    : `<p class="empty">No agents yet. <a href="#admin" data-go="admin">Register one in Admin</a>.</p>`;
 }
 
 function renderAgent() {
@@ -856,10 +952,48 @@ function renderSelects() {
   $('sim-agent').value = keepSim && S.agents.some(a => a.id === keepSim) ? keepSim : ui.sel || '';
 }
 
+function renderAdminList() {
+  $('admin-list').innerHTML = S.agents.length ? S.agents.map(a => {
+    const cap = a.rule && !a.rule.off ? fmtUSD(a.rule.cap) : 'no cap';
+    return `<button type="button" class="pick" role="option" data-act="admin-pick" data-id="${esc(a.id)}" aria-selected="${ui.adminId === a.id}"><strong>${esc(a.id)}</strong><small>${esc(cap)} · ${esc(status(a).text)}</small></button>`;
+  }).join('') : `<p class="empty">No agents yet. Register the first one.</p>`;
+}
+
+function fillAdmin(a) {
+  $('adm-id').value = a?.id || '';
+  $('adm-id').readOnly = !!a;
+  $('adm-desc').value = a?.description || '';
+  $('adm-sol').value = a?.wallet || '';
+  $('adm-base').value = a?.walletBase || '';
+  const r = a?.rule;
+  $('adm-period').value = r?.period === 'mes' ? 'mes' : 'dia';
+  $('adm-cap').value = r && r.cap != null ? r.cap : '';
+  $('adm-pertx').value = r?.perTx ?? '';
+  $('adm-approve').value = r?.approveAbove ?? '';
+  $('adm-80').value = ['alertar', 'pedir_aprovacao', 'bloquear'].includes(r?.at80) ? r.at80 : 'alertar';
+  $('adm-100').value = ['bloquear', 'pausar_agente', 'pedir_aprovacao'].includes(r?.at100) ? r.at100 : 'bloquear';
+  $('adm-allow').value = (r?.allow || []).join('\n');
+  $('admin-save').textContent = a ? 'Save changes' : 'Register agent';
+}
+
+function renderAdmin() {
+  renderAdminList();
+  if (ui.adminDirty || ui.adminSaving || $('admin-form').contains(document.activeElement)) return;
+  if (ui.adminId && !agent(ui.adminId)) ui.adminId = null;
+  fillAdmin(ui.adminId ? agent(ui.adminId) : null);
+}
+
+function optionalAmount(id) {
+  const raw = $(id).value.trim();
+  if (!raw) return null;
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : NaN;
+}
+
 function renderAll() {
   if (!S) return;
   const focusId = document.activeElement?.id;
-  renderKPIs(); renderTabs(); renderAgent(); renderChart(); renderValidation(); renderApprovals(); renderAlerts(); renderConn(); renderLedger(); renderSelects(); renderWatcher();
+  renderKPIs(); renderTabs(); renderAgent(); renderChart(); renderValidation(); renderApprovals(); renderAlerts(); renderConn(); renderLedger(); renderSelects(); renderAdmin(); renderWatcher();
   $('clock').textContent = new Date(S.now).toLocaleString('en-US', {day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'});
   if (focusId && $(focusId) && ['cap-in','w-sol','w-base'].includes(focusId)) $(focusId).focus();
 }
@@ -875,6 +1009,14 @@ function showResult(r, amount, vendor) {
 async function act(fn) { try { await fn(); } catch (e) { banner(e.message); } await refresh(); }
 
 document.addEventListener('click', ev => {
+  if (ev.target.closest('[data-go="admin"]')) {
+    ui.adminId = null;
+    ui.adminDirty = false;
+    fillAdmin(null);
+    $('admin-err').hidden = true;
+    $('admin-note').hidden = true;
+    if (S) renderAdminList();
+  }
   const tab = ev.target.closest('[data-tab]');
   if (tab) { ui.sel = tab.dataset.tab; ui.editingCap = null; $('sim-agent').value = ui.sel; renderAll(); return; }
   const t = ev.target.closest('[data-act]'); if (!t || !S) return;
@@ -903,6 +1045,10 @@ document.addEventListener('click', ev => {
       return api('PUT', `/api/agents/${encodeURIComponent(id)}/wallet`, body)
         .then(() => { ui.editingWallet = null; ui.walletErr[id] = null; return refresh(); })
         .catch(e => { ui.walletErr[id] = e.message; renderConn(); }); }
+    case 'admin-new':
+      ui.adminId = null; ui.adminDirty = false; fillAdmin(null); $('admin-err').hidden = true; $('admin-note').hidden = true; renderAdminList(); $('adm-id').focus(); return;
+    case 'admin-pick':
+      ui.adminId = id; ui.adminDirty = false; fillAdmin(agent(id)); $('admin-err').hidden = true; $('admin-note').hidden = true; renderAdminList(); $('adm-desc').focus(); return;
   }
 });
 document.addEventListener('keydown', ev => {
@@ -939,6 +1085,48 @@ $('watcher').addEventListener('click', async () => {
   renderWatcher();
 });
 $('sim').addEventListener('submit', ev => { ev.preventDefault(); if (!(parseFloat($('sim-amount').value) > 0)) { $('sim-amount').focus(); return; } simulateOnce().catch(e => banner(e.message)); });
+$('admin-form').addEventListener('input', () => { ui.adminDirty = true; $('admin-note').hidden = true; });
+$('admin-form').addEventListener('submit', async ev => {
+  ev.preventDefault();
+  const showErr = msg => { $('admin-err').hidden = !msg; $('admin-err').textContent = msg || ''; };
+  showErr('');
+  const id = $('adm-id').value.trim();
+  if (!/^[a-z0-9][a-z0-9-]{1,40}$/.test(id)) { showErr('Use a lowercase id with numbers and hyphens (for example nansen).'); $('adm-id').focus(); return; }
+  const solana = $('adm-sol').value.trim(), baseAddr = $('adm-base').value.trim();
+  const allow = $('adm-allow').value.split(/[\n,]/).map(s => s.trim()).filter(Boolean);
+  if ([solana, baseAddr, ...allow].some(looksLikeSecret)) { showErr(SECRET_MSG); return; }
+  if ($('adm-cap').value.trim() === '' || !(Number($('adm-cap').value) >= 0)) { showErr('Enter the USDC cap for this agent.'); $('adm-cap').focus(); return; }
+  const perTx = optionalAmount('adm-pertx'), approveAbove = optionalAmount('adm-approve');
+  if (Number.isNaN(perTx) || Number.isNaN(approveAbove) || (perTx !== null && perTx < 0) || (approveAbove !== null && approveAbove < 0)) {
+    showErr('Amounts must be numbers of zero or more.'); return;
+  }
+  const existed = !!S?.agents.some(a => a.id === id);
+  ui.adminSaving = true;
+  $('admin-save').disabled = true;
+  try {
+    const body = { id, description: $('adm-desc').value.trim() };
+    if (solana) body.wallet = solana;
+    if (baseAddr) body.walletBase = baseAddr;
+    await api('POST', '/api/agents', body);
+    await api('PUT', `/api/agents/${encodeURIComponent(id)}/rules`, {
+      period: $('adm-period').value,
+      cap: Number($('adm-cap').value),
+      perTx, approveAbove, allow,
+      at80: $('adm-80').value,
+      at100: $('adm-100').value,
+    });
+    ui.adminId = id;
+    ui.adminDirty = false;
+    ui.sel = id;
+    $('admin-note').hidden = false;
+    $('admin-note').textContent = existed ? `${id} updated.` : `${id} is registered. The SDK uses this id.`;
+    ui.adminSaving = false;
+    await refresh();
+    if (agent(id)) fillAdmin(agent(id));
+  } catch (e) { showErr(e.message); }
+  ui.adminSaving = false;
+  $('admin-save').disabled = false;
+});
 $('present').addEventListener('click', async () => {
   const btn = $('present');
   btn.disabled = true; btn.textContent = 'Simulating…';
@@ -969,7 +1157,10 @@ $('loop').addEventListener('click', async () => {
 });
 
 refresh();
-setInterval(() => { if (!ui.looping && !ui.editingCap && !ui.editingWallet) refresh(); }, 5000);
+setInterval(() => {
+  const typing = $('admin-form').contains(document.activeElement);
+  if (!ui.looping && !ui.editingCap && !ui.editingWallet && !ui.adminDirty && !ui.adminSaving && !typing) refresh();
+}, 5000);
 
 /* Nectrae · token do painel */
 document.getElementById('login-form').addEventListener('submit', async (ev) => {
@@ -991,7 +1182,8 @@ document.getElementById('login-form').addEventListener('submit', async (ev) => {
     agents: ['CAPS BY AGENT', 'Agents'],
     approvals: ['NEEDS YOU', 'Approvals'],
     ledger: ['EVERY PAYMENT ATTEMPT', 'Ledger'],
-    protection: ['VALIDATION', 'Protection']
+    protection: ['VALIDATION', 'Protection'],
+    admin: ['AGENT REGISTRY', 'Admin']
   };
   const btns = document.querySelectorAll('.mtabs [data-mtab]');
   function setTab(t, push) {
