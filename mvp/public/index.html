@@ -1,12 +1,25 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script>
+(function () {
+  var force = /(?:\?|&)phone(?:=|&|$)/.test(location.search + '&');
+  if (force || window.innerWidth <= 700) document.documentElement.classList.add('nectrae-ios');
+  if (force && window.innerWidth > 700) document.documentElement.classList.add('nectrae-phone');
+})();
+</script>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Nectrae">
+<meta name="theme-color" content="#031626">
 <title>Nectrae Spend Control</title>
+<link rel="icon" href="/brand/favicon.png" type="image/png">
+<link rel="apple-touch-icon" href="/brand/nectrae-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
 html{color-scheme:dark}
 body{margin:0}
@@ -19,10 +32,9 @@ body{margin:0}
   --ok:#5FDFA6; --ok-bg:rgba(95,223,166,.12); --warn:#EDAE44; --warn-bg:rgba(237,174,68,.14); --crit:#E8803A; --crit-bg:rgba(232,128,58,.14);
   --r-ia:#69A9D2; --r-x402:#EDAE44; --r-sol:#E8803A; --r-sub:#BFC3BF;
   --grad:linear-gradient(90deg,#EDAE44,#E8803A);
-  --sans:"Inter",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
-  --mono:"Inter",ui-sans-serif,system-ui,sans-serif;
+  --sans:"Manrope",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"Manrope",ui-sans-serif,system-ui,sans-serif;
   --code:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
-  --serif:"Playfair Display",Georgia,serif;
 }
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.45;padding-inline:16px;padding-block:0 48px}
@@ -197,7 +209,19 @@ tr.detail td{background:var(--surface-2)}
 .wedit{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
 .wedit input{width:340px;max-width:100%;border:1px solid var(--line);border-radius:6px;padding:4px 8px;background:var(--surface);font-family:var(--mono);font-size:12px}
 .werr{color:var(--crit);font-size:12px;margin-top:4px}
-@media (max-width:760px){ .conn{grid-template-columns:minmax(0,1fr)} }
+.agent-tools{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.agent-tools .tabs{flex:1}
+.admin{display:grid;grid-template-columns:minmax(180px,240px) minmax(0,1fr);gap:18px;align-items:start}
+.admin-side{display:flex;flex-direction:column;gap:8px;min-width:0}
+.admin-list{display:flex;flex-direction:column;gap:4px;max-height:480px;overflow:auto}
+.pick{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;text-align:left;border:1px solid transparent;background:transparent;border-radius:8px;padding:8px 10px;cursor:pointer;color:var(--muted)}
+.pick strong{color:var(--ink);font-weight:600;font-family:var(--mono);font-size:13px}
+.pick small{font-size:12px;color:var(--muted)}
+.pick[aria-selected="true"]{background:var(--bg);border-color:var(--line);color:var(--ink)}
+.pick:hover{background:var(--bg)}
+.field textarea{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--bg);width:100%;min-width:0;min-height:88px;font-family:var(--code);color:var(--ink);resize:vertical}
+#admin-note{grid-column:1/-1;margin:0}
+@media (max-width:760px){ .conn{grid-template-columns:minmax(0,1fr)} .admin{grid-template-columns:minmax(0,1fr)} }
 
 .foot{color:var(--muted);font-size:12px;border-top:1px solid var(--line);padding-top:14px}
 
@@ -223,14 +247,87 @@ a{color:var(--accent)} a:hover{color:var(--accent-soft)} a:visited{color:var(--a
 body{padding-inline:24px}
 .top{padding-block:24px 18px;align-items:flex-end}
 .brand{gap:28px;align-items:flex-end;flex-wrap:wrap}
-.logo-block{display:flex;flex-direction:column;gap:4px}
-.brand h1.logo{font-family:var(--serif);font-weight:700;font-size:34px;line-height:1;letter-spacing:-.01em;display:flex;align-items:flex-end;gap:2px}
-.brand h1.logo svg{margin-bottom:20px}
-.tagline{font-size:10px;letter-spacing:.32em;color:var(--muted)}
+.logo-block{display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.brand h1.logo{margin:0;line-height:0}
+.brand h1.logo img{display:block;height:52px;width:auto}
+.tagline{font-family:var(--sans);font-size:11px;font-weight:400;letter-spacing:.32em;color:var(--muted)}
 .brand-copy{display:flex;flex-direction:column;gap:4px;padding-bottom:2px}
 .eyebrow{font-size:11px;font-weight:600;letter-spacing:.24em;color:var(--accent)}
 .brand p{font-size:13px}
 .chip{background:var(--surface);color:var(--ink);padding:6px 12px}
+.lang-switch{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;background:var(--surface);flex:none}
+.lang-switch button{border:0;background:transparent;color:var(--muted);padding:6px 11px;font-size:11px;font-weight:700;letter-spacing:.06em;cursor:pointer}
+.lang-switch button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.watcher-wrap{position:relative;align-self:center;z-index:22}
+.watcher{position:relative;align-self:center;display:inline-flex;align-items:center;gap:10px;max-width:min(100%,340px);
+  border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 16px 4px 4px;cursor:pointer;color:inherit;text-align:left}
+.watcher:hover{background:var(--surface-2)}
+.watcher:disabled{cursor:wait}
+.watcher[data-mood="squint"]{box-shadow:0 0 0 1px var(--accent)}
+.watcher[data-mood="shut"]{box-shadow:0 0 0 1px var(--crit)}
+.watcher[aria-expanded="true"]{background:var(--surface-2)}
+.watcher-face{width:36px;height:36px;display:grid;place-items:center;flex:none}
+.watcher-face .face{width:36px;height:36px;display:block;animation:watcher-breathe 3.2s ease-in-out infinite}
+.watcher .halo{fill:none;stroke:transparent;stroke-width:1.5}
+.watcher .face ellipse,.watcher .face rect{fill:var(--ink)}
+.watcher[data-mood="open"] .face ellipse{transform-box:fill-box;transform-origin:center;animation:watcher-blink 4.8s ease-in-out infinite}
+.watcher[data-mood="squint"] .halo{stroke:var(--accent)}
+.watcher[data-mood="squint"] .face{animation-duration:1.1s}
+.watcher[data-mood="shut"] .halo{stroke:var(--crit)}
+.watcher-copy{display:flex;flex-direction:column;gap:1px;min-width:0}
+.watcher-kicker{font-size:11px;font-weight:700;letter-spacing:.04em;color:var(--accent)}
+.watcher-say{font-size:12px;color:var(--muted);line-height:1.3;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.watcher-badge{position:absolute;top:-1px;left:26px;min-width:16px;height:16px;padding:0 4px;border-radius:8px;background:var(--crit);color:#fff;
+  font-size:10px;font-weight:700;line-height:16px;text-align:center;pointer-events:none;box-shadow:0 0 0 2px var(--bg)}
+.watcher-badge[hidden]{display:none!important}
+.watcher-chat{position:fixed;z-index:40;width:252px;max-height:min(380px,52vh);
+  display:flex;flex-direction:column;gap:8px;padding:12px 10px 14px;border-radius:18px;background:var(--surface);
+  border:1px solid var(--line);box-shadow:0 18px 48px rgba(0,0,0,.42);overflow-x:hidden;overflow-y:auto;transform-origin:top right}
+.watcher-chat[hidden]{display:none!important}
+.watcher-chat::before{content:"";position:absolute;top:-6px;right:18px;width:12px;height:12px;background:var(--surface);border-left:1px solid var(--line);border-top:1px solid var(--line);transform:rotate(45deg)}
+.watcher-chat-list{display:flex;flex-direction:column;align-items:flex-end;gap:8px;width:100%}
+.watcher-chat-list .empty{align-self:stretch}
+.say{position:relative;max-width:100%;display:flex;flex-direction:column;gap:4px;padding:10px 14px 8px;
+  border-radius:18px 18px 6px 18px;background:var(--accent);color:var(--accent-ink);animation:say-in .28s ease-out;
+  overflow-wrap:anywhere;word-break:break-word}
+.say.warn{background:var(--accent)}
+.say.crit{background:var(--crit);color:#fff}
+.say.ok{background:var(--ok);color:var(--accent-ink)}
+.say.info{background:#69A9D2;color:var(--accent-ink)}
+.say-who{font-size:11px;font-weight:700;letter-spacing:.02em;opacity:.72}
+.say-what{font-size:14px;font-weight:500;line-height:1.35}
+.say-time{font-size:10px;opacity:.62;align-self:flex-end}
+@keyframes watcher-breathe{0%,100%{transform:translateY(0)}50%{transform:translateY(-1.5px)}}
+@keyframes watcher-blink{0%,42%,48%,100%{transform:scaleY(1)}45%{transform:scaleY(.08)}}
+@keyframes say-in{from{opacity:0;transform:translate(10px,-6px) scale(.96)}to{opacity:1;transform:none}}
+.agents-board{display:flex;flex-direction:column;gap:14px}
+.agents-board .board-h{display:none}
+.agent-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.acard{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:12px;cursor:pointer;text-align:left;color:inherit}
+.acard:hover{background:var(--surface-2)}
+.acard.hot{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.acard.sel:not(.hot){border-color:var(--ink)}
+.acard-top{display:flex;align-items:flex-start;gap:10px}
+.acard-pills{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex:none}
+.acard-top .face{width:44px;height:44px;flex:none}
+.acard .face ellipse,.acard .face rect{fill:var(--ink)}
+.acard .face .mouth{fill:none;stroke:var(--ink);stroke-width:.8;stroke-linecap:round}
+.acard-id{flex:1;min-width:0}
+.acard-id strong{display:block;font-size:16px;font-weight:700}
+.acard-id p{margin:2px 0 0;color:var(--muted);font-size:12px;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.acard-amt{display:flex;align-items:baseline;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.acard-amt .spent{font-size:26px;font-weight:700;letter-spacing:-.02em}
+.acard-amt .of{color:var(--muted);font-size:13px}
+.acard-amt .pct{font-family:var(--mono);font-size:13px;font-weight:600}
+.acard .bar{height:8px}
+.split{display:flex;gap:16px;font-size:12px;color:var(--muted)}
+.split span{display:inline-flex;align-items:center;gap:6px}
+.acard-meta{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;font-size:12px;color:var(--muted)}
+.acard-meta strong{display:block;color:var(--ink);font-weight:600;margin-top:2px}
+.acard-acts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px}
+.acard-acts .live-act{grid-column:1/-1}
+.acard-acts .btn{width:100%;justify-content:center}
+@media (max-width:980px){ .agent-cards{grid-template-columns:minmax(0,1fr)} }
 .btn{border-radius:10px;padding:8px 14px;font-weight:600;background:var(--surface);border-color:var(--line)}
 .btn:hover{background:var(--surface-2)}
 .btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
@@ -267,11 +364,53 @@ th{background:var(--surface);text-transform:uppercase;letter-spacing:.08em;font-
 tr.detail td{background:var(--bg)}
 @keyframes flash{from{background:var(--warn-bg)}to{background:transparent}}
 .foot{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
-@media (max-width:600px){ body{padding-inline:16px} .brand h1.logo{font-size:28px} .kpi .val{font-size:24px} }
+@media (max-width:600px){ body{padding-inline:16px} .brand h1.logo img{height:40px} .kpi .val{font-size:24px} }
+
+/* ===== Artifact-aligned chart, cards, tables ===== */
+.chart-wrap{overflow:visible}
+.chart-wrap svg{min-width:0;width:100%;height:auto;max-height:280px}
+.legend{display:none}
+.bar.stack{display:flex;height:8px;border-radius:999px;background:#0a1c28;overflow:hidden;position:relative}
+.bar.stack i{position:static;inset:auto;height:100%;border-radius:0;flex:none;min-width:0}
+.bar.stack i.sol{background:var(--r-x402)}
+.bar.stack i.base{background:var(--r-ia)}
+.acard-acts .btn{border-radius:12px;min-height:40px;padding:9px 12px;font-weight:600}
+.btn.gold-line{border-color:var(--accent);color:var(--ink);background:transparent}
+.btn.gold-line:hover{background:var(--accent-soft);color:var(--accent-ink);border-color:var(--accent)}
+.appr-item .acts{margin-top:4px}
+.appr-item .acts .btn{flex:1;min-height:38px;border-radius:12px;font-weight:600}
+.appr-item .hint{font-size:12px;color:var(--muted);line-height:1.35}
+.panel:has(#approvals){min-height:220px}
+
+.table-wrap{border:0;border-radius:0;max-height:min(52vh,560px);margin:0 -8px}
+table{min-width:100%;border-collapse:separate;border-spacing:0}
+th{background:transparent;padding:10px 14px;font-size:10px;letter-spacing:.12em;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:13px 14px;vertical-align:middle;border-bottom:1px solid rgba(23,44,58,.9)}
+tr.clickable:hover td{background:rgba(237,174,68,.04)}
+td.clip{max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+td.dest{max-width:168px;font-family:var(--code);font-size:12px}
+td.reason{max-width:240px}
+td.when,td.agent-id,.amt .num{font-family:var(--code);font-size:12px;white-space:nowrap}
+td.agent-id{font-weight:600;color:var(--ink)}
+.npill{display:inline-flex;align-items:center;gap:7px;font-size:12px;white-space:nowrap}
+.npill i{width:8px;height:8px;border-radius:50%;flex:none}
+.wallets{min-width:0}
+.addr-stack{display:flex;flex-direction:column;gap:6px}
+.addr-row{display:flex;align-items:center;gap:10px;white-space:nowrap}
+.addr-row .netk{width:52px;flex:none;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.alink{color:var(--accent);font-size:12px;font-weight:600;text-decoration:none}
+.alink:hover{color:var(--accent-soft)}
+.vcell{font-size:12px;color:var(--muted);white-space:nowrap}
+.wact .btn{border-radius:10px}
+.filters select{border-radius:999px;padding:7px 12px;background:var(--bg);font-size:12px}
+.pill{padding:3px 9px;font-size:11px;letter-spacing:.01em}
+.split{margin-top:2px}
+.acard .bar{margin-top:2px}
 
 /* ===== Nectrae · pedido de token ===== */
 .login{max-width:420px;width:100%;margin:24px auto;align-items:flex-start;text-align:left}
-.login h2{font-family:var(--serif);font-size:28px;font-weight:700}
+.login-mark{width:48px;height:48px;display:block;object-fit:contain}
+.login h2{font-family:var(--sans);font-size:28px;font-weight:500;letter-spacing:-.02em}
 .login p{margin:0;color:var(--muted);font-size:13px;line-height:1.5}
 .login code{font-family:var(--code);color:var(--ink)}
 .login-form{display:flex;flex-direction:column;gap:12px;width:100%}
@@ -281,38 +420,121 @@ tr.detail td{background:var(--bg)}
 body:has(#login:not([hidden])) .wrap > :not(.top):not(#login):not(#banner),
 body:has(#login:not([hidden])) .mtabs{display:none!important}
 
-/* ===== Nectrae · versão para celular (barra de abas) ===== */
-.mtabs,.m-head,.m-pending{display:none}
-@media (max-width:700px){
-  body{padding-bottom:calc(104px + env(safe-area-inset-bottom))}
-  .brand-copy,.top-meta{display:none}
-  .top{padding-block:16px 12px}
-  .m-head{display:flex;flex-direction:column;gap:2px}
-  .m-head h2{font-family:var(--serif);font-size:32px;font-weight:700;line-height:1.1}
+/* ===== Nectrae · iOS HIG (≤700px): tab bar, large titles, safe area; logo stays official ===== */
+.mtabs,.m-head,.m-pending,.m-back,.m-more{display:none}
+html.nectrae-ios{
+  --ios-label:#FAF8F2;--ios-secondary:rgba(235,235,245,.6);--ios-separator:rgba(84,84,88,.65);--ios-fill:rgba(118,118,128,.24);--ios-red:#FF453A;
+  -webkit-text-size-adjust:100%;
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display","Helvetica Neue",sans-serif;
+    font-size:16px;line-height:1.35;
+    padding-inline:16px;
+    padding-top:0;
+    padding-bottom:calc(83px + env(safe-area-inset-bottom));
+    overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent;
+  }
+  h1,h2,h3,button,select,input,textarea,.num,.kpi .val,.acard-amt .spent,.vstat .n,.cap-fig .spent{
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display","Helvetica Neue",sans-serif;
+  }
+  input,select,textarea{font-size:16px;min-height:44px;border-radius:10px}
+  .btn{min-height:44px;border-radius:12px;font-size:17px;font-weight:600;padding:10px 16px}
+  .btn.small{min-height:44px;font-size:16px}
+  .brand-copy,.top-meta .chip,#admin-chip,.tagline,.watcher-copy,.agents-board .eyebrow,.m-head .eyebrow{display:none}
+  .top{
+    position:sticky;top:0;z-index:15;overflow:visible;
+    padding:calc(6px + env(safe-area-inset-top)) 0 8px;
+    margin-inline:-16px;padding-inline:16px;
+    background:rgba(3,22,38,.72);
+    -webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);
+    border-bottom:0.5px solid var(--ios-separator);
+    align-items:center;
+  }
+  .brand{gap:0;align-items:center}
+  .brand h1.logo img{height:40px}
+  .top-meta{gap:8px;align-items:center}
+  .lang-switch{height:32px;border-radius:8px;background:var(--ios-fill);border:0}
+  .lang-switch button{min-height:32px;padding:0 11px;font-size:13px;font-weight:600;letter-spacing:0;color:var(--ios-label)}
+  .lang-switch button[aria-pressed="true"]{background:rgba(255,255,255,.18);color:var(--ios-label);border-radius:7px}
+  .watcher{width:44px;height:44px;max-width:none;padding:0;border-radius:50%;justify-content:center;border:0;background:var(--ios-fill)}
+  .watcher-face,.watcher-face .face{width:28px;height:28px}
+  .watcher-badge{left:auto;right:-2px;top:-2px}
+  .watcher-chat{width:248px;right:-4px;background:#06202F}
+  .watcher-chat::before{background:#06202F;right:14px}
+  .say{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",sans-serif}
+  .m-head{display:flex;flex-direction:column;align-items:stretch;gap:0;padding:4px 0 10px;min-height:44px}
+  .m-head h2{font-size:34px;font-weight:700;line-height:1.1;letter-spacing:.37px;color:var(--ios-label)}
+  .m-back{display:none;align-items:center;gap:2px;min-height:44px;min-width:44px;padding:0 4px 0 0;border:0;background:transparent;color:var(--accent);font-size:17px;font-weight:400;cursor:pointer}
+  .m-head[data-level="child"]{flex-direction:row;align-items:center;position:relative;padding:0 0 8px}
+  .m-head[data-level="child"] .m-back{display:inline-flex}
+  .m-head[data-level="child"] h2{font-size:17px;font-weight:600;letter-spacing:-.4px;position:absolute;left:0;right:0;text-align:center;pointer-events:none}
   body[data-mtab] [data-m]{display:none}
   body[data-mtab="inicio"] [data-m="inicio"],body[data-mtab="agentes"] [data-m="agentes"],
   body[data-mtab="aprovacoes"] [data-m="aprovacoes"],body[data-mtab="registro"] [data-m="registro"],
-  body[data-mtab="protecao"] [data-m="protecao"]{display:flex}
+  body[data-mtab="protecao"] [data-m="protecao"],body[data-mtab="admin"] [data-m="admin"],
+  body[data-mtab="sim"] [data-m="sim"],body[data-mtab="mais"] [data-m="mais"]{display:flex}
   body[data-mtab="inicio"] .kpis[data-m]{display:grid}
   body[data-mtab="protecao"] .foot[data-m]{display:block}
   .m-pending[hidden]{display:none!important}
-  .m-pending{align-items:center;gap:12px;width:100%;text-align:left;border:0;border-radius:20px;background:var(--accent-soft);color:var(--accent-ink);padding:14px 16px;cursor:pointer}
-  .m-pending span{flex:1;display:flex;flex-direction:column;gap:2px}
-  .m-pending strong{font-size:15px}
-  .m-pending small{font-size:12px}
+  .m-pending{align-items:center;gap:12px;width:100%;text-align:left;border:0;border-radius:12px;background:var(--accent);color:var(--accent-ink);padding:12px 14px;min-height:44px;cursor:pointer}
+  .m-pending span{flex:1;display:flex;flex-direction:column;gap:1px}
+  .m-pending strong{font-size:15px;font-weight:600}
+  .m-pending small{font-size:13px;opacity:.85}
   .grid,.col{display:contents}
-  .panel{border-radius:20px}
-  .kpi{border-radius:18px}
-  .mtabs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));position:fixed;left:0;right:0;bottom:0;z-index:20;
-    padding:6px 6px calc(10px + env(safe-area-inset-bottom));background:rgba(6,32,47,.86);
-    -webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);border-top:1px solid var(--line)}
-  .mtabs button{position:relative;border:0;background:transparent;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:3px;
-    font-size:10px;font-weight:500;padding:6px 0;min-height:52px;cursor:pointer}
-  .mtabs button[aria-current="page"]{color:var(--accent);font-weight:600}
-  .m-badge{position:absolute;top:2px;left:50%;margin-left:6px;min-width:18px;height:18px;border-radius:9px;background:var(--accent);color:var(--accent-ink);
-    font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 4px}
+  .wrap{gap:16px}
+  .kpis{gap:8px}
+  .kpi{border-radius:12px;padding:14px 16px;background:var(--surface);border:0.5px solid var(--ios-separator)}
+  .kpi .lbl{font-size:13px;color:var(--ios-secondary)}
+  .kpi .val{font-size:28px;font-weight:700;letter-spacing:.36px}
+  .kpi .sub{font-size:13px;color:var(--ios-secondary)}
+  .panel{border-radius:12px;padding:16px;background:var(--surface);border:0.5px solid var(--ios-separator)}
+  .panel-h h2{font-size:17px;font-weight:600;letter-spacing:-.4px}
+  .panel-h .hint{font-size:13px;color:var(--ios-secondary)}
+  .agent-cards{grid-template-columns:minmax(0,1fr);gap:12px}
+  .acard{border-radius:12px;border:0.5px solid var(--ios-separator)}
+  .acard-acts .btn,.appr-item .acts .btn{min-height:44px}
+  .item .acts .btn{min-height:44px}
+  body[data-mtab="sim"] #sim-panel > .panel-h{display:none}
+  .m-more{flex-direction:column;gap:0;background:var(--surface);border-radius:12px;overflow:hidden;border:0.5px solid var(--ios-separator)}
+  .ios-row{display:flex;align-items:center;gap:12px;width:100%;min-height:44px;padding:10px 16px;border:0;background:transparent;color:inherit;text-align:left;cursor:pointer;font:inherit}
+  .ios-row + .ios-row{border-top:0.5px solid var(--ios-separator)}
+  .ios-row-icon{width:29px;height:29px;border-radius:7px;display:grid;place-items:center;background:var(--accent);color:var(--accent-ink);flex:none}
+  .ios-row-copy{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+  .ios-row-copy strong{font-size:17px;font-weight:400}
+  .ios-row-copy small{font-size:13px;color:var(--ios-secondary)}
+  .ios-chev{flex:none;color:rgba(235,235,245,.3)}
+  .mtabs{
+    display:grid;grid-template-columns:repeat(5,minmax(0,1fr));
+    position:fixed;left:0;right:0;bottom:0;z-index:20;
+    height:calc(49px + env(safe-area-inset-bottom));
+    padding:6px 0 env(safe-area-inset-bottom);
+    background:rgba(3,22,38,.82);
+    -webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);
+    border-top:0.5px solid var(--ios-separator);
+  }
+  .mtabs button{
+    position:relative;border:0;background:transparent;color:#8E8E93;
+    display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:2px;
+    font-size:10px;font-weight:500;letter-spacing:.12px;line-height:1.1;
+    padding:0;min-height:49px;cursor:pointer;
+  }
+  .mtabs button svg{width:25px;height:25px}
+  .mtabs button[aria-current="page"]{color:var(--accent)}
+  .m-badge{position:absolute;top:0;left:50%;margin-left:8px;min-width:16px;height:16px;border-radius:8px;background:var(--ios-red);color:#fff;
+    font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 4px;letter-spacing:0}
   .m-badge[hidden]{display:none}
 }
+html.nectrae-phone{background:#0b0f14;min-height:100%}
+html.nectrae-phone body{display:flex;justify-content:center;align-items:flex-start;padding:28px 16px 40px!important;min-height:100dvh}
+html.nectrae-phone .phone-stage{
+  width:390px;height:844px;flex:none;position:relative;overflow:auto;border-radius:44px;
+  background:var(--bg);
+  box-shadow:0 0 0 3px #2c2c2e,0 0 0 14px #1c1c1e,0 28px 80px rgba(0,0,0,.5);
+  -webkit-overflow-scrolling:touch;
+}
+html.nectrae-phone .phone-stage::-webkit-scrollbar{display:none}
+html.nectrae-phone .wrap{padding-inline:16px;padding-bottom:90px;max-width:none;min-height:100%}
+html.nectrae-phone .mtabs{position:absolute}
+html.nectrae-phone .top{position:sticky}
 </style>
 </head>
 <body>
@@ -320,96 +542,135 @@ body:has(#login:not([hidden])) .mtabs{display:none!important}
   <header class="top">
     <div class="brand">
       <div class="logo-block">
-        <h1 class="logo">Nectrae<svg width="13" height="13" viewBox="0 0 24 24" aria-hidden="true"><path d="M9.4 2.5Q12 1 14.6 2.5L18.93 5Q21.53 6.5 21.53 9.5L21.53 14.5Q21.53 17.5 18.93 19L14.6 21.5Q12 23 9.4 21.5L5.07 19Q2.47 17.5 2.47 14.5L2.47 9.5Q2.47 6.5 5.07 5Z" fill="#EDAE44"/></svg><span hidden> · Spend Control</span></h1>
+        <h1 class="logo"><img src="/brand/nectrae-logo-on-dark.png" alt="Nectrae" width="151" height="41"><span hidden> · Spend Control</span></h1>
         <span class="tagline">Bee in control</span>
       </div>
       <div class="brand-copy">
         <span class="eyebrow">AI AGENT SPEND GOVERNANCE</span>
-        <p>Um teto de USDC por API, conferido na Solana e na Base</p>
+        <p data-i18n="brand.sub">One USDC cap per API, checked on Solana and Base</p>
       </div>
     </div>
     <div class="top-meta">
-      <span class="chip" id="net-chip">Solana</span>
+      <div class="watcher-wrap">
+        <button type="button" class="watcher" id="watcher" data-mood="open" aria-expanded="false" aria-controls="watcher-chat" aria-label="Mrs. N">
+          <span class="watcher-face" id="watcher-face" aria-hidden="true"></span>
+          <span class="watcher-copy">
+            <span class="watcher-kicker">Mrs. N</span>
+            <span class="watcher-say" id="watcher-say" data-i18n="watch.ok" aria-live="polite">Watching the caps.</span>
+          </span>
+          <span class="watcher-badge" id="watcher-badge" hidden>0</span>
+        </button>
+      </div>
       <span class="chip num" id="clock">—</span>
+      <div class="lang-switch" role="group" data-i18n-aria="lang.group" aria-label="Language">
+        <button type="button" data-lang="en" aria-pressed="true">EN</button>
+        <button type="button" data-lang="pt" aria-pressed="false">PT</button>
+      </div>
+      <a class="chip" id="admin-chip" href="#admin" data-go="admin">Admin</a>
     </div>
   </header>
+  <div class="watcher-chat" id="watcher-chat" hidden role="dialog" aria-label="Alerts">
+    <div class="watcher-chat-list" id="watcher-chat-list"></div>
+  </div>
 
   <div id="banner" class="errbox" hidden></div>
 
   <section class="panel login" id="login" aria-labelledby="login-title" hidden>
-    <svg width="40" height="40" viewBox="0 0 24 24" aria-hidden="true"><path d="M9.4 2.5Q12 1 14.6 2.5L18.93 5Q21.53 6.5 21.53 9.5L21.53 14.5Q21.53 17.5 18.93 19L14.6 21.5Q12 23 9.4 21.5L5.07 19Q2.47 17.5 2.47 14.5L2.47 9.5Q2.47 6.5 5.07 5Z" fill="#EDAE44"/><path d="M9 11V9a3 3 0 0 1 6 0v2" fill="none" stroke="#031626" stroke-width="1.8" stroke-linecap="round"/><rect x="8" y="11" width="8" height="6" rx="1.2" fill="#031626"/></svg>
-    <h2 id="login-title">Entrar no painel</h2>
-    <p>Este servidor está aberto para a rede e pede o token do painel. Use o valor de <code>PANEL_TOKEN</code> do arquivo <code>.env</code>.</p>
+    <img class="login-mark" src="/brand/nectrae-icon-on-dark.png" width="48" height="48" alt="">
+    <h2 id="login-title" data-i18n="login.title">Sign in to the panel</h2>
+    <p data-i18n="login.body">This server is open to the network and asks for the panel token. Use the PANEL_TOKEN value from the .env file.</p>
     <form id="login-form" class="login-form">
       <div class="field">
-        <label for="login-token">Token do painel</label>
+        <label for="login-token" data-i18n="login.token">Panel token</label>
         <input id="login-token" type="password" autocomplete="current-password" spellcheck="false" required>
       </div>
-      <label class="login-remember"><input type="checkbox" id="login-remember"> Lembrar neste aparelho</label>
+      <label class="login-remember"><input type="checkbox" id="login-remember"> <span data-i18n="login.remember">Remember on this device</span></label>
       <p class="werr" id="login-err" role="alert" hidden></p>
-      <button class="btn primary" type="submit">Entrar</button>
+      <button class="btn primary" type="submit" data-i18n="login.submit">Sign in</button>
     </form>
   </section>
 
-  <div class="m-head" aria-live="polite"><span class="eyebrow" id="m-eyebrow">NECTRAE · BEE IN CONTROL</span><h2 id="m-title">Início</h2></div>
-  <button type="button" class="m-pending" id="m-pending" data-m="inicio" hidden><svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><path d="M9.4 2.5Q12 1 14.6 2.5L18.93 5Q21.53 6.5 21.53 9.5L21.53 14.5Q21.53 17.5 18.93 19L14.6 21.5Q12 23 9.4 21.5L5.07 19Q2.47 17.5 2.47 14.5L2.47 9.5Q2.47 6.5 5.07 5Z" fill="#031626"/></svg><span><strong id="m-pending-t"></strong><small>Toque para revisar</small></span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+  <div class="m-head" aria-live="polite" data-level="root">
+    <button type="button" class="m-back" id="m-back">
+      <svg width="12" height="20" viewBox="0 0 12 20" fill="none" aria-hidden="true"><path d="M10.5 1.5 2 10l8.5 8.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span data-i18n="tab.mais">More</span>
+    </button>
+    <h2 id="m-title">Hello</h2>
+  </div>
+  <button type="button" class="m-pending" id="m-pending" data-m="inicio" hidden><svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><path d="M9.4 2.5Q12 1 14.6 2.5L18.93 5Q21.53 6.5 21.53 9.5L21.53 14.5Q21.53 17.5 18.93 19L14.6 21.5Q12 23 9.4 21.5L5.07 19Q2.47 17.5 2.47 14.5L2.47 9.5Q2.47 6.5 5.07 5Z" fill="#031626"/></svg><span><strong id="m-pending-t"></strong><small data-i18n="pending.tap">Tap to review</small></span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
 
-  <section class="kpis" id="kpis" data-m="inicio" aria-label="Resumo"></section>
+  <section class="kpis" id="kpis" data-m="inicio" data-i18n-aria="kpis.aria" aria-label="Summary"></section>
+
+  <section class="agents-board" data-i18n-aria="tab.agentes" aria-label="Agents" data-m="agentes">
+    <div class="agent-cards" id="agent-cards"></div>
+  </section>
 
   <div class="grid">
     <div class="col">
-      <section class="panel" aria-labelledby="agent-title" data-m="agentes">
-        <div class="tabs" role="tablist" id="tabs" aria-label="Agentes"></div>
-        <div class="agent-h" id="agent-h"></div>
-        <div class="caps" id="caps"></div>
-      </section>
       <section class="panel" aria-labelledby="chart-title" data-m="agentes">
         <div class="panel-h">
-          <h2 id="chart-title">Gasto diário por rede</h2>
-          <span class="hint" id="chart-hint">últimos 14 dias</span>
+          <h2 id="chart-title" data-i18n="chart.title">Daily spend by network</h2>
+          <span class="hint" id="chart-hint" data-i18n="chart.hint">last 14 days</span>
         </div>
         <div class="chart-wrap" id="chart"></div>
         <div class="legend" id="legend"></div>
       </section>
+
+      <section class="panel" aria-labelledby="alert-title" data-m="inicio">
+        <div class="panel-h">
+          <h2 id="alert-title" data-i18n="alerts.title">Alerts</h2>
+          <span class="hint" data-i18n="alerts.hint">Caps, Blocks, and Validation</span>
+        </div>
+        <div class="list alerts" id="alerts"></div>
+      </section>
     </div>
 
     <div class="col">
-      <section class="panel" aria-labelledby="sim-title" data-m="agentes">
+      <section class="panel" aria-labelledby="appr-title" data-m="aprovacoes">
         <div class="panel-h">
-          <h2 id="sim-title">Testar um pagamento</h2>
-          <span class="hint">simulação: nada é gravado nem pago</span>
+          <h2 id="appr-title" data-i18n="appr.title">Waiting for approval</h2>
+          <span class="count" id="appr-count">0</span>
+        </div>
+        <div class="list" id="approvals"></div>
+      </section>
+
+      <section class="panel" id="sim-panel" aria-labelledby="sim-title" data-m="sim">
+        <div class="panel-h">
+          <h2 id="sim-title" data-i18n="sim.title">Test a payment</h2>
+          <span class="hint" data-i18n="sim.hint">simulation: nothing is saved or paid</span>
         </div>
         <div class="present">
-          <button class="btn primary" type="button" id="present">Simular pagamentos</button>
-          <p class="hint" id="present-note">Grava uma rodada no registro, para a apresentação. Nada é pago.</p>
+          <button class="btn primary" type="button" id="present" data-i18n="present.btn">Simulate payments</button>
+          <p class="hint" id="present-note" data-i18n="present.note">Writes a round to the ledger for the demo. Nothing is paid.</p>
+          <p class="hint" data-i18n="live.hint">Start on the card. With AGENT_SOLANA_SECRET and LIVE_DESTINATION in .env (a wallet that receives USDC, also on the allow list) plus the signer’s public address in Protection, Start pays on Solana and Validate marks Verified. Without them, it only checks the cap — rows stay as No tx. The panel never holds the key.</p>
         </div>
         <form class="form" id="sim">
           <div class="field">
-            <label for="sim-agent">Agente</label>
+            <label for="sim-agent" data-i18n="sim.agent">Agent</label>
             <select id="sim-agent"></select>
           </div>
           <div class="field">
-            <label for="sim-network">Rede</label>
+            <label for="sim-network" data-i18n="sim.network">Network</label>
             <select id="sim-network">
               <option value="solana">Solana</option>
               <option value="base">Base</option>
             </select>
           </div>
           <div class="field full">
-            <label for="sim-vendor">API</label>
+            <label for="sim-vendor" data-i18n="sim.vendor">API</label>
             <input id="sim-vendor" type="text" value="api.nansen.ai" spellcheck="false">
           </div>
           <div class="field full">
-            <label for="sim-dest">Endereço que recebe</label>
-            <input id="sim-dest" type="text" placeholder="o endereço do 402" spellcheck="false" autocomplete="off">
+            <label for="sim-dest" data-i18n="sim.dest">Receiving address</label>
+            <input id="sim-dest" type="text" data-i18n-placeholder="sim.dest.ph" placeholder="the 402 address" spellcheck="false" autocomplete="off">
           </div>
           <div class="field full">
-            <label for="sim-amount">Valor (US$)</label>
+            <label for="sim-amount" data-i18n="sim.amount">Amount (US$)</label>
             <input id="sim-amount" type="number" min="0.000001" step="any" value="0.25" inputmode="decimal">
           </div>
           <div class="form-actions">
-            <button class="btn primary" type="submit">Checar</button>
-            <button class="btn" type="button" id="loop">Simular agente em loop</button>
+            <button class="btn primary" type="submit" data-i18n="sim.check">Check</button>
+            <button class="btn" type="button" id="loop" data-i18n="sim.loop">Simulate agent in a loop</button>
           </div>
         </form>
         <div id="sim-result" hidden></div>
@@ -417,27 +678,11 @@ body:has(#login:not([hidden])) .mtabs{display:none!important}
 
       <section class="panel" aria-labelledby="val-title" data-m="registro">
         <div class="panel-h">
-          <h2 id="val-title">Validação do registro</h2>
-          <button class="btn small" type="button" data-act="validate">Validar agora</button>
+          <h2 id="val-title" data-i18n="val.title">Ledger validation</h2>
+          <button class="btn small" type="button" data-act="validate" data-i18n="val.now">Validate now</button>
         </div>
         <div class="vstats" id="vstats"></div>
         <div class="cover" id="cover"></div>
-      </section>
-
-      <section class="panel" aria-labelledby="appr-title" data-m="aprovacoes">
-        <div class="panel-h">
-          <h2 id="appr-title">Aguardando aprovação</h2>
-          <span class="count" id="appr-count">0</span>
-        </div>
-        <div class="list" id="approvals"></div>
-      </section>
-
-      <section class="panel" aria-labelledby="alert-title" data-m="inicio">
-        <div class="panel-h">
-          <h2 id="alert-title">Alertas</h2>
-          <span class="hint">tetos, bloqueios e validação</span>
-        </div>
-        <div class="list alerts" id="alerts"></div>
       </section>
     </div>
   </div>
@@ -445,8 +690,8 @@ body:has(#login:not([hidden])) .mtabs{display:none!important}
   <section class="panel" aria-labelledby="conn-title" data-m="protecao">
     <div class="panel-h">
       <div>
-        <h2 id="conn-title">Conexão das redes</h2>
-        <span class="hint">só leitura · Solana devnet e Base Sepolia · a chave do provedor fica no .env</span>
+        <h2 id="conn-title" data-i18n="conn.title">Network connection</h2>
+        <span class="hint" data-i18n="conn.hint">read-only · Solana devnet and Base Sepolia · the provider key stays in .env</span>
       </div>
       <span id="conn-pill"></span>
     </div>
@@ -456,7 +701,7 @@ body:has(#login:not([hidden])) .mtabs{display:none!important}
     </div>
     <div class="table-wrap">
       <table class="wallets">
-        <thead><tr><th>Agente</th><th>Endereços públicos</th><th>Validação</th><th></th></tr></thead>
+        <thead><tr><th data-i18n="th.agent">Agent</th><th data-i18n="th.pubaddrs">Public addresses</th><th data-i18n="th.validation">Validation</th><th></th></tr></thead>
         <tbody id="wallets"></tbody>
       </table>
     </div>
@@ -465,64 +710,420 @@ body:has(#login:not([hidden])) .mtabs{display:none!important}
   <section class="panel" aria-labelledby="ledger-title" data-m="registro">
     <div class="panel-h">
       <div>
-        <h2 id="ledger-title">Registro único</h2>
-        <span class="hint">cada tentativa de pagamento, permitida ou não · clique numa linha para ver a validação</span>
+        <h2 id="ledger-title" data-i18n="ledger.title">Single ledger</h2>
+        <span class="hint" data-i18n="ledger.hint">every payment attempt, allowed or not · click a row to see validation</span>
       </div>
       <div class="filters">
-        <select id="f-agent" aria-label="Filtrar por agente"></select>
-        <select id="f-dec" aria-label="Filtrar por decisão">
-          <option value="">Todas as decisões</option>
-          <option value="allowed">Permitidos</option>
-          <option value="blocked">Barrados</option>
-          <option value="needs_approval">Pediram aprovação</option>
-          <option value="external">Fora do motor</option>
+        <select id="f-agent" data-i18n-aria="f.agent" aria-label="Filter by agent"></select>
+        <select id="f-dec" data-i18n-aria="f.dec" aria-label="Filter by decision">
+          <option value="" data-i18n="f.dec.all">All decisions</option>
+          <option value="allowed" data-i18n="f.dec.allowed">Allowed</option>
+          <option value="blocked" data-i18n="f.dec.blocked">Blocked</option>
+          <option value="needs_approval" data-i18n="f.dec.approval">Asked for approval</option>
+          <option value="external" data-i18n="f.dec.external">Outside the engine</option>
         </select>
-        <select id="f-ver" aria-label="Filtrar por validação">
-          <option value="">Toda validação</option>
-          <option value="verified">Conferidos</option>
-          <option value="pending">Aguardando</option>
-          <option value="mismatch">Divergentes</option>
-          <option value="external">Fora do registro</option>
-          <option value="na">Sem conferência</option>
+        <select id="f-ver" data-i18n-aria="f.ver" aria-label="Filter by validation">
+          <option value="" data-i18n="f.ver.all">All validation</option>
+          <option value="verified" data-i18n="f.ver.verified">Verified</option>
+          <option value="pending" data-i18n="f.ver.pending">Pending</option>
+          <option value="mismatch" data-i18n="f.ver.mismatch">Mismatched</option>
+          <option value="external" data-i18n="f.ver.external">Outside the ledger</option>
+          <option value="na" data-i18n="f.ver.na">Not checked</option>
         </select>
       </div>
     </div>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>Quando</th><th>Agente</th><th>Rede</th><th>Destino</th><th class="r">Valor</th><th>Decisão</th><th>Validação</th><th>Motivo</th><th aria-label="Detalhes"></th></tr></thead>
+        <thead><tr><th data-i18n="th.when">When</th><th data-i18n="th.agent">Agent</th><th data-i18n="th.network">Network</th><th data-i18n="th.dest">Destination</th><th class="r" data-i18n="th.amount">Amount</th><th data-i18n="th.decision">Decision</th><th data-i18n="th.validation">Validation</th><th data-i18n="th.reason">Reason</th><th data-i18n-aria="th.details" aria-label="Details"></th></tr></thead>
         <tbody id="ledger"></tbody>
       </table>
     </div>
   </section>
 
-  <p class="foot" data-m="protecao">Nectrae Spend Control · MVP. O produto nunca guarda fundos nem chaves privadas. A regra mais restritiva sempre vence. Dias e meses seguem o relógio do servidor; o gráfico agrupa por dia UTC.</p>
+  <section class="panel" id="admin" aria-labelledby="admin-title" data-m="admin">
+    <div class="panel-h">
+      <div>
+        <h2 id="admin-title">Admin</h2>
+        <span class="hint" data-i18n="admin.hint">Register an agent or change the cap, wallets, and addresses the API can receive</span>
+      </div>
+    </div>
+    <div class="admin">
+      <div class="admin-side">
+        <button class="btn small" type="button" data-act="admin-new" data-i18n="admin.new">New agent</button>
+        <div class="admin-list" id="admin-list" role="listbox" data-i18n-aria="admin.list" aria-label="Registered agents"></div>
+      </div>
+      <form class="form" id="admin-form" autocomplete="off">
+        <div class="field">
+          <label for="adm-id" data-i18n="adm.id">Agent id</label>
+          <input id="adm-id" name="id" required spellcheck="false" autocomplete="off" placeholder="nansen">
+          <span class="help" data-i18n="adm.id.help">Lowercase, numbers, and hyphens. The SDK sends this id.</span>
+        </div>
+        <div class="field">
+          <label for="adm-desc" data-i18n="adm.desc">Description</label>
+          <input id="adm-desc" name="description" type="text" autocomplete="off" data-i18n-placeholder="adm.desc.ph" placeholder="On-chain data, USDC per call">
+        </div>
+        <div class="field">
+          <label for="adm-sol" data-i18n="adm.sol">Solana public address</label>
+          <input id="adm-sol" name="solana" spellcheck="false" autocomplete="off" data-i18n-placeholder="adm.sol.ph" placeholder="devnet address">
+          <span class="help" data-i18n="adm.sol.help">The wallet that sends. Leave blank to keep the saved address.</span>
+        </div>
+        <div class="field">
+          <label for="adm-base" data-i18n="adm.base">Base public address</label>
+          <input id="adm-base" name="base" spellcheck="false" autocomplete="off" data-i18n-placeholder="adm.base.ph" placeholder="0x… on Sepolia">
+        </div>
+        <div class="field">
+          <label for="adm-period" data-i18n="adm.period">Cap period</label>
+          <select id="adm-period" name="period">
+            <option value="dia" data-i18n="period.day">Day</option>
+            <option value="mes" data-i18n="period.month">Month</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="adm-cap" data-i18n="adm.cap">Cap in USDC</label>
+          <input id="adm-cap" name="cap" type="number" min="0" step="any" inputmode="decimal" required placeholder="1.00">
+        </div>
+        <div class="field">
+          <label for="adm-pertx" data-i18n="adm.pertx">Max per call (US$)</label>
+          <input id="adm-pertx" name="perTx" type="number" min="0" step="any" inputmode="decimal" data-i18n-placeholder="optional" placeholder="optional">
+        </div>
+        <div class="field">
+          <label for="adm-approve" data-i18n="adm.approve">Ask approval above (US$)</label>
+          <input id="adm-approve" name="approveAbove" type="number" min="0" step="any" inputmode="decimal" data-i18n-placeholder="optional" placeholder="optional">
+        </div>
+        <div class="field">
+          <label for="adm-80" data-i18n="adm.80">At 80% of the cap</label>
+          <select id="adm-80" name="at80">
+            <option value="alertar" data-i18n="act.alert">Alert</option>
+            <option value="pedir_aprovacao" data-i18n="act.ask">Ask for approval</option>
+            <option value="bloquear" data-i18n="act.block">Block</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="adm-100" data-i18n="adm.100">At 100% of the cap</label>
+          <select id="adm-100" name="at100">
+            <option value="bloquear" data-i18n="act.block">Block</option>
+            <option value="pausar_agente" data-i18n="act.pause">Pause agent</option>
+            <option value="pedir_aprovacao" data-i18n="act.ask">Ask for approval</option>
+          </select>
+        </div>
+        <div class="field full">
+          <label for="adm-allow" data-i18n="adm.allow">Addresses the API receives</label>
+          <textarea id="adm-allow" name="allow" rows="4" spellcheck="false" autocomplete="off" data-i18n-placeholder="adm.allow.ph" placeholder="one address per line, Solana or 0x"></textarea>
+          <span class="help" data-i18n="adm.allow.help">The address the API asks for in the 402. Any other is blocked before signing. Empty accepts any destination.</span>
+        </div>
+        <div class="errbox" id="admin-err" hidden></div>
+        <p class="hint" id="admin-note" hidden></p>
+        <div class="form-actions">
+          <button class="btn primary" type="submit" id="admin-save" data-i18n="admin.create">Register agent</button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <section class="m-more" data-m="mais" aria-label="More">
+    <button type="button" class="ios-row" data-mtab="sim">
+      <span class="ios-row-icon" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5.5v13l14-6.5z"/></svg></span>
+      <span class="ios-row-copy"><strong data-i18n="sim.title">Test a payment</strong><small data-i18n="m.sim.sub">Demo round, nothing is paid</small></span>
+      <svg class="ios-chev" width="9" height="16" viewBox="0 0 9 16" fill="none" aria-hidden="true"><path d="M1.5 1.5 7.5 8l-6 6.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <button type="button" class="ios-row" data-mtab="protecao">
+      <span class="ios-row-icon" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"/></svg></span>
+      <span class="ios-row-copy"><strong data-i18n="tab.protecao">Protection</strong><small data-i18n="m.protecao.sub">Wallets, RPC, and on-chain checks</small></span>
+      <svg class="ios-chev" width="9" height="16" viewBox="0 0 9 16" fill="none" aria-hidden="true"><path d="M1.5 1.5 7.5 8l-6 6.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <button type="button" class="ios-row" data-mtab="admin">
+      <span class="ios-row-icon" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.2"/><path d="M5 19c.8-3.2 3.5-5 7-5s6.2 1.8 7 5"/></svg></span>
+      <span class="ios-row-copy"><strong data-i18n="tab.admin">Admin</strong><small data-i18n="m.admin.sub">Register agents and caps</small></span>
+      <svg class="ios-chev" width="9" height="16" viewBox="0 0 9 16" fill="none" aria-hidden="true"><path d="M1.5 1.5 7.5 8l-6 6.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+  </section>
+
+  <p class="foot" data-m="protecao" data-i18n="foot">Nectrae Spend Control · MVP. The product never holds funds or private keys. The most restrictive rule always wins. Days and months follow the server clock; the chart groups by UTC day.</p>
 </div>
 
-<nav class="mtabs" aria-label="Seções"><button type="button" data-mtab="inicio"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="12,2 21,7 21,17 12,22 3,17 3,7"/></svg>Início</button><button type="button" data-mtab="agentes"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="12,2 21,7 21,17 12,22 3,17 3,7"/><ellipse cx="9" cy="12" rx="2.15" ry="0.85" fill="currentColor" stroke="none"/><ellipse cx="15" cy="12.3" rx="2.3" ry="0.95" fill="currentColor" stroke="none"/></svg>Agentes</button><button type="button" data-mtab="aprovacoes"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg>Aprovações<span class="m-badge" id="m-badge" hidden></span></button><button type="button" data-mtab="registro"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3h8l4 4v14H7z"/><path d="M15 3v4h4"/><path d="M10 12h6M10 16h6"/></svg>Registro</button><button type="button" data-mtab="protecao"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg>Proteção</button></nav>
+<nav class="mtabs" data-i18n-aria="tabs.aria" aria-label="Sections">
+  <button type="button" data-mtab="inicio">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10.8 12 4l8 6.8V20a1 1 0 0 1-1 1h-5.2v-6.2H10.2V21H5a1 1 0 0 1-1-1z"/></svg>
+    <span data-i18n="tab.inicio">Home</span>
+  </button>
+  <button type="button" data-mtab="agentes">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.2 19.2 7.4v9.2L12 20.8 4.8 16.6V7.4z"/><path d="M8.4 12.1h.01M15.6 12.1h.01"/></svg>
+    <span data-i18n="tab.agentes">Agents</span>
+  </button>
+  <button type="button" data-mtab="aprovacoes">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.2"/><path d="m8.4 12.2 2.4 2.4 4.8-5.2"/></svg>
+    <span data-i18n="tab.aprovacoes">Approvals</span>
+    <span class="m-badge" id="m-badge" hidden></span>
+  </button>
+  <button type="button" data-mtab="registro">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3.5" width="14" height="17" rx="2"/><path d="M8.5 8.5h7M8.5 12h7M8.5 15.5h4.5"/></svg>
+    <span data-i18n="tab.registro">Ledger</span>
+  </button>
+  <button type="button" data-mtab="mais">
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="6" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="18" cy="12" r="1.7"/></svg>
+    <span data-i18n="tab.mais">More</span>
+  </button>
+</nav>
 <script>
 (() => {
+const LANG_KEY = 'nectrae.lang';
+let LANG = (() => { try { return localStorage.getItem(LANG_KEY) === 'pt' ? 'pt' : 'en'; } catch { return 'en'; } })();
+const loc = () => LANG === 'pt' ? 'pt-BR' : 'en-US';
+const I18N = {
+en: {
+  'lang.group':'Language','brand.sub':'One USDC cap per API, checked on Solana and Base',
+  'login.title':'Sign in to the panel','login.body':'This server is open to the network and asks for the panel token. Use the PANEL_TOKEN value from the .env file.',
+  'login.token':'Panel token','login.remember':'Remember on this device','login.submit':'Sign in','login.bad':'That token does not match the server PANEL_TOKEN.',
+  'banner.server':'Could not reach the server: {msg}. Is it running (npm start)?',
+  'pending.tap':'Tap to review','kpis.aria':'Summary','agents.eyebrow':'AGENTS','agents.title':'One API, one daily cap',
+  'agents.hint':'Solana and Base share the same cap','agents.register':'Register an agent',
+  'chart.title':'Daily spend by network','chart.hint':'last 14 days','alerts.title':'Alerts','alerts.hint':'Caps, Blocks, and Validation',
+  'appr.title':'Waiting for approval','sim.title':'Test a payment','sim.hint':'simulation: nothing is saved or paid',
+  'present.btn':'Simulate payments','present.note':'Writes a round to the ledger for the demo. Nothing is paid.',
+  'sim.agent':'Agent','sim.network':'Network','sim.vendor':'API','sim.dest':'Receiving address','sim.dest.ph':'the 402 address',
+  'sim.amount':'Amount (US$)','sim.check':'Check','sim.loop':'Simulate agent in a loop',
+  'val.title':'Ledger validation','val.now':'Validate now','val.validating':'Validating…',
+  'conn.title':'Network connection','conn.hint':'read-only · Solana devnet and Base Sepolia · the provider key stays in .env',
+  'th.agent':'Agent','th.pubaddrs':'Public addresses','th.validation':'Validation','th.when':'When','th.network':'Network',
+  'th.dest':'Destination','th.amount':'Amount','th.decision':'Decision','th.reason':'Reason','th.details':'Details',
+  'ledger.title':'Single ledger','ledger.hint':'every payment attempt, allowed or not · click a row to see validation',
+  'f.agent':'Filter by agent','f.dec':'Filter by decision','f.ver':'Filter by validation',
+  'f.dec.all':'All decisions','f.dec.allowed':'Allowed','f.dec.blocked':'Blocked','f.dec.approval':'Asked for approval','f.dec.external':'Outside the engine',
+  'f.ver.all':'All validation','f.ver.verified':'Verified','f.ver.pending':'Pending','f.ver.mismatch':'Mismatched','f.ver.external':'Outside the ledger','f.ver.na':'Not checked',
+  'admin.hint':'Register an agent or change the cap, wallets, and addresses the API can receive','admin.new':'New agent','admin.list':'Registered agents',
+  'adm.id':'Agent id','adm.id.help':'Lowercase, numbers, and hyphens. The SDK sends this id.','adm.desc':'Description','adm.desc.ph':'On-chain data, USDC per call',
+  'adm.sol':'Solana public address','adm.sol.ph':'devnet address','adm.sol.help':'The wallet that sends. Leave blank to keep the saved address.',
+  'adm.base':'Base public address','adm.base.ph':'0x… on Sepolia','adm.period':'Cap period','period.day':'Day','period.month':'Month',
+  'adm.cap':'Cap in USDC','adm.pertx':'Max per call (US$)','adm.approve':'Ask approval above (US$)','optional':'optional',
+  'adm.80':'At 80% of the cap','adm.100':'At 100% of the cap','adm.allow':'Addresses the API receives','adm.allow.ph':'one address per line, Solana or 0x',
+  'adm.allow.help':'The address the API asks for in the 402. Any other is blocked before signing. Empty accepts any destination.',
+  'admin.create':'Register agent','admin.save':'Save changes','foot':'Nectrae Spend Control · MVP. The product never holds funds or private keys. The most restrictive rule always wins. Days and months follow the server clock; the chart groups by UTC day.',
+  'tabs.aria':'Sections','tab.inicio':'Home','tab.agentes':'Agents','tab.aprovacoes':'Approvals','tab.registro':'Ledger','tab.protecao':'Protection','tab.admin':'Admin','tab.mais':'More',
+  'act.allow':'Allow','act.alert':'Alert','act.cheaper':'Switch to a cheaper model','act.ask':'Ask for approval','act.block':'Block','act.pause':'Pause agent',
+  'period.today':'today','period.inmonth':'this month',
+  'dec.allowed':'Allowed','dec.blocked':'Blocked','dec.approval':'Approval','dec.external':'Outside engine',
+  'ver.verified':'Verified','ver.pending':'Pending','ver.notx':'No tx','ver.mismatch':'Mismatch','ver.external':'Outside ledger',
+  'secret':'This looks like a private key or recovery phrase. Nothing was sent to the server. Use only the public address; if the key is real, treat it as leaked and move the funds.',
+  'status.paused':'Paused','status.cap':'Cap reached','status.near':'Near the cap','status.ok':'Within cap',
+  'live.on':'Live','live.wait':'Waiting for you','live.paid':'Paid','live.signing':'Signing on-chain','live.blocked':'Live agent blocked',
+  'live.start':'Start live agent','live.stop':'Stop live agent',
+  'live.hint':'Start on the card. With AGENT_SOLANA_SECRET and LIVE_DESTINATION in .env (a wallet that receives USDC, also on the allow list) plus the signer’s public address in Protection, Start pays on Solana and Validate marks Verified. Without them, it only checks the cap — rows stay as No tx. The panel never holds the key.',
+  'live.reason.no_secret':'Live agent is checking the cap only. Set AGENT_SOLANA_SECRET in .env and restart npm start so it can sign. Validation stays at No tx until a signature arrives.',
+  'live.reason.example_destination':'Live agent will not send USDC to a catalog example address. Set LIVE_DESTINATION in .env to a wallet that receives USDC and add it under Admin → API addresses.',
+  'live.reason.base_unsigned':'This runner only signs on Solana. Switch the live agent to Solana to get on-chain validation.',
+  'kpi.today':'Spent today','kpi.today.sub':'{n} payments that went out','kpi.month':'Spent this month','kpi.month.sub':'USDC on Solana and Base',
+  'kpi.hot':'Caps above 80%','kpi.of':'{hot} of {total}','kpi.hot.sub':'one cap per agent','kpi.blocked':'Blocked today','kpi.paused':'{n} agent(s) paused','kpi.nonepaused':'no agent paused',
+  'watch.paused1':'{id} is paused.','watch.pausedN':'{ids} are paused.','watch.full1':'{id} hit the cap.','watch.fullN':'{ids} hit the cap.',
+  'watch.full':'Cap reached.','watch.appr1':'1 payment waiting for approval.','watch.apprN':'{n} payments waiting for approval.',
+  'watch.near1':'{id} is near the cap. {pct}% used today.','watch.nearN':'{ids} are near the cap.','watch.near':'Near the cap.','watch.ok':'Watching the caps.',
+  'watch.aria':'Alerts from Mrs. N','watch.aria.n':'{n} alerts from Mrs. N','watch.empty':"Quiet. I'll speak if a cap, block, or validation fires.",
+  'cards.empty':'No agents registered. ','cards.empty.link':'Register one in Admin','cards.empty.end':'.',
+  'cards.off':'Cap is not enabled. Every attempt is blocked.','cards.of':'of {cap} {period}','cards.bar':'{pct}% of the cap used',
+  'cards.max':'Max per call','cards.allow':'Allowed addresses','cards.allow.n':'{n} API addresses','cards.allow.any':'any destination',
+  'cards.at80':'At 80%','cards.at100':'At 100%','cards.save':'Save','cards.cancel':'Cancel','cards.edit':'Edit cap','cards.resume':'Resume agent','cards.pause':'Pause agent',
+  'chart.today':'today','chart.cap':'daily cap {amt}','chart.dynhint':'{id} · USD · last 14 days','chart.aria':'Daily spend for {id} by network, in dollars',
+  'val.verified':'Verified on-chain','val.pending':'Waiting on the source','val.mismatch':'Mismatched','val.external':'Outside the ledger',
+  'val.cover':'Each USDC call is checked on the network it left: signature on Solana devnet or hash on Base Sepolia. Scanning both wallets finds what left without going through the engine. Both networks share the same cap.',
+  'val.none':'No signed payments to check. Blocked rows stay as —. Allowed rows stay No tx until the live agent signs on-chain (AGENT_SOLANA_SECRET + LIVE_DESTINATION).',
+  'val.last':'Last manual validation: {checked} verified, {external} outside the ledger',
+  'appr.to':'to {who}','appr.approve':'Approve','appr.reject':'Reject','appr.empty':'Nothing pending. Payments above the approval limit show up here.',
+  'alerts.empty':'No alerts.','alerts.system':'system',
+  'conn.ok':'Connected','conn.fail':'No connection','conn.untested':'Not tested','conn.rpcfail':'RPC unavailable','conn.untested.body':'Not tested yet.',
+  'conn.testing':'Testing…','conn.both':'Both networks','conn.test':'Test connection','conn.slot':'getSlot → ','conn.block':'block ',
+  'conn.reading':'Reading the network…','conn.verified':' verified','conn.waiting':' waiting ','conn.mismatch':'{n} mismatch(es)','conn.external':'{n} outside the ledger',
+  'conn.noaddr':'no address','conn.scan':'Validate wallet','conn.change':'Change','conn.save':'Save','conn.cancel':'Cancel',
+  'ledger.declared':'declared {amt}','ledger.open.base':'open on Basescan','ledger.open.sol':'open on Solscan',
+  'ledger.checks':'Checks','ledger.proof':'Proof','ledger.noproof':'No proof yet. It appears when the network confirms.','ledger.empty':'No payments with these filters.',
+  'check.ok':'ok','check.fail':'failed','check.wait':'waiting','f.allagents':'All agents','admin.nocap':'no cap','admin.empty':'No agents yet. Register the first one.',
+  'result.strictest':'The most restrictive rule wins.','admin.err.id':'Use an id with lowercase letters, numbers, and hyphens (e.g. nansen).',
+  'admin.err.cap':'Enter this agent’s USDC cap.','admin.err.num':'Values must be numbers greater than or equal to zero.',
+  'admin.note.upd':'{id} updated.','admin.note.new':'{id} registered. The SDK uses this id.',
+  'present.busy':'Simulating…','present.lines':'{n} attempts on the ledger','present.allowed':'{n} allowed','present.blocked':'{n} blocked',
+  'present.approval':'{n} to approve','present.unpaid':'Nothing was paid.','loop.stop':'Stop simulation',
+  'loop.blocked':'Blocked on call #{n}, after {amt} simulated.','loop.btn':'Simulate agent in a loop',
+  'm.pend1':'1 payment waiting for approval','m.pendN':'{n} payments waiting for approval',
+  'm.hello':'Hello, {name}','m.hello.guest':'there',
+  'm.sim.sub':'Demo round, nothing is paid','m.protecao.sub':'Wallets, RPC, and on-chain checks','m.admin.sub':'Register agents and caps'
+},
+pt: {
+  'lang.group':'Idioma','brand.sub':'Um teto em USDC por API, conferido na Solana e na Base',
+  'login.title':'Entrar no painel','login.body':'Este servidor está aberto para a rede e pede o token do painel. Use o valor de PANEL_TOKEN do arquivo .env.',
+  'login.token':'Token do painel','login.remember':'Lembrar neste aparelho','login.submit':'Entrar','login.bad':'Esse token não confere com o PANEL_TOKEN do servidor.',
+  'banner.server':'Não consegui falar com o servidor: {msg}. Ele está rodando (npm start)?',
+  'pending.tap':'Toque para revisar','kpis.aria':'Resumo','agents.eyebrow':'AGENTES','agents.title':'Uma API, um teto diário',
+  'agents.hint':'Solana e Base entram no mesmo teto','agents.register':'Cadastrar agente',
+  'chart.title':'Gasto diário por rede','chart.hint':'últimos 14 dias','alerts.title':'Alertas','alerts.hint':'Tetos, Bloqueios e Validação',
+  'appr.title':'Aguardando aprovação','sim.title':'Testar um pagamento','sim.hint':'simulação: nada é gravado nem pago',
+  'present.btn':'Simular pagamentos','present.note':'Grava uma rodada no registro, para a apresentação. Nada é pago.',
+  'sim.agent':'Agente','sim.network':'Rede','sim.vendor':'API','sim.dest':'Endereço que recebe','sim.dest.ph':'o endereço do 402',
+  'sim.amount':'Valor (US$)','sim.check':'Checar','sim.loop':'Simular agente em loop',
+  'val.title':'Validação do registro','val.now':'Validar agora','val.validating':'Validando…',
+  'conn.title':'Conexão das redes','conn.hint':'só leitura · Solana devnet e Base Sepolia · a chave do provedor fica no .env',
+  'th.agent':'Agente','th.pubaddrs':'Endereços públicos','th.validation':'Validação','th.when':'Quando','th.network':'Rede',
+  'th.dest':'Destino','th.amount':'Valor','th.decision':'Decisão','th.reason':'Motivo','th.details':'Detalhes',
+  'ledger.title':'Registro único','ledger.hint':'cada tentativa de pagamento, permitida ou não · clique numa linha para ver a validação',
+  'f.agent':'Filtrar por agente','f.dec':'Filtrar por decisão','f.ver':'Filtrar por validação',
+  'f.dec.all':'Todas as decisões','f.dec.allowed':'Permitidos','f.dec.blocked':'Barrados','f.dec.approval':'Pediram aprovação','f.dec.external':'Fora do motor',
+  'f.ver.all':'Toda validação','f.ver.verified':'Conferidos','f.ver.pending':'Aguardando','f.ver.mismatch':'Divergentes','f.ver.external':'Fora do registro','f.ver.na':'Sem conferência',
+  'admin.hint':'Cadastre um agente ou altere teto, carteiras e os endereços que a API pode receber','admin.new':'Novo agente','admin.list':'Agentes cadastrados',
+  'adm.id':'Id do agente','adm.id.help':'Minúsculas, números e hífens. O SDK envia este id.','adm.desc':'Descrição','adm.desc.ph':'Dados on-chain, USDC por chamada',
+  'adm.sol':'Endereço público Solana','adm.sol.ph':'endereço da devnet','adm.sol.help':'A carteira que envia. Deixe em branco para manter o endereço já salvo.',
+  'adm.base':'Endereço público Base','adm.base.ph':'0x… na Sepolia','adm.period':'Período do teto','period.day':'Dia','period.month':'Mês',
+  'adm.cap':'Teto em USDC','adm.pertx':'Máximo por chamada (US$)','adm.approve':'Pedir aprovação acima de (US$)','optional':'opcional',
+  'adm.80':'Aos 80% do teto','adm.100':'Aos 100% do teto','adm.allow':'Endereços que a API recebe','adm.allow.ph':'um endereço por linha, Solana ou 0x',
+  'adm.allow.help':'O endereço que a API pede no 402. Qualquer outro é barrado antes da assinatura. Vazio aceita qualquer destino.',
+  'admin.create':'Cadastrar agente','admin.save':'Salvar alterações','foot':'Nectrae Spend Control · MVP. O produto nunca guarda fundos nem chaves privadas. A regra mais restritiva sempre vence. Dias e meses seguem o relógio do servidor; o gráfico agrupa por dia UTC.',
+  'tabs.aria':'Seções','tab.inicio':'Início','tab.agentes':'Agentes','tab.aprovacoes':'Aprovações','tab.registro':'Registro','tab.protecao':'Proteção','tab.admin':'Admin','tab.mais':'Mais',
+  'act.allow':'Permitir','act.alert':'Alertar','act.cheaper':'Trocar p/ modelo mais barato','act.ask':'Pedir aprovação','act.block':'Bloquear','act.pause':'Pausar agente',
+  'period.today':'hoje','period.inmonth':'no mês',
+  'dec.allowed':'Permitido','dec.blocked':'Barrado','dec.approval':'Aprovação','dec.external':'Fora do motor',
+  'ver.verified':'Conferido','ver.pending':'Aguardando','ver.notx':'Sem tx','ver.mismatch':'Divergente','ver.external':'Fora do registro',
+  'secret':'Isto parece uma chave privada ou frase de recuperação. Nada foi enviado ao servidor. Use só o endereço público; se a chave for real, considere que ela vazou e mova os fundos.',
+  'status.paused':'Pausado','status.cap':'Teto atingido','status.near':'Perto do teto','status.ok':'Dentro do teto',
+  'live.on':'Vivo','live.wait':'À espera de si','live.paid':'Pagou','live.signing':'Assinando na rede','live.blocked':'Agente vivo barrado',
+  'live.start':'Ligar agente vivo','live.stop':'Parar agente vivo',
+  'live.hint':'Ligue no cartão. Com AGENT_SOLANA_SECRET e LIVE_DESTINATION no .env (uma carteira que recebe USDC, também na lista permitida) e o endereço público de quem assina em Proteção, Ligar paga na Solana e Validar agora marca Conferido. Sem isso, só consulta o teto — as linhas ficam em Sem tx. O painel nunca guarda a chave.',
+  'live.reason.no_secret':'O agente vivo só consulta o teto. Defina AGENT_SOLANA_SECRET no .env e reinicie o npm start para ele assinar. A validação fica em Sem tx até chegar uma assinatura.',
+  'live.reason.example_destination':'O agente vivo não envia USDC para o endereço de exemplo do catálogo. Defina LIVE_DESTINATION no .env (uma carteira que recebe USDC) e acrescente-a em Admin → endereços da API.',
+  'live.reason.base_unsigned':'Este runner só assina na Solana. Mude o agente vivo para Solana para a validação on-chain fechar.',
+  'kpi.today':'Gasto hoje','kpi.today.sub':'{n} pagamentos que saíram','kpi.month':'Gasto no mês','kpi.month.sub':'USDC na Solana e na Base',
+  'kpi.hot':'Tetos acima de 80%','kpi.of':'{hot} de {total}','kpi.hot.sub':'um teto por agente','kpi.blocked':'Barrados hoje','kpi.paused':'{n} agente(s) pausado(s)','kpi.nonepaused':'nenhum agente pausado',
+  'watch.paused1':'{id} está pausado.','watch.pausedN':'{ids} estão pausados.','watch.full1':'{id} atingiu o teto.','watch.fullN':'{ids} atingiram o teto.',
+  'watch.full':'Teto atingido.','watch.appr1':'1 pagamento espera aprovação.','watch.apprN':'{n} pagamentos esperam aprovação.',
+  'watch.near1':'{id} está perto do teto. {pct}% usado hoje.','watch.nearN':'{ids} estão perto do teto.','watch.near':'Perto do teto.','watch.ok':'Vigiando os tetos.',
+  'watch.aria':'Alertas da Mrs. N','watch.aria.n':'{n} alertas da Mrs. N','watch.empty':'Calma. Falo se um teto, bloqueio ou validação disparar.',
+  'cards.empty':'Nenhum agente cadastrado. ','cards.empty.link':'Cadastre um no Admin','cards.empty.end':'.',
+  'cards.off':'Teto não habilitado. Toda tentativa é barrada.','cards.of':'de {cap} {period}','cards.bar':'{pct}% do teto usado',
+  'cards.max':'Máx. por chamada','cards.allow':'Endereços permitidos','cards.allow.n':'{n} endereços da API','cards.allow.any':'qualquer destino',
+  'cards.at80':'Aos 80%','cards.at100':'Aos 100%','cards.save':'Salvar','cards.cancel':'Cancelar','cards.edit':'Editar teto','cards.resume':'Retomar agente','cards.pause':'Pausar agente',
+  'chart.today':'hoje','chart.cap':'teto diário {amt}','chart.dynhint':'{id} · US$ · últimos 14 dias','chart.aria':'Gasto diário de {id} por rede, em dólares',
+  'val.verified':'Conferidos na rede','val.pending':'Aguardando a fonte','val.mismatch':'Divergentes','val.external':'Fora do registro',
+  'val.cover':'Cada chamada em USDC é conferida na rede em que saiu: assinatura na Solana devnet ou hash na Base Sepolia. A varredura das duas carteiras acha o que saiu sem passar pelo motor. As duas redes entram no mesmo teto.',
+  'val.none':'Nada assinado para conferir. Linhas barradas ficam em —. Permitidas ficam em Sem tx até o agente vivo assinar na rede (AGENT_SOLANA_SECRET + LIVE_DESTINATION).',
+  'val.last':'Última validação manual: {checked} conferidos, {external} fora do registro',
+  'appr.to':'para {who}','appr.approve':'Aprovar','appr.reject':'Recusar','appr.empty':'Nada pendente. Pagamentos acima do limite de aprovação aparecem aqui.',
+  'alerts.empty':'Sem alertas.','alerts.system':'sistema',
+  'conn.ok':'Conectado','conn.fail':'Sem conexão','conn.untested':'Não testado','conn.rpcfail':'RPC indisponível','conn.untested.body':'Ainda não testado.',
+  'conn.testing':'Testando…','conn.both':'As duas redes','conn.test':'Testar conexão','conn.slot':'getSlot → ','conn.block':'bloco ',
+  'conn.reading':'Lendo a rede…','conn.verified':' conferidos','conn.waiting':' aguardando ','conn.mismatch':'{n} divergente(s)','conn.external':'{n} fora do registro',
+  'conn.noaddr':'sem endereço','conn.scan':'Validar carteira','conn.change':'Trocar','conn.save':'Salvar','conn.cancel':'Cancelar',
+  'ledger.declared':'declarado {amt}','ledger.open.base':'abrir no Basescan','ledger.open.sol':'abrir no Solscan',
+  'ledger.checks':'Checagens','ledger.proof':'Prova','ledger.noproof':'Ainda sem prova. Aparece quando a rede confirmar.','ledger.empty':'Nenhum pagamento com esses filtros.',
+  'check.ok':'ok','check.fail':'falhou','check.wait':'aguardando','f.allagents':'Todos os agentes','admin.nocap':'sem teto','admin.empty':'Nenhum agente ainda. Cadastre o primeiro.',
+  'result.strictest':'Vale a regra mais restritiva.','admin.err.id':'Use um id em minúsculas, números e hífens (ex.: nansen).',
+  'admin.err.cap':'Informe o teto em USDC deste agente.','admin.err.num':'Os valores precisam ser números iguais ou maiores que zero.',
+  'admin.note.upd':'{id} atualizado.','admin.note.new':'{id} cadastrado. O SDK usa este id.',
+  'present.busy':'Simulando…','present.lines':'{n} tentativas no registro','present.allowed':'{n} permitidas','present.blocked':'{n} barradas',
+  'present.approval':'{n} para aprovar','present.unpaid':'Nada foi pago.','loop.stop':'Parar simulação',
+  'loop.blocked':'Barrado na chamada nº {n}, depois de {amt} simulados.','loop.btn':'Simular agente em loop',
+  'm.pend1':'1 pagamento espera aprovação','m.pendN':'{n} pagamentos esperam aprovação',
+  'm.hello':'Olá, {name}','m.hello.guest':'Nome',
+  'm.sim.sub':'Rodada de demo, nada é pago','m.protecao.sub':'Carteiras, RPC e conferência na rede','m.admin.sub':'Cadastro de agentes e tetos'
+}
+};
+function t(key, vars) {
+  let s = (I18N[LANG] && I18N[LANG][key]) || I18N.en[key] || key;
+  if (vars) for (const [k, v] of Object.entries(vars)) s = s.replaceAll('{' + k + '}', v);
+  return s;
+}
+function engineText(s) {
+  if (s == null || LANG !== 'en') return s;
+  const pairs = [
+    [/Valor inválido: precisa ser maior que zero/g, 'Invalid amount: must be greater than zero'],
+    [/O agente está pausado\. Retome o agente para liberar pagamentos/g, 'The agent is paused. Resume it to allow payments'],
+    [/O teto de USDC não está habilitado para este agente/g, 'The USDC cap is not enabled for this agent'],
+    [/Destino fora da lista permitida\. O endereço não é o que esta API recebe/g, 'Destination not on the allow list. This address is not what this API receives'],
+    [/Acima do máximo por transação/g, 'Above the per-transaction maximum'],
+    [/Passa do teto \(/g, 'Exceeds the cap ('],
+    [/Este tipo só é monitorado/g, 'This type is monitor-only'],
+    [/Passaria do teto:/g, 'Would exceed the cap:'],
+    [/Chega a (\d+)% do teto:/g, 'Reaches $1% of the cap:'],
+    [/Dentro do teto:/g, 'Within the cap:'],
+    [/Dentro do teto/g, 'Within the cap'],
+    [/Pagamentos acima de (.+) precisam de aprovação humana/g, 'Payments above $1 need human approval'],
+    [/ de (?=US\$|\$)/g, ' of '],
+    [/\bno mês\b/g, 'this month'],
+    [/\bhoje\b/g, 'today'],
+    [/Aguarda decisão humana\. Nada saiu da carteira/g, 'Waiting for a human decision. Nothing left the wallet'],
+    [/Barrado antes de sair: não há o que conferir/g, 'Blocked before sending: nothing to check'],
+    [/Aguardando o agente informar a assinatura \(Solana\) ou o hash \(Base\)/g, 'Waiting for the agent to report the signature (Solana) or hash (Base)'],
+    [/Registrado pelo SDK antes do pagamento/g, 'Recorded by the SDK before payment'],
+    [/Hash recebido do agente/g, 'Hash received from the agent'],
+    [/Assinatura recebida do agente/g, 'Signature received from the agent'],
+    [/Aguardando conferência na rede/g, 'Waiting for on-chain confirmation'],
+    [/Transação encontrada no RPC \(bloco /g, 'Transaction found on RPC (block '],
+    [/Transação encontrada no RPC \(slot /g, 'Transaction found on RPC (slot '],
+    [/Nenhum pedido correspondente no SDK: o pagamento não passou pelo motor de regras/g, 'No matching request in the SDK: the payment did not go through the rules engine'],
+    [/O valor já entra no gasto do agente/g, 'The amount already counts toward the agent’s spend'],
+    [/USDC chegou a 100% do teto/g, 'USDC reached 100% of the cap'],
+    [/USDC passou de 80% do teto/g, 'USDC passed 80% of the cap'],
+    [/USDC passou de 50% do teto/g, 'USDC passed 50% of the cap'],
+    [/Agente pausado pelo painel/g, 'Agent paused from the panel'],
+    [/Agente retomado pelo painel/g, 'Agent resumed from the panel'],
+    [/Agente pausado: USDC atingiu o teto de/g, 'Agent paused: USDC hit the cap of'],
+    [/Teto de USDC alterado de/g, 'USDC cap changed from'],
+    [/ para /g, ' to '],
+    [/Carteira vigiada trocada/g, 'Watched wallet changed'],
+    [/Validação: pagamento (\d+) diverge da rede \((.+) declarado, (.+) na rede\)/g, 'Validation: payment $1 mismatches the network ($2 declared, $3 on-chain)'],
+    [/Validação: (.+) saíram da carteira (.+) sem passar pelo motor de regras/g, 'Validation: $1 left the $2 wallet without going through the rules engine'],
+    [/aguarda aprovação/g, 'waiting for approval'],
+    [/Barrado:/g, 'Blocked:'],
+    [/aprovado/g, 'approved'],
+    [/recusado/g, 'rejected'],
+    [/Ação: Alertar/g, 'Action: Alert'],
+    [/Ação: Pedir aprovação/g, 'Action: Ask for approval'],
+    [/Ação: Bloquear/g, 'Action: Block'],
+    [/Ação: Pausar agente/g, 'Action: Pause agent'],
+    [/Ação: Permitir/g, 'Action: Allow'],
+    [/declarado/g, 'declared'],
+    [/na rede/g, 'on-chain'],
+    [/check only · sem AGENT_SOLANA_SECRET; a validação não fecha/g, 'check only · no AGENT_SOLANA_SECRET; on-chain validation will not close'],
+    [/check only · destino de exemplo; não envia USDC/g, 'check only · example destination; will not send USDC'],
+    [/check only · runner só assina na Solana/g, 'check only · this runner only signs on Solana'],
+    [/runner ligado · vai assinar na Solana/g, 'runner on · will sign on Solana'],
+    [/ligado no painel/g, 'started from the panel']
+  ];
+  let out = String(s);
+  for (const [re, to] of pairs) out = out.replace(re, to);
+  return out;
+}
+function applyStaticI18n() {
+  document.documentElement.lang = LANG === 'pt' ? 'pt-BR' : 'en';
+  document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => { el.placeholder = t(el.dataset.i18nPlaceholder); });
+  document.querySelectorAll('[data-i18n-aria]').forEach(el => { el.setAttribute('aria-label', t(el.dataset.i18nAria)); });
+  document.querySelectorAll('.lang-switch [data-lang]').forEach(b => { b.setAttribute('aria-pressed', b.dataset.lang === LANG ? 'true' : 'false'); });
+  window.dispatchEvent(new Event('nectrae:lang'));
+}
+function setLang(lang) {
+  LANG = lang === 'pt' ? 'pt' : 'en';
+  try { localStorage.setItem(LANG_KEY, LANG); } catch {}
+  if (typeof ui !== 'undefined') ui.lineMood = '';
+  applyStaticI18n();
+  if (S) renderAll();
+}
 const NETS = {
   solana: {label:'Solana', short:'Solana', color:'--r-x402'},
   base:   {label:'Base',   short:'Base',   color:'--r-ia'}
 };
 const NET_KEYS = Object.keys(NETS);
-const ACT = {permitir:'Permitir', alertar:'Alertar', trocar_modelo:'Trocar p/ modelo mais barato', pedir_aprovacao:'Pedir aprovação', bloquear:'Bloquear', pausar_agente:'Pausar agente'};
-const PERIOD = {dia:'hoje', mes:'no mês'};
-const DEC = {allowed:['ok','Permitido'], blocked:['crit','Barrado'], needs_approval:['warn','Aprovação'], external:['crit','Fora do motor']};
-const VER = {verified:['ok','Conferido'], pending:['muted','Aguardando'], mismatch:['warn','Divergente'], external:['crit','Fora do registro'], na:['muted','—']};
+function ACT() { return {permitir:t('act.allow'), alertar:t('act.alert'), trocar_modelo:t('act.cheaper'), pedir_aprovacao:t('act.ask'), bloquear:t('act.block'), pausar_agente:t('act.pause')}; }
+function PERIOD() { return {dia:t('period.today'), mes:t('period.inmonth')}; }
+function DEC() { return {allowed:['ok',t('dec.allowed')], blocked:['crit',t('dec.blocked')], needs_approval:['warn',t('dec.approval')], external:['crit',t('dec.external')]}; }
+function VER() { return {verified:['ok',t('ver.verified')], pending:['muted',t('ver.pending')], mismatch:['warn',t('ver.mismatch')], external:['crit',t('ver.external')], na:['muted','—']}; }
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const fmtUSD = n => new Intl.NumberFormat('pt-BR',{style:'currency',currency:'USD',minimumFractionDigits:2,maximumFractionDigits:2}).format(n);
+const fmtUSD = n => new Intl.NumberFormat(loc(),{style:'currency',currency:'USD',minimumFractionDigits:2,maximumFractionDigits:2}).format(n);
 const fmtTime = isoStr => { const d = new Date(isoStr), today = new Date().toDateString() === d.toDateString();
-  return today ? d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}) : d.toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}); };
+  return today ? d.toLocaleTimeString(loc(),{hour:'2-digit',minute:'2-digit'}) : d.toLocaleString(loc(),{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}); };
 const shortAddr = a => a && a.length > 14 ? `${a.slice(0,4)}…${a.slice(-4)}` : (a || '');
 const looksLikeSecret = v => { v = v.trim(); if (/^\[\s*\d{1,3}(\s*,\s*\d{1,3}){31,}\s*\]$/.test(v)) return true;
   const w = v.split(/\s+/); if ((w.length === 12 || w.length === 24) && w.every(x => /^[a-z]{3,8}$/.test(x))) return true;
   return /^0x[0-9a-fA-F]{64}$/.test(v) || /^[1-9A-HJ-NP-Za-km-z]{80,90}$/.test(v); };
-const SECRET_MSG = 'Isto parece uma chave privada ou frase de recuperação. Nada foi enviado ao servidor. Use só o endereço público; se a chave for real, considere que ela vazou e mova os fundos.';
+const SECRET_MSG = () => t('secret');
 
-const ui = { sel: null, open: null, editingCap: null, editingWallet: null, walletErr: {}, busy: {}, looping: null, lastValidation: null };
+const ui = { sel: null, open: null, editingCap: null, editingWallet: null, walletErr: {}, busy: {}, looping: null, lastValidation: null, adminId: null, adminDirty: false, adminSaving: false, watcherBusy: false, watcherLine: '', lineMood: '', chatOpen: false };
 let S = null;
 
 // Token do painel (PANEL_TOKEN). Fica só neste navegador: na aba (sessionStorage) ou no aparelho (localStorage).
@@ -556,10 +1157,15 @@ function showLogin(msg) {
 function banner(msg) { const b = $('banner'); b.hidden = !msg; b.textContent = msg || ''; }
 
 async function refresh() {
-  try { S = await api('GET', '/api/state'); banner(null); $('login').hidden = true; }
+  try {
+    S = await api('GET', '/api/state');
+    window.nectraeOperator = S.operatorName || '';
+    window.dispatchEvent(new Event('nectrae:state'));
+    banner(null); $('login').hidden = true;
+  }
   catch (e) {
-    if (e.status === 401) { showLogin(getPanelToken() ? 'Esse token não confere com o PANEL_TOKEN do servidor.' : ''); return; }
-    banner(`Não consegui falar com o servidor: ${e.message}. Ele está rodando (npm start)?`); return;
+    if (e.status === 401) { showLogin(getPanelToken() ? t('login.bad') : ''); return; }
+    banner(t('banner.server', {msg: e.message})); return;
   }
   if (!ui.sel || !S.agents.some(a => a.id === ui.sel)) ui.sel = S.agents[0]?.id ?? null;
   renderAll();
@@ -569,11 +1175,22 @@ const agent = id => S.agents.find(a => a.id === id);
 const pctOf = a => { const r = a.rule; return r && !r.off && r.cap > 0 ? (a.spent || 0) / r.cap : 0; };
 
 function status(a) {
-  if (a.paused) return {cls:'paused', pill:'muted', text:'Pausado'};
+  if (a.paused) return {cls:'paused', pill:'muted', text:t('status.paused')};
   const worst = pctOf(a);
-  if (worst >= 1) return {cls:'crit', pill:'crit', text:'Teto atingido'};
-  if (worst >= 0.8) return {cls:'warn', pill:'warn', text:'Perto do teto'};
-  return {cls:'ok', pill:'ok', text:'Dentro do teto'};
+  if (worst >= 1) return {cls:'crit', pill:'crit', text:t('status.cap')};
+  if (worst >= 0.8) return {cls:'warn', pill:'warn', text:t('status.near')};
+  return {cls:'ok', pill:'ok', text:t('status.ok')};
+}
+function livePill(id) {
+  const L = S.live?.[id];
+  if (!L || L.status === 'stopped') return '';
+  const title = L.note ? ` title="${esc(engineText(L.note))}"` : '';
+  if (L.status === 'waiting_approval') return `<span class="pill warn"${title}>${t('live.wait')}</span>`;
+  if (L.status === 'rejected' || L.status === 'blocked') return `<span class="pill crit"${title}>${t('live.blocked')}</span>`;
+  if (L.status === 'paid') return `<span class="pill ok"${title}>${t('live.paid')}</span>`;
+  if (L.paying) return `<span class="pill ok"${title}>${t('live.signing')}</span>`;
+  if (L.running || L.status) return `<span class="pill ok"${title}>${t('live.on')}</span>`;
+  return '';
 }
 
 function renderKPIs() {
@@ -581,10 +1198,10 @@ function renderKPIs() {
   for (const a of S.agents) { const r = a.rule; if (!r || r.off || !r.cap) continue; total++; if (pctOf(a) >= 0.8) hot++; }
   const paused = S.agents.filter(a => a.paused).length;
   $('kpis').innerHTML = [
-    {lbl:'Gasto hoje', val:fmtUSD(S.totals.today.s), sub:`${S.totals.today.n} pagamentos que saíram`},
-    {lbl:'Gasto no mês', val:fmtUSD(S.totals.month.s), sub:'USDC na Solana e na Base'},
-    {lbl:'Tetos acima de 80%', val:`${hot} de ${total}`, sub:'um teto por agente', cls: hot ? 'warn' : ''},
-    {lbl:'Barrados hoje', val:String(S.totals.blockedToday), sub: paused ? `${paused} agente(s) pausado(s)` : 'nenhum agente pausado', cls: S.totals.blockedToday ? 'crit' : ''}
+    {lbl:t('kpi.today'), val:fmtUSD(S.totals.today.s), sub:t('kpi.today.sub', {n: S.totals.today.n})},
+    {lbl:t('kpi.month'), val:fmtUSD(S.totals.month.s), sub:t('kpi.month.sub')},
+    {lbl:t('kpi.hot'), val:t('kpi.of', {hot, total}), sub:t('kpi.hot.sub'), cls: hot ? 'warn' : ''},
+    {lbl:t('kpi.blocked'), val:String(S.totals.blockedToday), sub: paused ? t('kpi.paused', {n: paused}) : t('kpi.nonepaused'), cls: S.totals.blockedToday ? 'crit' : ''}
   ].map(k => `<div class="kpi ${k.cls||''}"><span class="lbl">${k.lbl}</span><span class="val">${esc(k.val)}</span><span class="sub">${esc(k.sub)}</span></div>`).join('');
 }
 
@@ -619,44 +1236,159 @@ function faceSvg(wax, eyes) {
   return `<svg class="face" viewBox="-3 -5 30 30" aria-hidden="true"><path class="halo" d="${HEX_HALO}"/><path d="M9.6 2.6Q9 0 7.4 -1.6M14.4 2.6Q15 0 16.6 -1.6" fill="none" stroke="${wax}" stroke-width="1" stroke-linecap="round"/><circle cx="7.2" cy="-1.8" r="1.2" fill="${wax}"/><circle cx="16.8" cy="-1.8" r="1.2" fill="${wax}"/><path d="${HEX_BODY}" fill="${wax}"/><path d="${HEX_VISOR}" fill="#031626"/>${look}</svg>`;
 }
 
-function renderTabs() {
-  $('tabs').innerHTML = S.agents.length ? S.agents.map(a => {
-    const st = status(a);
-    return `<button class="tab" role="tab" type="button" data-tab="${esc(a.id)}" aria-selected="${a.id===ui.sel}" aria-label="${esc(a.id)}, ${esc(st.text)}">${faceSvg(waxOf(a.id), eyesOf(a))}<span class="id">${esc(a.id)}</span></button>`;
-  }).join('')
-    : `<p class="empty">Nenhum agente cadastrado. Rode <code>npm run seed</code> para criar os de exemplo.</p>`;
+function watcherMood() {
+  if (S.agents.some(a => { const c = status(a).cls; return c === 'paused' || c === 'crit'; })) return 'shut';
+  if (S.agents.some(a => status(a).cls === 'warn')) return 'squint';
+  if ((S.payments || []).some(p => p.decision === 'needs_approval')) return 'squint';
+  return 'open';
+}
+function localWatcherLine(mood) {
+  if (mood === 'shut') {
+    const paused = S.agents.filter(a => a.paused).map(a => a.id);
+    if (paused.length === 1) return t('watch.paused1', {id: paused[0]});
+    if (paused.length > 1) return t('watch.pausedN', {ids: paused.join(', ')});
+    const full = S.agents.filter(a => status(a).cls === 'crit');
+    if (full.length === 1) return t('watch.full1', {id: full[0].id});
+    if (full.length > 1) return t('watch.fullN', {ids: full.map(a => a.id).join(', ')});
+    return t('watch.full');
+  }
+  if (mood === 'squint') {
+    const n = (S.payments || []).filter(p => p.decision === 'needs_approval').length;
+    if (n === 1) return t('watch.appr1');
+    if (n > 1) return t('watch.apprN', {n});
+    const near = S.agents.filter(a => status(a).cls === 'warn');
+    if (near.length === 1) return t('watch.near1', {id: near[0].id, pct: Math.round(pctOf(near[0])*100)});
+    if (near.length > 1) return t('watch.nearN', {ids: near.map(a => a.id).join(', ')});
+    return t('watch.near');
+  }
+  return t('watch.ok');
+}
+function renderWatcher() {
+  if (!S || ui.watcherBusy || !$('watcher')) return;
+  const mood = watcherMood();
+  const el = $('watcher');
+  if (el.dataset.mood !== mood || !$('watcher-face').innerHTML) {
+    el.dataset.mood = mood;
+    $('watcher-face').innerHTML = faceSvg('#EDAE44', mood);
+  }
+  if (ui.lineMood !== mood) {
+    ui.watcherLine = localWatcherLine(mood);
+    ui.lineMood = mood;
+  }
+  $('watcher-say').textContent = ui.watcherLine;
+  const n = (S.alerts || []).length;
+  const badge = $('watcher-badge');
+  if (badge) {
+    badge.hidden = !n;
+    badge.textContent = n > 9 ? '9+' : String(n);
+  }
+  const btn = $('watcher');
+  btn.setAttribute('aria-label', n ? t('watch.aria.n', {n}) : t('watch.aria'));
+  btn.setAttribute('aria-expanded', ui.chatOpen ? 'true' : 'false');
 }
 
-function renderAgent() {
-  const a = agent(ui.sel);
-  if (!a) { $('agent-h').innerHTML = ''; $('caps').innerHTML = ''; return; }
-  const st = status(a);
-  $('agent-h').innerHTML = `<div><h2 id="agent-title">${esc(a.id)}</h2><p>${esc(a.description)}</p></div>
-    <div class="agent-actions"><span class="pill ${st.pill}">${st.text}</span>
-    ${a.paused ? `<button class="btn small primary" type="button" data-act="resume">Retomar agente</button>` : `<button class="btn small danger" type="button" data-act="pause">Pausar agente</button>`}</div>`;
-  const r = a.rule;
-  if (!r || r.off) {
-    $('caps').innerHTML = `<div class="cap off"><div class="cap-h"><span class="cap-name"><span class="sw" style="background:var(--r-x402)"></span>USDC</span><span class="pill muted">Não habilitado</span></div><div class="cap-rules"><span>Toda tentativa é barrada.</span></div></div>`;
+function alertBubbleHtml(x) {
+  const sev = esc(x.sev || 'info');
+  return `<div class="say ${sev}">
+    <span class="say-who">${esc(x.agent_id || t('alerts.system'))}</span>
+    <span class="say-what">${esc(engineText(x.text))}</span>
+    <span class="say-time">${fmtTime(x.created_at)}</span>
+  </div>`;
+}
+function fillAlertThread(el, newestFirst) {
+  if (!el) return;
+  const list = S?.alerts || [];
+  if (!list.length) {
+    el.innerHTML = `<p class="empty">${t('watch.empty')}</p>`;
     return;
   }
-  const s = a.spent || 0, pct = r.cap > 0 ? s / r.cap : 0;
-  const col = pct >= 1 ? 'var(--crit)' : pct >= 0.8 ? 'var(--grad)' : 'var(--r-x402)';
-  const rules = [];
-  if (r.at80) rules.push(`80% → <strong>${ACT[r.at80]}</strong>`);
-  if (r.at100) rules.push(`100% → <strong>${ACT[r.at100]}</strong>`);
-  if (r.perTx) rules.push(`máx. <strong class="num">${fmtUSD(r.perTx)}</strong> por chamada`);
-  if (r.approveAbove) rules.push(`aprovação acima de <strong class="num">${fmtUSD(r.approveAbove)}</strong>`);
-  if (r.allow?.length) rules.push(`<strong>${r.allow.length}</strong> endereços da API`);
-  const editing = ui.editingCap === a.id;
-  $('caps').innerHTML = `<div class="cap">
-      <div class="cap-h"><span class="cap-name"><span class="sw" style="background:var(--r-x402)"></span>USDC por chamada</span><span class="period">${r.period==='dia'?'Diário':'Mensal'}</span></div>
-      <div class="cap-fig"><span><span class="spent">${fmtUSD(s)}</span> <span class="of">de <span class="num">${fmtUSD(r.cap)}</span></span></span><span class="pct" style="${pct>=1?'color:var(--crit)':pct>=0.8?'color:var(--warn)':''}">${Math.round(pct*100)}%</span></div>
-      <div class="bar" role="img" aria-label="${Math.round(pct*100)}% do teto usado"><i style="width:${Math.min(pct,1)*100}%;background:${col}"></i><b style="left:50%"></b><b style="left:80%"></b></div>
-      <div class="cap-rules">${rules.map(x => `<span>${x}</span>`).join('')}</div>
-      <div class="cap-foot"><span>${pct>=1 ? 'Teto atingido' : `Restam <span class="num">${fmtUSD(Math.max(r.cap - s, 0))}</span> ${PERIOD[r.period]}`} · Solana e Base no mesmo teto</span>
-      ${editing ? `<span class="cap-edit"><label class="period" for="cap-in">Novo teto</label><input id="cap-in" type="number" min="0" step="any" value="${r.cap}"><button class="btn small primary" type="button" data-act="save-cap">Salvar</button><button class="btn small" type="button" data-act="cancel-cap">Cancelar</button></span>`
-        : `<button class="btn small" type="button" data-act="edit-cap">Editar teto</button>`}</div>
-    </div>`;
+  const rows = newestFirst ? list : [...list].reverse();
+  el.innerHTML = rows.map(alertBubbleHtml).join('');
+  if (!newestFirst) el.scrollTop = el.scrollHeight;
+}
+function placeWatcherChat() {
+  const chat = $('watcher-chat'), btn = $('watcher');
+  if (!chat || !btn || !ui.chatOpen) return;
+  const r = btn.getBoundingClientRect();
+  chat.style.top = `${Math.round(r.bottom + 8)}px`;
+  chat.style.right = `${Math.round(window.innerWidth - r.right)}px`;
+  chat.style.left = 'auto';
+}
+function setWatcherChat(open) {
+  ui.chatOpen = !!open;
+  const chat = $('watcher-chat');
+  const btn = $('watcher');
+  if (!chat || !btn) return;
+  chat.hidden = !ui.chatOpen;
+  btn.setAttribute('aria-expanded', ui.chatOpen ? 'true' : 'false');
+  if (ui.chatOpen) {
+    document.body.appendChild(chat);
+    fillAlertThread($('watcher-chat-list'), false);
+    placeWatcherChat();
+    requestAnimationFrame(() => { placeWatcherChat(); chat.scrollTop = chat.scrollHeight; });
+  }
+}
+
+function spentSplit(a) {
+  const v = {solana:0, base:0};
+  const today = new Date(S.now).toISOString().slice(0,10);
+  const month = today.slice(0,7);
+  const daily = a.rule?.period !== 'mes';
+  for (const r of S.daily || []) {
+    if (r.agent_id !== a.id || v[r.network] === undefined) continue;
+    if (daily ? r.day !== today : !String(r.day).startsWith(month)) continue;
+    v[r.network] += r.total;
+  }
+  return v;
+}
+
+function renderAgentCards() {
+  const box = $('agent-cards');
+  if (!box) return;
+  if (!S.agents.length) {
+    box.innerHTML = `<p class="empty">${t('cards.empty')}<a href="#admin" data-go="admin">${t('cards.empty.link')}</a>${t('cards.empty.end')}</p>`;
+    return;
+  }
+  box.innerHTML = S.agents.map(a => {
+    const st = status(a), r = a.rule, s = a.spent || 0, pct = r && !r.off && r.cap > 0 ? s / r.cap : 0;
+    const col = pct >= 1 ? 'var(--crit)' : pct >= 0.8 ? 'var(--grad)' : 'var(--r-x402)';
+    const split = spentSplit(a), editing = ui.editingCap === a.id;
+    const period = PERIOD()[r?.period] || t('period.today');
+    return `<article class="acard ${st.cls==='warn'?'hot':''} ${a.id===ui.sel?'sel':''}" data-tab="${esc(a.id)}">
+      <div class="acard-top">
+        ${faceSvg(waxOf(a.id), eyesOf(a))}
+        <div class="acard-id">
+          <strong>${esc(a.id)}</strong>
+          ${a.description ? `<p>${esc(a.description)}</p>` : ''}
+        </div>
+        <div class="acard-pills"><span class="pill ${st.pill}">${st.text}</span>${livePill(a.id)}</div>
+      </div>
+      ${!r || r.off ? `<p class="empty" style="margin:0">${t('cards.off')}</p>` : `
+      <div class="acard-amt">
+        <span><span class="spent">${fmtUSD(s)}</span> <span class="of">${t('cards.of', {cap: fmtUSD(r.cap), period})}</span></span>
+        <span class="pct" style="${pct>=1?'color:var(--crit)':pct>=0.8?'color:var(--warn)':''}">${Math.round(pct*100)}%</span>
+      </div>
+      <div class="bar stack" role="img" aria-label="${t('cards.bar', {pct: Math.round(pct*100)})}"><i class="sol" style="width:${r.cap>0?Math.min(split.solana/r.cap,1)*100:0}%"></i><i class="base" style="width:${r.cap>0?Math.min(split.base/r.cap,1)*100:0}%"></i></div>
+      <div class="split">
+        <span><span class="sw" style="background:var(--r-x402)"></span>Solana ${fmtUSD(split.solana)}</span>
+        <span><span class="sw" style="background:var(--r-ia)"></span>Base ${fmtUSD(split.base)}</span>
+      </div>
+      <div class="acard-meta">
+        <div>${t('cards.max')}<strong>${r.perTx != null ? fmtUSD(r.perTx) : '—'}</strong></div>
+        <div>${t('cards.allow')}<strong>${r.allow?.length ? t('cards.allow.n', {n: r.allow.length}) : t('cards.allow.any')}</strong></div>
+        <div>${t('cards.at80')}<strong>${r.at80 ? ACT()[r.at80] : '—'}</strong></div>
+        <div>${t('cards.at100')}<strong>${r.at100 ? ACT()[r.at100] : '—'}</strong></div>
+      </div>`}
+      <div class="acard-acts">
+        ${S.live?.[a.id]?.running
+          ? `<button class="btn small danger live-act" type="button" data-act="live-stop" data-id="${esc(a.id)}">${t('live.stop')}</button>`
+          : `<button class="btn small live-act" type="button" data-act="live-start" data-id="${esc(a.id)}">${t('live.start')}</button>`}
+        ${editing ? `<span class="cap-edit" style="grid-column:1/-1"><input id="cap-in" type="number" min="0" step="any" value="${r ? r.cap : 0}"><button class="btn small primary" type="button" data-act="save-cap" data-id="${esc(a.id)}">${t('cards.save')}</button><button class="btn small" type="button" data-act="cancel-cap">${t('cards.cancel')}</button></span>`
+          : `<button class="btn small" type="button" data-act="edit-cap" data-id="${esc(a.id)}">${t('cards.edit')}</button>`}
+        ${a.paused ? `<button class="btn small primary" type="button" data-act="resume" data-id="${esc(a.id)}">${t('cards.resume')}</button>` : `<button class="btn small gold-line" type="button" data-act="pause" data-id="${esc(a.id)}">${t('cards.pause')}</button>`}
+      </div>
+    </article>`;
+  }).join('');
 }
 
 function renderChart() {
@@ -665,95 +1397,113 @@ function renderChart() {
   for (let i = 13; i >= 0; i--) { const d = new Date(); d.setUTCDate(d.getUTCDate() - i); days.push(d.toISOString().slice(0,10)); }
   const rows = days.map(day => { const v = {solana:0, base:0};
     for (const r of S.daily) if (r.agent_id === a.id && r.day === day && v[r.network] !== undefined) v[r.network] += r.total;
-    return {day, v, total: NET_KEYS.reduce((t,k) => t + v[k], 0)}; });
-  const max = Math.max(...rows.map(x => x.total), 0);
-  const steps = [0.5,1,2,5,10,20,25,50,100,200,250,500,1000,2000,5000,10000];
-  const step = steps.find(s => (max || 1) / s <= 5) || 10000, topV = Math.max(step, Math.ceil(max / step) * step);
-  const W = 640, H = 220, L = 56, Rm = 8, T = 16, B = 26, cw = (W-L-Rm)/rows.length, bw = Math.min(cw*0.62, 26);
+    return {day, v, total: NET_KEYS.reduce((sum,k) => sum + v[k], 0)}; });
+  const cap = a.rule && !a.rule.off ? a.rule.cap : 0;
+  const max = Math.max(...rows.map(x => x.total), cap, 0);
+  const steps = [0.2,0.5,1,2,5,10,20,25,50,100,200,250,500,1000,2000,5000,10000];
+  const step = steps.find(s => (max || 1) / s <= 4) || 10000;
+  const topV = Math.max(step, Math.ceil(max / step) * step) * (cap > 0 && cap >= max * 0.85 ? 1.2 : 1);
+  const W = 720, H = 268, L = 52, Rm = 92, T = 22, B = 32, cw = (W-L-Rm)/rows.length, bw = Math.min(cw*0.72, 34);
   const y = v => T + (H-T-B) * (1 - v/topV);
-  let g = '';
-  for (let t = 0; t <= topV + 1e-9; t += step) {
-    g += `<line x1="${L}" x2="${W-Rm}" y1="${y(t)}" y2="${y(t)}" stroke="var(--line)"/><text x="${L-8}" y="${y(t)+4}" text-anchor="end" font-size="11" fill="var(--muted)" font-family="var(--mono)">${t >= 1000 ? (t/1000)+'k' : t}</text>`;
+  const yFmt = v => v >= 1000 ? `$${(v/1000).toFixed(v % 1000 ? 1 : 0)}k` : `$${v.toFixed(2)}`;
+  let defs = '', g = '';
+  for (let tick = 0; tick <= topV + 1e-9; tick += step) {
+    g += `<line x1="${L}" x2="${W-Rm}" y1="${y(tick)}" y2="${y(tick)}" stroke="rgba(250,248,242,.07)"/><text x="${L-8}" y="${y(tick)+4}" text-anchor="end" font-size="11" fill="var(--muted)" font-family="var(--code)">${yFmt(tick)}</text>`;
   }
   rows.forEach((x, i) => {
-    const cx = L + cw*i + cw/2, last = i === rows.length - 1; let acc = 0;
-    for (const k of NET_KEYS) { const v = x.v[k]; if (v <= 0) continue; const y0 = y(acc), y1 = y(acc+v); acc += v;
-      g += `<rect x="${cx-bw/2}" y="${y1}" width="${bw}" height="${Math.max(y0-y1,0.5)}" fill="var(${NETS[k].color})"><title>${x.day.slice(8)}/${x.day.slice(5,7)} · ${NETS[k].label}: ${fmtUSD(v)}</title></rect>`; }
-    if (last && x.total > 0) g += `<text x="${cx}" y="${y(x.total)-6}" text-anchor="end" font-size="11" fill="var(--ink)" font-family="var(--mono)">${fmtUSD(x.total)}</text>`;
-    if (i % 2 === 1 || last) g += `<text x="${cx}" y="${H-8}" text-anchor="middle" font-size="11" fill="${last?'var(--ink)':'var(--muted)'}" font-family="var(--mono)">${last ? 'hoje' : x.day.slice(8)+'/'+x.day.slice(5,7)}</text>`;
+    const cx = L + cw*i + cw/2, last = i === rows.length - 1;
+    if (last) g += `<rect x="${cx-cw/2+1}" y="${T}" width="${cw-2}" height="${H-T-B}" fill="rgba(237,174,68,.05)" rx="4"/>`;
+    if (x.total > 0) {
+      const clip = `c${i}`, x0 = cx-bw/2, top = y(x.total), h = Math.max(y(0)-top, 1), r = Math.min(5, bw/2, h/2);
+      defs += `<clipPath id="${clip}"><rect x="${x0}" y="${top}" width="${bw}" height="${h}" rx="${r}"/></clipPath>`;
+      let acc = 0;
+      for (const k of NET_KEYS) {
+        const v = x.v[k]; if (v <= 0) continue;
+        const y0 = y(acc), y1 = y(acc+v); acc += v;
+        g += `<rect clip-path="url(#${clip})" x="${x0}" y="${y1}" width="${bw}" height="${Math.max(y0-y1,0.5)}" fill="var(${NETS[k].color})"><title>${x.day} · ${NETS[k].label}: ${fmtUSD(v)}</title></rect>`;
+      }
+    }
+    if (last && x.total > 0) g += `<text x="${cx}" y="${y(x.total)-8}" text-anchor="middle" font-size="11" fill="var(--ink)" font-family="var(--code)">${fmtUSD(x.total)}</text>`;
+    const dlab = last ? t('chart.today') : (LANG === 'pt' ? x.day.slice(8)+'/'+x.day.slice(5,7) : x.day.slice(5,7)+'/'+x.day.slice(8));
+    if (i % 2 === 1 || last) g += `<text x="${cx}" y="${H-10}" text-anchor="middle" font-size="11" fill="${last?'var(--accent)':'var(--muted)'}" font-family="var(--code)">${dlab}</text>`;
   });
-  $('chart').innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Gasto diário de ${esc(a.id)} por rede, em dólares">${g}</svg>`;
-  $('chart-hint').textContent = `${a.id} · US$ · últimos 14 dias`;
-  $('legend').innerHTML = NET_KEYS.map(k => `<span><span class="sw" style="background:var(${NETS[k].color})"></span>${NETS[k].label}</span>`).join('');
+  if (cap > 0 && cap <= topV) {
+    g += `<line x1="${L}" x2="${W-Rm}" y1="${y(cap)}" y2="${y(cap)}" stroke="var(--accent)" stroke-dasharray="3 5" stroke-width="1.4"/>
+      <text x="${W-Rm+6}" y="${y(cap)-7}" font-size="11" fill="var(--accent)" font-family="var(--code)">${t('chart.cap', {amt: fmtUSD(cap)})}</text>`;
+  }
+  $('chart').innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(t('chart.aria', {id: a.id}))}"><defs>${defs}</defs>${g}</svg>`;
+  $('chart-hint').textContent = t('chart.dynhint', {id: a.id});
+  $('legend').innerHTML = '';
 }
 
 function renderValidation() {
   const c = S.validation, fv = $('f-ver').value;
   const items = [
-    {v:'verified', cls:'ok', t:'Conferidos na rede'},
-    {v:'pending', cls:'', t:'Aguardando a fonte'},
-    {v:'mismatch', cls:(c.mismatch?'warn':''), t:'Divergentes'},
-    {v:'external', cls:(c.external?'crit':''), t:'Fora do registro'}
+    {v:'verified', cls:'ok', lab:t('val.verified')},
+    {v:'pending', cls:'', lab:t('val.pending')},
+    {v:'mismatch', cls:(c.mismatch?'warn':''), lab:t('val.mismatch')},
+    {v:'external', cls:(c.external?'crit':''), lab:t('val.external')}
   ];
-  $('vstats').innerHTML = items.map(i => `<button class="vstat ${i.cls}" type="button" data-act="vfilter" data-v="${i.v}" aria-pressed="${fv===i.v}"><span class="n">${c[i.v]||0}</span><span class="t">${i.t}</span></button>`).join('');
+  $('vstats').innerHTML = items.map(i => `<button class="vstat ${i.cls}" type="button" data-act="vfilter" data-v="${i.v}" aria-pressed="${fv===i.v}"><span class="n">${c[i.v]||0}</span><span class="t">${i.lab}</span></button>`).join('');
   const lv = ui.lastValidation;
-  $('cover').innerHTML = `<span>Cada chamada em USDC é conferida na rede em que saiu: assinatura na Solana devnet ou hash na Base Sepolia. A varredura das duas carteiras acha o que saiu sem passar pelo motor. As duas redes entram no mesmo teto.</span>
-    ${lv ? `<span>Última validação manual: ${lv.checked} conferidos, ${lv.external} fora do registro${lv.errors.length ? ` · <span style="color:var(--crit)">${esc(lv.errors[0])}</span>` : ''}.</span>` : ''}`;
+  $('cover').innerHTML = `<span>${t('val.cover')}</span>
+    ${lv ? `<span>${(lv.checked || lv.external) ? t('val.last', {checked: lv.checked, external: lv.external}) : t('val.none')}${lv.errors.length ? ` · <span style="color:var(--crit)">${esc(lv.errors[0])}</span>` : ''}${ (lv.checked || lv.external) ? '.' : ''}</span>` : ''}`;
 }
 
 function renderApprovals() {
   const list = S.payments.filter(p => p.decision === 'needs_approval');
   $('appr-count').textContent = list.length;
   $('appr-count').className = 'count' + (list.length ? ' hot' : '');
-  $('approvals').innerHTML = list.length ? list.map(p => `<div class="item">
+  $('approvals').innerHTML = list.length ? list.map(p => `<div class="item appr-item">
       <div class="row"><span class="who">${esc(p.agent_id)} · ${NETS[p.network]?.short ?? esc(p.network || '')}</span><span class="time">${fmtTime(p.created_at)}</span></div>
-      <div class="row"><span class="what"><span class="num">${fmtUSD(p.amount)}</span> para ${esc(p.vendor || shortAddr(p.destination))}</span></div>
-      <div class="acts"><button class="btn small primary" type="button" data-act="approve" data-id="${p.id}">Aprovar</button><button class="btn small" type="button" data-act="reject" data-id="${p.id}">Recusar</button></div>
-    </div>`).join('') : `<p class="empty">Nada pendente. Pagamentos acima do limite de aprovação aparecem aqui.</p>`;
+      <div class="row"><span class="what"><span class="num">${fmtUSD(p.amount)}</span> ${t('appr.to', {who: esc(p.vendor || shortAddr(p.destination))})}</span></div>
+      ${p.note ? `<span class="hint">${esc(engineText(p.note))}</span>` : ''}
+      <div class="acts"><button class="btn small primary" type="button" data-act="approve" data-id="${p.id}">${t('appr.approve')}</button><button class="btn small" type="button" data-act="reject" data-id="${p.id}">${t('appr.reject')}</button></div>
+    </div>`).join('') : `<p class="empty">${t('appr.empty')}</p>`;
 }
 
 function renderAlerts() {
   $('alerts').innerHTML = S.alerts.length ? S.alerts.map(x => `<div class="item">
-      <div class="row"><span class="who"><span class="sev ${esc(x.sev)}"></span>${esc(x.agent_id || 'sistema')}</span><span class="time">${fmtTime(x.created_at)}</span></div>
-      <span class="what">${esc(x.text)}</span></div>`).join('') : `<p class="empty">Sem alertas.</p>`;
+      <div class="row"><span class="who"><span class="sev ${esc(x.sev)}"></span>${esc(x.agent_id || t('alerts.system'))}</span><span class="time">${fmtTime(x.created_at)}</span></div>
+      <span class="what">${esc(engineText(x.text))}</span></div>`).join('') : `<p class="empty">${t('alerts.empty')}</p>`;
+  if (ui.chatOpen) fillAlertThread($('watcher-chat-list'), false);
 }
 
 function chainCard(title, c, lines) {
-  const pill = c.ok === true ? `<span class="pill ok">Conectado</span>` : c.ok === false ? `<span class="pill crit">Sem conexão</span>` : `<span class="pill muted">Não testado</span>`;
-  const body = c.ok === false ? `<ul><li><span class="ck fail">✕</span><span>${esc(c.error || 'RPC indisponível')}</span></li></ul>`
-    : c.ok ? `<ul>${lines}</ul>` : '<p class="empty" style="margin:0">Ainda não testado.</p>';
+  const pill = c.ok === true ? `<span class="pill ok">${t('conn.ok')}</span>` : c.ok === false ? `<span class="pill crit">${t('conn.fail')}</span>` : `<span class="pill muted">${t('conn.untested')}</span>`;
+  const body = c.ok === false ? `<ul><li><span class="ck fail">✕</span><span>${esc(c.error || t('conn.rpcfail'))}</span></li></ul>`
+    : c.ok ? `<ul>${lines}</ul>` : `<p class="empty" style="margin:0">${t('conn.untested.body')}</p>`;
   return `<span class="period">${title}${c.at ? ' · ' + fmtTime(c.at) : ''}</span><span class="endpoint">${esc(c.rpc || '')}</span>${pill}${body}`;
 }
 function renderConn() {
   const sol = S.connection.solana, baseNet = S.connection.base;
-  $('net-chip').textContent = `Dev · Solana ${sol.network} · Base ${baseNet.network}`;
   const both = sol.ok === true && baseNet.ok === true, anyFail = sol.ok === false || baseNet.ok === false;
-  $('conn-pill').innerHTML = ui.busy.conn ? `<span class="pill muted">Testando…</span>` : both ? `<span class="pill ok">As duas redes</span>` : anyFail ? `<span class="pill crit">Sem conexão</span>` : `<span class="pill muted">Não testado</span>`;
+  $('conn-pill').innerHTML = ui.busy.conn ? `<span class="pill muted">${t('conn.testing')}</span>` : both ? `<span class="pill ok">${t('conn.both')}</span>` : anyFail ? `<span class="pill crit">${t('conn.fail')}</span>` : `<span class="pill muted">${t('conn.untested')}</span>`;
   $('conn-info').innerHTML = chainCard('Solana', sol, [
-    `<li><span class="ck ok">✓</span><span>Rede <code>${esc(sol.network)}</code> · status <code>${esc(sol.commitment)}</code></span></li>`,
+    `<li><span class="ck ok">✓</span><span>${LANG==='pt'?'Rede':'Network'} <code>${esc(sol.network)}</code> · status <code>${esc(sol.commitment)}</code></span></li>`,
     `<li><span class="ck ok">✓</span><span>USDC <code>${esc(shortAddr(sol.mint))}</code></span></li>`,
-    sol.ok ? `<li><span class="ck ok">✓</span><span>getSlot → <code>${Number(sol.slot).toLocaleString('pt-BR')}</code> · ${sol.latencyMs} ms</span></li>` : ''
+    sol.ok ? `<li><span class="ck ok">✓</span><span>${t('conn.slot')}<code>${Number(sol.slot).toLocaleString(loc())}</code> · ${sol.latencyMs} ms</span></li>` : ''
   ].filter(Boolean).join(''));
   $('conn-log').innerHTML = chainCard('Base', baseNet, [
-    `<li><span class="ck ok">✓</span><span>Rede <code>${esc(baseNet.network)}</code></span></li>`,
+    `<li><span class="ck ok">✓</span><span>${LANG==='pt'?'Rede':'Network'} <code>${esc(baseNet.network)}</code></span></li>`,
     `<li><span class="ck ok">✓</span><span>USDC <code>${esc(shortAddr(baseNet.usdc))}</code></span></li>`,
-    baseNet.ok ? `<li><span class="ck ok">✓</span><span>bloco <code>${Number(baseNet.block).toLocaleString('pt-BR')}</code> · ${baseNet.latencyMs} ms</span></li>` : ''
-  ].filter(Boolean).join('')) + `<div><button class="btn small" type="button" data-act="conn-test" ${ui.busy.conn?'disabled':''}>Testar conexão</button></div>`;
+    baseNet.ok ? `<li><span class="ck ok">✓</span><span>${t('conn.block')}<code>${Number(baseNet.block).toLocaleString(loc())}</code> · ${baseNet.latencyMs} ms</span></li>` : ''
+  ].filter(Boolean).join('')) + `<div><button class="btn small" type="button" data-act="conn-test" ${ui.busy.conn?'disabled':''}>${t('conn.test')}</button></div>`;
   $('wallets').innerHTML = S.agents.map(a => {
     const editing = ui.editingWallet === a.id, err = ui.walletErr[a.id];
     const mine = S.payments.filter(p => p.agent_id === a.id && (p.network === 'solana' || p.network === 'base' || p.decision === 'external'));
     const n = s => mine.filter(p => p.ver_status === s).length;
-    const res = ui.busy[a.id] ? `<span class="pill muted">Lendo a rede…</span>` :
-      `<span class="num">${n('verified')}</span> conferidos ${n('pending') ? `· <span class="num">${n('pending')}</span> aguardando ` : ''}${n('mismatch') ? `<span class="pill warn">${n('mismatch')} divergente(s)</span> ` : ''}${n('external') ? `<span class="pill crit">${n('external')} fora do registro</span>` : ''}`;
-    const solLink = a.wallet ? `<a class="btn small" href="https://solscan.io/account/${encodeURIComponent(a.wallet)}${sol.network==='devnet'?'?cluster=devnet':''}" target="_blank" rel="noopener">Solscan</a>` : '';
+    const res = ui.busy[a.id] ? `<span class="pill muted">${t('conn.reading')}</span>` :
+      `<span class="num">${n('verified')}</span>${t('conn.verified')}${n('pending') ? `· <span class="num">${n('pending')}</span>${t('conn.waiting')}` : ''}${n('mismatch') ? `<span class="pill warn">${t('conn.mismatch', {n: n('mismatch')})}</span> ` : ''}${n('external') ? `<span class="pill crit">${t('conn.external', {n: n('external')})}</span>` : ''}`;
+    const solLink = a.wallet ? `<a class="alink" href="https://solscan.io/account/${encodeURIComponent(a.wallet)}${sol.network==='devnet'?'?cluster=devnet':''}" target="_blank" rel="noopener">Solscan</a>` : '';
     const baseHref = baseNet.network === 'sepolia' ? 'https://sepolia.basescan.org/address/' : 'https://basescan.org/address/';
-    const baseLink = a.walletBase ? `<a class="btn small" href="${baseHref}${encodeURIComponent(a.walletBase)}" target="_blank" rel="noopener">Basescan</a>` : '';
+    const baseLink = a.walletBase ? `<a class="alink" href="${baseHref}${encodeURIComponent(a.walletBase)}" target="_blank" rel="noopener">Basescan</a>` : '';
     const cell = editing
-      ? `<div class="wedit"><label class="period" for="w-sol">Solana</label><input id="w-sol" value="${esc(a.wallet || '')}" spellcheck="false" autocomplete="off"><label class="period" for="w-base">Base</label><input id="w-base" value="${esc(a.walletBase || '')}" spellcheck="false" autocomplete="off"><button class="btn small primary" type="button" data-act="w-save" data-id="${esc(a.id)}">Salvar</button><button class="btn small" type="button" data-act="w-cancel">Cancelar</button></div>`
-      : `<div>Solana ${a.wallet ? `<span class="addr" title="${esc(a.wallet)}">${esc(shortAddr(a.wallet))}</span> ${solLink}` : '<span class="note">sem endereço</span>'}</div><div>Base ${a.walletBase ? `<span class="addr" title="${esc(a.walletBase)}">${esc(shortAddr(a.walletBase))}</span> ${baseLink}` : '<span class="note">sem endereço</span>'}</div>`;
+      ? `<div class="wedit"><label class="period" for="w-sol">Solana</label><input id="w-sol" value="${esc(a.wallet || '')}" spellcheck="false" autocomplete="off"><label class="period" for="w-base">Base</label><input id="w-base" value="${esc(a.walletBase || '')}" spellcheck="false" autocomplete="off"><button class="btn small primary" type="button" data-act="w-save" data-id="${esc(a.id)}">${t('conn.save')}</button><button class="btn small" type="button" data-act="w-cancel">${t('conn.cancel')}</button></div>`
+      : `<div class="addr-stack">${a.wallet ? `<div class="addr-row"><span class="netk">Solana</span><span class="addr" title="${esc(a.wallet)}">${esc(shortAddr(a.wallet))}</span>${solLink}</div>` : `<div class="addr-row"><span class="netk">Solana</span><span class="note">${t('conn.noaddr')}</span></div>`}${a.walletBase ? `<div class="addr-row"><span class="netk">Base</span><span class="addr" title="${esc(a.walletBase)}">${esc(shortAddr(a.walletBase))}</span>${baseLink}</div>` : `<div class="addr-row"><span class="netk">Base</span><span class="note">${t('conn.noaddr')}</span></div>`}</div>`;
     const canScan = a.wallet || a.walletBase;
-    return `<tr><td class="num">${esc(a.id)}</td><td>${cell}${err ? `<div class="werr">${esc(err)}</div>` : ''}</td><td>${res}</td>
-      <td><div class="wact"><button class="btn small" type="button" data-act="w-scan" data-id="${esc(a.id)}" ${ui.busy[a.id] || !canScan ? 'disabled' : ''}>Validar carteira</button>${editing ? '' : `<button class="btn small" type="button" data-act="w-edit" data-id="${esc(a.id)}">Trocar</button>`}</div></td></tr>`;
+    return `<tr><td class="agent-id">${esc(a.id)}</td><td>${cell}${err ? `<div class="werr">${esc(err)}</div>` : ''}</td><td class="vcell">${res}</td>
+      <td><div class="wact"><button class="btn small" type="button" data-act="w-scan" data-id="${esc(a.id)}" ${ui.busy[a.id] || !canScan ? 'disabled' : ''}>${t('conn.scan')}</button>${editing ? '' : `<button class="btn small" type="button" data-act="w-edit" data-id="${esc(a.id)}">${t('conn.change')}</button>`}</div></td></tr>`;
   }).join('');
 }
 
@@ -762,84 +1512,146 @@ function renderLedger() {
   const sol = S.connection.solana, baseNet = S.connection.base;
   const rows = S.payments.filter(p => (!fa || p.agent_id === fa) && (!fd || p.decision === fd) && (!fv || p.ver_status === fv)).slice(0, 150);
   $('ledger').innerHTML = rows.length ? rows.map(p => {
-    const [c, t] = DEC[p.decision] || ['muted', p.decision], [vc, vt] = VER[p.ver_status] || ['muted', p.ver_status], open = ui.open === p.id;
+    const [c, lab] = DEC()[p.decision] || ['muted', p.decision];
+    const [vc, vt] = (p.ver_status === 'pending' && !p.signature) ? ['muted', t('ver.notx')] : (VER()[p.ver_status] || ['muted', p.ver_status]);
+    const open = ui.open === p.id;
     const value = p.amount_source != null && Math.abs(p.amount_source - p.amount) > 1e-9
-      ? `<span class="num">${fmtUSD(p.amount_source)}</span><br><span class="note">declarado ${fmtUSD(p.amount)}</span>` : `<span class="num">${fmtUSD(p.amount)}</span>`;
+      ? `<span class="num">${fmtUSD(p.amount_source)}</span><br><span class="note">${t('ledger.declared', {amt: fmtUSD(p.amount)})}</span>` : `<span class="num">${fmtUSD(p.amount)}</span>`;
     const net = NETS[p.network];
-    let html = `<tr class="clickable" data-act="toggle" data-id="${p.id}" tabindex="0" aria-expanded="${open}"><td class="num">${fmtTime(p.created_at)}</td><td class="num">${esc(p.agent_id)}</td>
-      <td><span class="sw" style="display:inline-block;margin-right:6px;background:var(${net?.color || '--line'})"></span>${net?.short ?? esc(p.network || '—')}</td>
-      <td>${esc(p.vendor || shortAddr(p.destination))}</td><td class="r">${value}</td><td><span class="pill ${c}">${t}</span></td><td><span class="pill ${vc}">${vt}</span></td>
-      <td><span class="note">${esc(p.note)}</span></td><td class="expand" aria-hidden="true">${open ? '▾' : '▸'}</td></tr>`;
+    const dest = p.vendor || shortAddr(p.destination);
+    let html = `<tr class="clickable" data-act="toggle" data-id="${p.id}" tabindex="0" aria-expanded="${open}"><td class="when">${fmtTime(p.created_at)}</td><td class="agent-id">${esc(p.agent_id)}</td>
+      <td><span class="npill"><i style="background:var(${net?.color || '--line'})"></i>${net?.short ?? esc(p.network || '—')}</span></td>
+      <td class="clip dest" title="${esc(dest)}">${esc(dest)}</td><td class="r amt">${value}</td><td><span class="pill ${c}">${lab}</span></td><td><span class="pill ${vc}">${vt}</span></td>
+      <td class="clip reason" title="${esc(engineText(p.note) || '')}"><span class="note">${esc(engineText(p.note))}</span></td><td class="expand" aria-hidden="true">${open ? '▾' : '▸'}</td></tr>`;
     if (open) {
       const proof = Object.entries(p.ver_proof || {});
       const sigLink = p.signature ? (p.network === 'base'
-        ? `<div><span class="k">Explorer</span><a class="v" href="${baseNet.network==='sepolia'?'https://sepolia.basescan.org/tx/':'https://basescan.org/tx/'}${encodeURIComponent(p.signature)}" target="_blank" rel="noopener">abrir no Basescan</a></div>`
-        : `<div><span class="k">Explorer</span><a class="v" href="https://solscan.io/tx/${encodeURIComponent(p.signature)}${sol.network==='devnet'?'?cluster=devnet':''}" target="_blank" rel="noopener">abrir no Solscan</a></div>`) : '';
+        ? `<div><span class="k">Explorer</span><a class="v" href="${baseNet.network==='sepolia'?'https://sepolia.basescan.org/tx/':'https://basescan.org/tx/'}${encodeURIComponent(p.signature)}" target="_blank" rel="noopener">${t('ledger.open.base')}</a></div>`
+        : `<div><span class="k">Explorer</span><a class="v" href="https://solscan.io/tx/${encodeURIComponent(p.signature)}${sol.network==='devnet'?'?cluster=devnet':''}" target="_blank" rel="noopener">${t('ledger.open.sol')}</a></div>`) : '';
       html += `<tr class="detail"><td colspan="9"><div class="checks">
-        <div><div class="period" style="margin-bottom:8px">Checagens</div><ul>${(p.ver_checks || []).map(k => `<li><span class="ck ${k.s}" aria-label="${k.s==='ok'?'ok':k.s==='fail'?'falhou':'aguardando'}">${k.s==='ok'?'✓':k.s==='fail'?'✕':'…'}</span><span>${esc(k.text)}</span></li>`).join('')}</ul></div>
-        <div><div class="period" style="margin-bottom:8px">Prova</div>${proof.length || sigLink ? `<div class="proof">${proof.map(([k,v]) => `<div><span class="k">${esc(k)}</span><span class="v">${esc(v)}</span></div>`).join('')}${sigLink}</div>` : `<p class="empty" style="margin:0">Ainda sem prova. Aparece quando a rede confirmar.</p>`}</div>
+        <div><div class="period" style="margin-bottom:8px">${t('ledger.checks')}</div><ul>${(p.ver_checks || []).map(k => `<li><span class="ck ${k.s}" aria-label="${k.s==='ok'?t('check.ok'):k.s==='fail'?t('check.fail'):t('check.wait')}">${k.s==='ok'?'✓':k.s==='fail'?'✕':'…'}</span><span>${esc(engineText(k.text))}</span></li>`).join('')}</ul></div>
+        <div><div class="period" style="margin-bottom:8px">${t('ledger.proof')}</div>${proof.length || sigLink ? `<div class="proof">${proof.map(([k,v]) => `<div><span class="k">${esc(k)}</span><span class="v">${esc(v)}</span></div>`).join('')}${sigLink}</div>` : `<p class="empty" style="margin:0">${t('ledger.noproof')}</p>`}</div>
       </div></td></tr>`;
     }
     return html;
-  }).join('') : `<tr><td colspan="9" class="empty">Nenhum pagamento com esses filtros.</td></tr>`;
+  }).join('') : `<tr><td colspan="9" class="empty">${t('ledger.empty')}</td></tr>`;
 }
 
 function renderSelects() {
   const keepAgent = $('f-agent').value, keepSim = $('sim-agent').value;
-  $('f-agent').innerHTML = `<option value="">Todos os agentes</option>` + S.agents.map(a => `<option value="${esc(a.id)}">${esc(a.id)}</option>`).join('');
+  $('f-agent').innerHTML = `<option value="">${t('f.allagents')}</option>` + S.agents.map(a => `<option value="${esc(a.id)}">${esc(a.id)}</option>`).join('');
   $('f-agent').value = keepAgent;
   $('sim-agent').innerHTML = S.agents.map(a => `<option value="${esc(a.id)}">${esc(a.id)}</option>`).join('');
   $('sim-agent').value = keepSim && S.agents.some(a => a.id === keepSim) ? keepSim : ui.sel || '';
 }
 
+function renderAdminList() {
+  $('admin-list').innerHTML = S.agents.length ? S.agents.map(a => {
+    const cap = a.rule && !a.rule.off ? fmtUSD(a.rule.cap) : t('admin.nocap');
+    return `<button type="button" class="pick" role="option" data-act="admin-pick" data-id="${esc(a.id)}" aria-selected="${ui.adminId === a.id}"><strong>${esc(a.id)}</strong><small>${esc(cap)} · ${esc(status(a).text)}</small></button>`;
+  }).join('') : `<p class="empty">${t('admin.empty')}</p>`;
+}
+
+function fillAdmin(a) {
+  const r = a?.rule;
+  $('adm-id').value = a?.id || '';
+  $('adm-id').readOnly = !!a;
+  $('adm-desc').value = a?.description || '';
+  $('adm-sol').value = a?.wallet || '';
+  $('adm-base').value = a?.walletBase || '';
+  $('adm-period').value = r?.period === 'mes' ? 'mes' : 'dia';
+  $('adm-cap').value = r && r.cap != null ? r.cap : '';
+  $('adm-pertx').value = r?.perTx ?? '';
+  $('adm-approve').value = r?.approveAbove ?? '';
+  $('adm-80').value = ['alertar', 'pedir_aprovacao', 'bloquear'].includes(r?.at80) ? r.at80 : 'alertar';
+  $('adm-100').value = ['bloquear', 'pausar_agente', 'pedir_aprovacao'].includes(r?.at100) ? r.at100 : 'bloquear';
+  $('adm-allow').value = (r?.allow || []).join('\n');
+  $('admin-save').textContent = a ? t('admin.save') : t('admin.create');
+}
+
+function renderAdmin() {
+  renderAdminList();
+  if (ui.adminDirty || ui.adminSaving || $('admin-form').contains(document.activeElement)) return;
+  if (ui.adminId && !agent(ui.adminId)) ui.adminId = null;
+  fillAdmin(ui.adminId ? agent(ui.adminId) : null);
+}
+
+function optionalAmount(id) {
+  const raw = $(id).value.trim();
+  if (!raw) return null;
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : NaN;
+}
+
 function renderAll() {
   if (!S) return;
   const focusId = document.activeElement?.id;
-  renderKPIs(); renderTabs(); renderAgent(); renderChart(); renderValidation(); renderApprovals(); renderAlerts(); renderConn(); renderLedger(); renderSelects();
-  $('clock').textContent = new Date(S.now).toLocaleString('pt-BR', {day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'});
+  renderKPIs(); renderAgentCards(); renderChart(); renderValidation(); renderApprovals(); renderAlerts(); renderConn(); renderLedger(); renderSelects(); renderAdmin(); renderWatcher();
+  $('clock').textContent = new Date(S.now).toLocaleString(loc(), {day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'});
   if (focusId && $(focusId) && ['cap-in','w-sol','w-base'].includes(focusId)) $(focusId).focus();
 }
 
 function showResult(r, amount, vendor) {
-  const [c, t] = DEC[r.decision];
+  const [c, lab] = DEC()[r.decision];
   const box = $('sim-result'); box.hidden = false;
-  box.innerHTML = `<div class="result"><div class="rh"><span class="pill ${c}">${t}</span><span class="num">${fmtUSD(amount)} → ${esc(vendor)}</span></div>
-    <ul>${r.hits.map(h => `<li>${esc(h.text)}${h.action !== 'permitir' ? ` <strong>(${ACT[h.action]})</strong>` : ''}</li>`).join('')}</ul>
-    ${r.hits.length > 1 ? `<span style="font-size:12px;color:var(--muted)">Vale a regra mais restritiva.</span>` : ''}</div>`;
+  box.innerHTML = `<div class="result"><div class="rh"><span class="pill ${c}">${lab}</span><span class="num">${fmtUSD(amount)} → ${esc(vendor)}</span></div>
+    <ul>${r.hits.map(h => `<li>${esc(engineText(h.text))}${h.action !== 'permitir' ? ` <strong>(${ACT()[h.action]})</strong>` : ''}</li>`).join('')}</ul>
+    ${r.hits.length > 1 ? `<span style="font-size:12px;color:var(--muted)">${t('result.strictest')}</span>` : ''}</div>`;
 }
 
 async function act(fn) { try { await fn(); } catch (e) { banner(e.message); } await refresh(); }
 
 document.addEventListener('click', ev => {
-  const tab = ev.target.closest('[data-tab]');
-  if (tab) { ui.sel = tab.dataset.tab; ui.editingCap = null; $('sim-agent').value = ui.sel; renderAll(); return; }
-  const t = ev.target.closest('[data-act]'); if (!t || !S) return;
-  const id = t.dataset.id;
-  switch (t.dataset.act) {
-    case 'pause': return act(() => api('POST', `/api/agents/${encodeURIComponent(ui.sel)}/pause`));
-    case 'resume': return act(() => api('POST', `/api/agents/${encodeURIComponent(ui.sel)}/resume`));
-    case 'edit-cap': ui.editingCap = ui.sel; renderAgent(); $('cap-in')?.focus(); return;
-    case 'cancel-cap': ui.editingCap = null; renderAgent(); return;
+  if (ev.target.closest('[data-go="admin"]')) {
+    ui.adminId = null;
+    ui.adminDirty = false;
+    fillAdmin(null);
+    $('admin-err').hidden = true;
+    $('admin-note').hidden = true;
+    if (S) renderAdminList();
+  }
+  const btn = ev.target.closest('[data-act]');
+  if (btn && S) {
+  const id = btn.dataset.id;
+  switch (btn.dataset.act) {
+    case 'pause': return act(() => api('POST', `/api/agents/${encodeURIComponent(id || ui.sel)}/pause`));
+    case 'resume': return act(() => api('POST', `/api/agents/${encodeURIComponent(id || ui.sel)}/resume`));
+    case 'live-start': return act(async () => {
+      const r = await api('POST', `/api/agents/${encodeURIComponent(id || ui.sel)}/live/start`, {});
+      if (r?.paying) banner('');
+      else if (r?.reason) banner(t('live.reason.' + r.reason));
+    });
+    case 'live-stop': return act(async () => { banner(''); await api('POST', `/api/agents/${encodeURIComponent(id || ui.sel)}/live/stop`, {}); });
+    case 'edit-cap': ui.sel = id || ui.sel; ui.editingCap = ui.sel; renderAgentCards(); $('cap-in')?.focus(); return;
+    case 'cancel-cap': ui.editingCap = null; renderAgentCards(); return;
     case 'save-cap': { const v = parseFloat($('cap-in').value); if (!(v >= 0)) { $('cap-in').focus(); return; }
-      ui.editingCap = null; return act(() => api('PUT', `/api/agents/${encodeURIComponent(ui.sel)}/rules`, {cap: v})); }
-    case 'approve': case 'reject': return act(() => api('POST', `/api/payments/${id}/${t.dataset.act}`));
+      const who = id || ui.sel; ui.editingCap = null; ui.sel = who; return act(() => api('PUT', `/api/agents/${encodeURIComponent(who)}/rules`, {cap: v})); }
+    case 'approve': case 'reject': return act(() => api('POST', `/api/payments/${id}/${btn.dataset.act}`));
     case 'toggle': ui.open = ui.open === +id ? null : +id; renderLedger(); document.querySelector(`tr[data-id="${id}"]`)?.focus(); return;
-    case 'vfilter': $('f-ver').value = $('f-ver').value === t.dataset.v ? '' : t.dataset.v; renderValidation(); renderLedger(); return;
-    case 'validate': ui.busy.all = true; t.disabled = true; t.textContent = 'Validando…';
-      return act(async () => { ui.lastValidation = await api('POST', '/api/validate', {}); }).finally(() => { ui.busy.all = false; t.disabled = false; t.textContent = 'Validar agora'; });
+    case 'vfilter': $('f-ver').value = $('f-ver').value === btn.dataset.v ? '' : btn.dataset.v; renderValidation(); renderLedger(); return;
+    case 'validate': ui.busy.all = true; btn.disabled = true; btn.textContent = t('val.validating');
+      return act(async () => { ui.lastValidation = await api('POST', '/api/validate', {}); }).finally(() => { ui.busy.all = false; btn.disabled = false; btn.textContent = t('val.now'); });
     case 'conn-test': ui.busy.conn = true; renderConn(); return act(() => api('POST', '/api/connection/test')).finally(() => { ui.busy.conn = false; renderConn(); });
     case 'w-scan': ui.busy[id] = true; renderConn(); return act(async () => { ui.lastValidation = await api('POST', '/api/validate', {agent: id}); }).finally(() => { ui.busy[id] = false; renderConn(); });
     case 'w-edit': ui.editingWallet = id; ui.walletErr[id] = null; renderConn(); $('w-sol')?.focus(); return;
     case 'w-cancel': ui.editingWallet = null; renderConn(); return;
     case 'w-save': { const solana = $('w-sol').value.trim(), baseAddr = $('w-base').value.trim();
-      if ([solana, baseAddr].some(looksLikeSecret)) { ui.walletErr[id] = SECRET_MSG; ui.editingWallet = null; renderConn(); return; }
+      if ([solana, baseAddr].some(looksLikeSecret)) { ui.walletErr[id] = SECRET_MSG(); ui.editingWallet = null; renderConn(); return; }
       const body = {};
       if (solana) body.solana = solana;
       if (baseAddr) body.base = baseAddr;
       return api('PUT', `/api/agents/${encodeURIComponent(id)}/wallet`, body)
         .then(() => { ui.editingWallet = null; ui.walletErr[id] = null; return refresh(); })
         .catch(e => { ui.walletErr[id] = e.message; renderConn(); }); }
+    case 'admin-new':
+      ui.adminId = null; ui.adminDirty = false; fillAdmin(null); $('admin-err').hidden = true; $('admin-note').hidden = true; renderAdminList(); $('adm-id').focus(); return;
+    case 'admin-pick':
+      ui.adminId = id; ui.adminDirty = false; fillAdmin(agent(id)); $('admin-err').hidden = true; $('admin-note').hidden = true; renderAdminList(); $('adm-desc').focus(); return;
   }
+  return;
+  }
+  const tab = ev.target.closest('[data-tab]');
+  if (tab) { ui.sel = tab.dataset.tab; ui.editingCap = null; if ($('sim-agent')) $('sim-agent').value = ui.sel; renderAll(); }
 });
 document.addEventListener('keydown', ev => {
   const tr = ev.target.closest?.('tr[data-act="toggle"]');
@@ -847,6 +1659,21 @@ document.addEventListener('keydown', ev => {
 });
 ['f-agent','f-dec','f-ver'].forEach(id => $(id).addEventListener('change', () => { renderValidation(); renderLedger(); }));
 $('sim-agent').addEventListener('change', e => { ui.sel = e.target.value; renderAll(); });
+$('watcher').addEventListener('click', ev => {
+  ev.stopPropagation();
+  if (!S || ui.watcherBusy) return;
+  setWatcherChat(!ui.chatOpen);
+});
+document.addEventListener('click', ev => {
+  if (!ui.chatOpen) return;
+  if (ev.target.closest?.('#watcher') || ev.target.closest?.('#watcher-chat')) return;
+  setWatcherChat(false);
+});
+document.addEventListener('keydown', ev => {
+  if (ev.key === 'Escape' && ui.chatOpen) setWatcherChat(false);
+});
+window.addEventListener('resize', placeWatcherChat);
+document.addEventListener('scroll', placeWatcherChat, true);
 
 async function simulateOnce(extraSpent = 0) {
   const body = { agent: $('sim-agent').value, network: $('sim-network').value, vendor: $('sim-vendor').value.trim(), destination: $('sim-dest').value.trim(), amount: parseFloat($('sim-amount').value), extraSpent };
@@ -855,38 +1682,88 @@ async function simulateOnce(extraSpent = 0) {
   return r;
 }
 $('sim').addEventListener('submit', ev => { ev.preventDefault(); if (!(parseFloat($('sim-amount').value) > 0)) { $('sim-amount').focus(); return; } simulateOnce().catch(e => banner(e.message)); });
+$('admin-form').addEventListener('input', () => { ui.adminDirty = true; $('admin-note').hidden = true; });
+$('admin-form').addEventListener('submit', async ev => {
+  ev.preventDefault();
+  const showErr = msg => { $('admin-err').hidden = !msg; $('admin-err').textContent = msg || ''; };
+  showErr('');
+  const id = $('adm-id').value.trim();
+  if (!/^[a-z0-9][a-z0-9-]{1,40}$/.test(id)) { showErr(t('admin.err.id')); $('adm-id').focus(); return; }
+  const solana = $('adm-sol').value.trim(), baseAddr = $('adm-base').value.trim();
+  const allow = $('adm-allow').value.split(/[\n,]/).map(s => s.trim()).filter(Boolean);
+  if ([solana, baseAddr, ...allow].some(looksLikeSecret)) { showErr(SECRET_MSG()); return; }
+  if ($('adm-cap').value.trim() === '' || !(Number($('adm-cap').value) >= 0)) { showErr(t('admin.err.cap')); $('adm-cap').focus(); return; }
+  const perTx = optionalAmount('adm-pertx'), approveAbove = optionalAmount('adm-approve');
+  if (Number.isNaN(perTx) || Number.isNaN(approveAbove) || (perTx !== null && perTx < 0) || (approveAbove !== null && approveAbove < 0)) {
+    showErr(t('admin.err.num')); return;
+  }
+  const existed = !!S?.agents.some(a => a.id === id);
+  ui.adminSaving = true;
+  $('admin-save').disabled = true;
+  try {
+    const body = { id, description: $('adm-desc').value.trim() };
+    if (solana) body.wallet = solana;
+    if (baseAddr) body.walletBase = baseAddr;
+    await api('POST', '/api/agents', body);
+    await api('PUT', `/api/agents/${encodeURIComponent(id)}/rules`, {
+      period: $('adm-period').value,
+      cap: Number($('adm-cap').value),
+      perTx, approveAbove, allow,
+      at80: $('adm-80').value,
+      at100: $('adm-100').value,
+    });
+    ui.adminId = id;
+    ui.adminDirty = false;
+    ui.sel = id;
+    $('admin-note').hidden = false;
+    $('admin-note').textContent = existed ? t('admin.note.upd', {id}) : t('admin.note.new', {id});
+    ui.adminSaving = false;
+    await refresh();
+    if (agent(id)) fillAdmin(agent(id));
+  } catch (e) { showErr(e.message); }
+  ui.adminSaving = false;
+  $('admin-save').disabled = false;
+});
 $('present').addEventListener('click', async () => {
   const btn = $('present');
-  btn.disabled = true; btn.textContent = 'Simulando…';
+  btn.disabled = true; btn.textContent = t('present.busy');
   try {
     const r = await api('POST', '/api/demo', {});
     await refresh();
-    const parts = [`${r.lines.length} tentativas no registro`];
-    if (r.allowed) parts.push(`${r.allowed} permitidas`);
-    if (r.blocked) parts.push(`${r.blocked} barradas`);
-    if (r.needsApproval) parts.push(`${r.needsApproval} para aprovar`);
-    $('present-note').textContent = `${parts.join(', ')}. Nada foi pago.`;
+    const parts = [t('present.lines', {n: r.lines.length})];
+    if (r.allowed) parts.push(t('present.allowed', {n: r.allowed}));
+    if (r.blocked) parts.push(t('present.blocked', {n: r.blocked}));
+    if (r.needsApproval) parts.push(t('present.approval', {n: r.needsApproval}));
+    $('present-note').textContent = `${parts.join(', ')}. ${t('present.unpaid')}`;
   } catch (e) { banner(e.message); }
-  btn.disabled = false; btn.textContent = 'Simular pagamentos';
+  btn.disabled = false; btn.textContent = t('present.btn');
 });
 $('loop').addEventListener('click', async () => {
   if (ui.looping) { ui.looping = false; return; }
-  ui.looping = true; $('loop').textContent = 'Parar simulação';
+  ui.looping = true; $('loop').textContent = t('loop.stop');
   try {
-    // soma as tentativas só nesta simulação, para mostrar em que chamada o teto barra o agente
     let extra = 0;
     for (let n = 1; n <= 200 && ui.looping; n++) {
       const r = await simulateOnce(extra);
-      if (r.decision !== 'allowed') { $('sim-result').insertAdjacentHTML('beforeend', `<p class="empty" style="margin:8px 0 0">Barrado na chamada nº ${n}, depois de ${fmtUSD(extra)} simulados.</p>`); break; }
+      if (r.decision !== 'allowed') { $('sim-result').insertAdjacentHTML('beforeend', `<p class="empty" style="margin:8px 0 0">${t('loop.blocked', {n, amt: fmtUSD(extra)})}</p>`); break; }
       extra += parseFloat($('sim-amount').value);
       await new Promise(res => setTimeout(res, matchMedia('(prefers-reduced-motion: reduce)').matches ? 30 : 180));
     }
   } catch (e) { banner(e.message); }
-  ui.looping = false; $('loop').textContent = 'Simular agente em loop';
+  ui.looping = false; $('loop').textContent = t('loop.btn');
 });
 
+document.querySelector('.lang-switch')?.addEventListener('click', ev => {
+  const b = ev.target.closest('[data-lang]');
+  if (b) setLang(b.dataset.lang);
+});
+window.nectraeT = t;
+applyStaticI18n();
 refresh();
-setInterval(() => { if (!ui.looping && !ui.editingCap && !ui.editingWallet) refresh(); }, 5000);
+setInterval(() => {
+  const typing = $('admin-form').contains(document.activeElement);
+  if (!ui.looping && !ui.editingCap && !ui.editingWallet && !ui.adminDirty && !ui.adminSaving && !typing) refresh();
+}, 5000);
 
 /* Nectrae · token do painel */
 document.getElementById('login-form').addEventListener('submit', async (ev) => {
@@ -903,23 +1780,55 @@ document.getElementById('login-form').addEventListener('submit', async (ev) => {
 <script>
 /* Nectrae · abas da versão para celular */
 (() => {
-  const TABS = {
-    inicio: ['NECTRAE · BEE IN CONTROL', 'Início'],
-    agentes: ['TETOS POR AGENTE', 'Agentes'],
-    aprovacoes: ['PRECISA DE VOCÊ', 'Aprovações'],
-    registro: ['CADA TENTATIVA DE PAGAMENTO', 'Registro'],
-    protecao: ['VALIDAÇÃO', 'Proteção']
-  };
+  const tr = (k, vars) => (window.nectraeT ? window.nectraeT(k, vars) : k);
+  function displayName() {
+    try {
+      const local = (localStorage.getItem('nectrae.userName') || '').trim();
+      if (local) return local;
+    } catch { /* ignore */ }
+    return String(window.nectraeOperator || '').trim();
+  }
+  function TABS() {
+    const name = displayName() || tr('m.hello.guest');
+    return {
+      inicio: tr('m.hello', { name }),
+      agentes: tr('tab.agentes'),
+      aprovacoes: tr('tab.aprovacoes'),
+      registro: tr('tab.registro'),
+      mais: tr('tab.mais'),
+      sim: tr('sim.title'),
+      protecao: tr('tab.protecao'),
+      admin: tr('tab.admin')
+    };
+  }
+  if (document.documentElement.classList.contains('nectrae-phone')) {
+    const stage = document.createElement('div');
+    stage.className = 'phone-stage';
+    const wrap = document.querySelector('.wrap');
+    const nav = document.querySelector('.mtabs');
+    wrap.before(stage);
+    stage.append(wrap, nav);
+  }
+  const PARENT = { sim: 'mais', protecao: 'mais', admin: 'mais' };
   const btns = document.querySelectorAll('.mtabs [data-mtab]');
   function setTab(t, push) {
-    if (!TABS[t]) t = 'inicio';
+    const tabs = TABS();
+    if (!tabs[t]) t = 'inicio';
     document.body.dataset.mtab = t;
-    btns.forEach(b => b.setAttribute('aria-current', b.dataset.mtab === t ? 'page' : 'false'));
-    document.getElementById('m-eyebrow').textContent = TABS[t][0];
-    document.getElementById('m-title').textContent = TABS[t][1];
-    if (push) { history.replaceState(null, '', '#' + t); window.scrollTo(0, 0); }
+    const root = PARENT[t] || t;
+    btns.forEach(b => b.setAttribute('aria-current', b.dataset.mtab === root ? 'page' : 'false'));
+    document.getElementById('m-title').textContent = tabs[t];
+    const head = document.querySelector('.m-head');
+    if (head) head.dataset.level = PARENT[t] ? 'child' : 'root';
+    if (push) history.replaceState(null, '', '#' + t);
+    const ios = document.documentElement.classList.contains('nectrae-ios');
+    if (ios) {
+      if (push) (document.querySelector('.phone-stage') || window).scrollTo(0, 0);
+    } else if (t === 'admin') document.getElementById('admin')?.scrollIntoView({ block: 'start' });
   }
   btns.forEach(b => b.addEventListener('click', () => setTab(b.dataset.mtab, true)));
+  document.querySelectorAll('.m-more [data-mtab]').forEach(b => b.addEventListener('click', () => setTab(b.dataset.mtab, true)));
+  document.getElementById('m-back').addEventListener('click', () => setTab('mais', true));
   document.getElementById('m-pending').addEventListener('click', () => setTab('aprovacoes', true));
   window.addEventListener('hashchange', () => setTab(location.hash.slice(1)));
   setTab(location.hash.slice(1));
@@ -932,9 +1841,11 @@ document.getElementById('login-form').addEventListener('submit', async (ev) => {
     badge.textContent = n; badge.hidden = n === 0;
     const pend = document.getElementById('m-pending');
     pend.hidden = n === 0;
-    document.getElementById('m-pending-t').textContent = n === 1 ? '1 pagamento espera aprovação' : n + ' pagamentos esperam aprovação';
+    document.getElementById('m-pending-t').textContent = n === 1 ? tr('m.pend1') : tr('m.pendN', {n});
   };
   new MutationObserver(sync).observe(cnt, { childList: true, characterData: true, subtree: true });
+  window.addEventListener('nectrae:lang', () => { setTab(document.body.dataset.mtab || location.hash.slice(1)); sync(); });
+  window.addEventListener('nectrae:state', () => { setTab(document.body.dataset.mtab || location.hash.slice(1)); });
   sync();
 })();
 </script>
