@@ -76,9 +76,10 @@ button,select,input{font:inherit;color:inherit}
 .tab:hover:not([aria-selected="true"]){color:var(--ink)}
 .tab .id{text-align:center;min-height:2.5em;line-height:1.25;overflow-wrap:anywhere}
 .tab .face{width:72px;height:72px;display:block}
-.tab .halo{fill:none;stroke:transparent;stroke-width:1.5}
+.tab .halo{fill:none;stroke:transparent;stroke-width:1.2;stroke-linejoin:round}
 .tab[aria-selected="true"] .halo{stroke:var(--ink)}
 .tab .face ellipse,.tab .face rect{fill:var(--ink)}
+.tab .face .mouth{fill:none;stroke:var(--ink);stroke-width:.8;stroke-linecap:round}
 
 .agent-h{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
 .agent-h h2{font-family:var(--mono);font-size:17px;font-weight:500}
@@ -258,6 +259,7 @@ body{padding-inline:24px}
 .watcher-face .face{width:36px;height:36px;display:block;animation:watcher-breathe 3.2s ease-in-out infinite}
 .watcher .halo{fill:none;stroke:transparent;stroke-width:1.5}
 .watcher .face ellipse,.watcher .face rect{fill:var(--ink)}
+.watcher .face .mouth{fill:none;stroke:var(--ink);stroke-width:.8;stroke-linecap:round}
 .watcher[data-mood="open"] .face ellipse{transform-box:fill-box;transform-origin:center;animation:watcher-blink 4.8s ease-in-out infinite}
 .watcher[data-mood="squint"] .halo{stroke:var(--accent)}
 .watcher[data-mood="squint"] .face{animation-duration:1.1s}
@@ -376,7 +378,7 @@ body:has(#login:not([hidden])) .mtabs{display:none!important}
   <div id="banner" class="errbox" hidden></div>
 
   <section class="panel login" id="login" aria-labelledby="login-title" hidden>
-    <svg width="40" height="40" viewBox="0 0 24 24" aria-hidden="true"><polygon points="12,1 22,6.5 22,17.5 12,23 2,17.5 2,6.5" fill="#EDAE44"/><path d="M9 11V9a3 3 0 0 1 6 0v2" fill="none" stroke="#031626" stroke-width="1.8" stroke-linecap="round"/><rect x="8" y="11" width="8" height="6" rx="1.2" fill="#031626"/></svg>
+    <svg width="40" height="40" viewBox="0 0 24 24" aria-hidden="true"><path d="M9.4 2.5Q12 1 14.6 2.5L18.93 5Q21.53 6.5 21.53 9.5L21.53 14.5Q21.53 17.5 18.93 19L14.6 21.5Q12 23 9.4 21.5L5.07 19Q2.47 17.5 2.47 14.5L2.47 9.5Q2.47 6.5 5.07 5Z" fill="#EDAE44"/><path d="M9 11V9a3 3 0 0 1 6 0v2" fill="none" stroke="#031626" stroke-width="1.8" stroke-linecap="round"/><rect x="8" y="11" width="8" height="6" rx="1.2" fill="#031626"/></svg>
     <h2 id="login-title">Sign in to the panel</h2>
     <p>This server is open to the network and asks for the panel token. Use the <code>PANEL_TOKEN</code> value from the <code>.env</code> file.</p>
     <form id="login-form" class="login-form">
@@ -391,7 +393,7 @@ body:has(#login:not([hidden])) .mtabs{display:none!important}
   </section>
 
   <div class="m-head" aria-live="polite"><span class="eyebrow" id="m-eyebrow">NECTRAE · BEE IN CONTROL</span><h2 id="m-title">Home</h2></div>
-  <button type="button" class="m-pending" id="m-pending" data-m="home" hidden><svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><polygon points="12,1 22,6.5 22,17.5 12,23 2,17.5 2,6.5" fill="#031626"/></svg><span><strong id="m-pending-t"></strong><small>Tap to review</small></span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+  <button type="button" class="m-pending" id="m-pending" data-m="home" hidden><svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><path d="M9.4 2.5Q12 1 14.6 2.5L18.93 5Q21.53 6.5 21.53 9.5L21.53 14.5Q21.53 17.5 18.93 19L14.6 21.5Q12 23 9.4 21.5L5.07 19Q2.47 17.5 2.47 14.5L2.47 9.5Q2.47 6.5 5.07 5Z" fill="#031626"/></svg><span><strong id="m-pending-t"></strong><small>Tap to review</small></span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
 
   <section class="kpis" id="kpis" data-m="home" aria-label="Summary"></section>
 
@@ -728,13 +730,17 @@ function eyesOf(a) {
   if (cls === 'warn') return 'squint';
   return 'open';
 }
+const HEX_BODY = 'M9.4 2.5Q12 1 14.6 2.5L18.93 5Q21.53 6.5 21.53 9.5L21.53 14.5Q21.53 17.5 18.93 19L14.6 21.5Q12 23 9.4 21.5L5.07 19Q2.47 17.5 2.47 14.5L2.47 9.5Q2.47 6.5 5.07 5Z';
+const HEX_VISOR = 'M10.27 6.1Q12 5.1 13.73 6.1L16.24 7.55Q17.98 8.55 17.98 10.55L17.98 13.45Q17.98 15.45 16.24 16.45L13.73 17.9Q12 18.9 10.27 17.9L7.76 16.45Q6.02 15.45 6.02 13.45L6.02 10.55Q6.02 8.55 7.76 7.55Z';
+const HEX_HALO = 'M9.06 2.1Q12 0.4 14.94 2.1L19.1 4.5Q22.05 6.2 22.05 9.6L22.05 14.4Q22.05 17.8 19.1 19.5L14.94 21.9Q12 23.6 9.06 21.9L4.9 19.5Q1.95 17.8 1.95 14.4L1.95 9.6Q1.95 6.2 4.9 4.5Z';
+// "Bee bot": rounded hex with antennae; eyes and mouth follow the agent's status
 function faceSvg(wax, eyes) {
   const look = eyes === 'shut'
-    ? '<rect x="6.7" y="10.7" width="3.5" height="0.62" rx="0.31"/><rect x="13.1" y="10.85" width="3.8" height="0.62" rx="0.31"/>'
+    ? '<ellipse cx="8.6" cy="11.05" rx="1.3" ry="0.25"/><ellipse cx="15.4" cy="11.05" rx="1.3" ry="0.25"/><path class="mouth" d="M10.8 15.2Q12 14.6 13.2 15.2"/>'
     : eyes === 'squint'
-    ? '<ellipse cx="8.5" cy="11.05" rx="1.85" ry="0.32"/><ellipse cx="15" cy="10.95" rx="2" ry="1.15"/>'
-    : '<ellipse cx="8.5" cy="10.7" rx="1.85" ry="1.05"/><ellipse cx="15" cy="10.95" rx="2" ry="1.15"/>';
-  return `<svg class="face" viewBox="-2 -2 28 28" aria-hidden="true"><polygon class="halo" points="12,1 22,6.5 22,17.5 12,23 2,17.5 2,6.5"/><polygon points="12,1 22,6.5 22,17.5 12,23 2,17.5 2,6.5" fill="${wax}"/><polygon points="12,1 22,6.5 22,17.5 12,23 2,17.5 2,6.5" fill="#031626" transform="translate(12 12) scale(0.62) translate(-12 -12)"/>${look}</svg>`;
+    ? '<ellipse cx="8.6" cy="11.05" rx="1.3" ry="0.32"/><ellipse cx="15.4" cy="10.95" rx="1.3" ry="1.15"/><path class="mouth" d="M10.6 15L13.4 15"/>'
+    : '<ellipse cx="8.6" cy="10.7" rx="1.3" ry="1.05"/><ellipse cx="15.4" cy="10.95" rx="1.3" ry="1.15"/><path class="mouth" d="M10.4 14.6Q12 15.9 13.6 14.6"/>';
+  return `<svg class="face" viewBox="-3 -5 30 30" aria-hidden="true"><path class="halo" d="${HEX_HALO}"/><path d="M9.6 2.6Q9 0 7.4 -1.6M14.4 2.6Q15 0 16.6 -1.6" fill="none" stroke="${wax}" stroke-width="1" stroke-linecap="round"/><circle cx="7.2" cy="-1.8" r="1.2" fill="${wax}"/><circle cx="16.8" cy="-1.8" r="1.2" fill="${wax}"/><path d="${HEX_BODY}" fill="${wax}"/><path d="${HEX_VISOR}" fill="#031626"/>${look}</svg>`;
 }
 
 function watcherMood() {

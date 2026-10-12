@@ -8,6 +8,8 @@ Agent Spend Control: one USDC cap per API, checked on Solana devnet and Base Sep
 | `docs/PRD-v2-Agent-Spend-Control.md` | PRD v2, revised on 11 Oct 2026. |
 | `painel-teto.html` | Clickable panel prototype, example data only. Open it in a browser. |
 
+Website: https://nectrae.lovable.app/
+
 To run the MVP:
 
 ```bash
