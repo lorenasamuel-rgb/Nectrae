@@ -2,190 +2,191 @@
 
 11/10/2026 · Lorena Samuel
 
-Um teto de USDC por API. Cada agente é uma empresa (Nansen, Vybe, TCG e as próximas). A Solana e a Base não são tipos de gasto: só conferem se o USDC saiu da carteira certa, no valor certo, para o endereço que a API pediu.
+One USDC cap per API. Each agent is one company (Nansen, Vybe, TCG, and the ones that follow). Solana and Base are not spend types: they only confirm that USDC left the right wallet, for the right amount, to the address the API asked for.
 
-O uso desta versão é em rede de teste: **Solana devnet** e **Base Sepolia**. O USDC dessas redes não tem valor.
+This version runs on test networks: **Solana devnet** and **Base Sepolia**. USDC on those networks has no real value.
 
-## O que mudou em 11/10/2026
+## What changed on 11/10/2026
 
-A versão de 06/10 tratava quatro meios de pagamento (modelos de IA, x402, transferência Solana e assinatura) como quatro tetos no mesmo agente. Isso saiu. O produto passou a ser controle de gasto com APIs pagas por chamada em USDC.
+The 06/10 version treated four payment rails (AI models, x402, Solana transfer, and subscription) as four caps on the same agent. That is gone. The product is now spend control for APIs paid per call in USDC.
 
-| Mudança | Por quê |
+| Change | Why |
 | --- | --- |
-| Um agente, uma API, um teto | O painel responde quanto aquela API gastou, não quatro categorias misturadas |
-| Solana e Base são a rede da conferência | O mesmo USDC pode liquidar numa ou na outra; as duas somam no mesmo teto |
-| O endereço do 402 entra na regra e na conferência | O app recusa, antes de assinar, um destino que não é o da API, e depois confere se o USDC caiu lá |
-| Duas carteiras públicas por agente | Uma base58 na Solana, uma `0x` na Base. Chave privada continua fora do app |
-| Redes de teste como padrão | Tudo o que esta versão usa é devnet e Sepolia |
-| IA, transferência livre e assinatura saíram do MVP | Não há transação na Solana numa fatura de cartão; prometer conferência ali era falso |
+| One agent, one API, one cap | The panel answers how much that API spent, not four mixed categories |
+| Solana and Base are the settlement networks | The same USDC can settle on either; both count toward the same cap |
+| The 402 address enters the rule and the check | The app refuses, before signing, a destination that is not the API’s, then confirms USDC landed there |
+| Two public wallets per agent | One base58 on Solana, one `0x` on Base. The private key stays outside the app |
+| Test networks as the default | Everything in this version uses devnet and Sepolia |
+| AI, free transfer, and subscription left the MVP | There is no Solana transaction on a card invoice; promising on-chain proof there was false |
 
-## Problema e visão
+## Problem and vision
 
-Quem paga APIs por chamada em USDC não vê, num lugar só, quanto cada fornecedor já consumiu, e não tem prova de que o número do painel é o USDC que saiu.
+People who pay APIs per call in USDC cannot see, in one place, how much each vendor has already consumed, and have no proof that the panel number is the USDC that left.
 
-- **Gasto por chamada:** Nansen, Vybe, TCG, x402engine e outras APIs cobram USDC via x402. Não há mensalidade nem chave de API: o pagamento é o acesso.
-- **Duas redes, um saldo que não se mistura:** a mesma chamada custa o mesmo dólar na Solana ou na Base, mas o USDC de uma não paga a outra.
-- **Controle do lado de quem paga:** os painéis de x402 mostram a receita de quem vende.
-- **Número sem prova:** se o agente declarar o valor e pular o SDK, o teto mente.
+- **Per-call spend:** Nansen, Vybe, TCG, x402engine, and other APIs charge USDC via x402. There is no subscription or API key: payment is access.
+- **Two networks, one balance that does not mix:** the same call costs the same dollar on Solana or Base, but USDC on one does not pay the other.
+- **Control on the payer side:** x402 dashboards show seller revenue.
+- **Number without proof:** if the agent declares the amount and skips the SDK, the cap lies.
 
-**Visão:** uma camada do lado de quem paga. Antes da assinatura, o motor decide se aquele USDC pode sair. Depois, a rede confirma valor, carteira e recebedor.
+**Vision:** a layer on the payer side. Before signing, the engine decides whether that USDC may leave. Afterward, the network confirms amount, wallet, and recipient.
 
-**Proposta de valor:** ver, limitar e provar o USDC gasto com cada API, sem guardar a chave da carteira.
+**Value proposition:** see, limit, and prove the USDC spent with each API, without holding the wallet key.
 
-## Objetivos e métricas
+## Goals and metrics
 
-O MVP prova que dá para ver, limitar e conferir o USDC de teste que os agentes gastam em APIs, na Solana devnet e na Base Sepolia.
+The MVP proves you can see, limit, and verify the test USDC agents spend on APIs, on Solana devnet and Base Sepolia.
 
-**Objetivos**
+**Goals**
 
-1. Um teto por agente, em USDC, no dia ou no mês.
-2. Decidir antes de assinar: permitir, alertar, bloquear, pedir aprovação ou pausar o agente.
-3. Conferir na rede em que o USDC saiu, e marcar divergência ou saída sem pedido.
-4. Somar as duas redes no mesmo teto.
+1. One cap per agent, in USDC, per day or per month.
+2. Decide before signing: allow, alert, block, ask for approval, or pause the agent.
+3. Verify on the network where USDC left, and mark mismatch or off-ledger spend.
+4. Sum both networks into the same cap.
 
-**Não-objetivos**
+**Non-goals**
 
-- Guardar fundos ou chaves privadas.
-- Conectar Phantom ou Coinbase Wallet. O painel não assina.
-- Pagar a API no lugar do agente.
-- Conferir fatura de cartão, OpenAI ou Claude. Esse gasto não passa pela Solana nem pela Base.
-- Rodar em mainnet nesta versão. Mainnet existe como opção no `.env` e fica desligada.
+- Hold funds or private keys.
+- Connect Phantom or Coinbase Wallet. The panel does not sign. *(Hosted prep for Phantom on Devnet may build an unsigned tx; signing still stays in the wallet.)*
+- Pay the API on behalf of the agent.
+- Verify a card invoice, OpenAI, or Claude. That spend never touches Solana or Base.
+- Run on mainnet in this version. Mainnet exists as an `.env` option and stays off.
 
-**Métricas de sucesso**
+**Success metrics**
 
-| Métrica | Meta no MVP |
+| Metric | MVP target |
 | --- | --- |
-| Pagamentos com assinatura ou hash conferidos na fonte | 100% em até 1 min após a confirmação |
-| USDC que saiu das carteiras vigiadas sem pedido | Detectado na varredura |
-| Latência da checagem de regra | < 50 ms (p95) |
-| Tempo até o primeiro teto | < 15 min após o cadastro |
+| Payments with signature or hash verified at the source | 100% within 1 min after confirmation |
+| USDC that left watched wallets without a request | Detected in the scan |
+| Rule-check latency | < 50 ms (p95) |
+| Time to first cap | < 15 min after signup |
 
-## Usuários e histórias
+## Users and stories
 
-| Persona | Quem é | O que precisa |
+| Persona | Who they are | What they need |
 | --- | --- | --- |
-| Dev de agentes | Chama APIs x402 com a carteira do agente | Um teto antes de assinar e a prova depois |
-| Líder técnico | Vê vários fornecedores | Qual API gastou, em qual rede, e o que foi barrado |
+| Agent developer | Calls x402 APIs with the agent wallet | A cap before signing and proof afterward |
+| Tech lead | Sees several vendors | Which API spent, on which network, and what was blocked |
 
-**Histórias**
+**Stories**
 
-- Como dev, quero um agente por API e um teto diário em USDC para um loop não esvaziar a carteira de teste.
-- Como dev, quero informar o endereço que a API pediu no 402 para o app barrar outro destino antes da assinatura.
-- Como dev, quero colar só o endereço público da Phantom em devnet e o `0x` da Base Sepolia.
-- Como líder técnico, quero ver Solana e Base no mesmo teto e na coluna de rede do registro.
-- Como líder técnico, quero ser avisado quando sair USDC sem passar pelo motor.
+- As a developer, I want one agent per API and a daily USDC cap so a loop cannot empty the test wallet.
+- As a developer, I want to pass the address the API asked for in the 402 so the app blocks another destination before signing.
+- As a developer, I want to paste only the Phantom public address on Devnet and the Base Sepolia `0x`.
+- As a tech lead, I want Solana and Base on the same cap and in the ledger’s network column.
+- As a tech lead, I want to be notified when USDC leaves without going through the engine.
 
-## Requisitos funcionais
+## Functional requirements
 
-| ID | Requisito | No MVP |
+| ID | Requirement | In MVP |
 | --- | --- | --- |
-| RF-01 | Cadastrar agente com nome, descrição, endereço Solana e endereço Base | Sim |
-| RF-02 | Um teto de USDC por agente, por dia ou por mês | Sim |
-| RF-03 | Checar antes de pagar: rede (`solana` ou `base`), valor, fornecedor e destino | Sim |
-| RF-04 | Vale a regra mais restritiva (teto, máximo por chamada, destino, aprovação, pausa) | Sim |
-| RF-05 | Máximo por chamada, lista dos endereços da API e aprovação acima de um valor | Sim |
-| RF-06 | Pausar o agente quando a regra de 100% mandar | Sim |
-| RF-07 | Registro de cada tentativa, permitida ou não | Sim |
-| RF-08 | Conferir na Solana pela assinatura e na Base pelo hash, inclusive o recebedor | Sim, em devnet e Sepolia |
-| RF-09 | Varrer as duas carteiras e marcar USDC que saiu sem pedido | Sim |
-| RF-10 | Se o valor da rede divergir, o registro passa a usar o da rede | Sim |
-| RF-11 | Alertas em 50%, 80% e 100%, e em divergência ou saída sem pedido | Sim, no painel |
-| RF-12 | Painel: um teto, gráfico por rede, aprovações, validação, registro e abas de celular | Sim |
-| RF-13 | Recusar chave privada, keypair JSON, frase de 12/24 palavras e chave hex `0x` de 32 bytes | Sim |
-| RF-14 | Rodada de apresentação que grava decisões e não paga | Sim |
-| RF-15 | Alertas por e-mail, Slack e webhook | Não |
-| RF-16 | Provar o endereço assinando uma mensagem, sem a chave sair da carteira | Não |
-| RF-17 | Mainnet como modo de uso | Não. Só se `SOLANA_NETWORK` ou `BASE_NETWORK` forem trocados |
+| RF-01 | Register an agent with name, description, Solana address, and Base address | Yes |
+| RF-02 | One USDC cap per agent, per day or per month | Yes |
+| RF-03 | Check before paying: network (`solana` or `base`), amount, vendor, and destination | Yes |
+| RF-04 | The most restrictive rule wins (cap, max per call, destination, approval, pause) | Yes |
+| RF-05 | Max per call, list of API receiving addresses, and approval above an amount | Yes |
+| RF-06 | Pause the agent when the 100% rule says so | Yes |
+| RF-07 | Ledger every attempt, allowed or not | Yes |
+| RF-08 | Verify on Solana by signature and on Base by hash, including the recipient | Yes, on Devnet and Sepolia |
+| RF-09 | Scan both wallets and mark USDC that left without a request | Yes |
+| RF-10 | If the on-chain amount differs, the ledger uses the network amount | Yes |
+| RF-11 | Alerts at 50%, 80%, and 100%, and on mismatch or off-ledger spend | Yes, in the panel |
+| RF-12 | Panel: one cap, chart by network, approvals, validation, ledger, and phone tabs | Yes |
+| RF-13 | Refuse private key, JSON keypair, 12/24-word phrase, and 32-byte hex `0x` key | Yes |
+| RF-14 | Presentation round that records decisions and does not pay | Yes |
+| RF-15 | Alerts by email, Slack, and webhook | No |
+| RF-16 | Prove the address by signing a message, without the key leaving the wallet | No |
+| RF-17 | Mainnet as a usage mode | No. Only if `SOLANA_NETWORK` or `BASE_NETWORK` are changed |
 
-## Modelo de políticas
+## Policy model
 
-Cada agente tem uma regra: período, teto em USDC, máximo por chamada e os endereços em que aquela API recebe. Solana e Base não têm teto próprio.
+Each agent has one rule: period, USDC cap, max per call, and the addresses that API receives on. Solana and Base do not have separate caps.
 
-Ações, da mais frouxa à mais rígida: `permitir` < `alertar` < `trocar_modelo` < `pedir_aprovacao` < `bloquear` = `pausar_agente`. `trocar_modelo` continua no motor e não é usado nos exemplos.
+Actions, from loosest to strictest: `permitir` (allow) < `alertar` (alert) < `trocar_modelo` (switch model) < `pedir_aprovacao` (ask approval) < `bloquear` (block) = `pausar_agente` (pause agent). `trocar_modelo` remains in the engine and is unused in the examples.
 
 ```yaml
-agente: nansen
-carteira_solana: <endereço público em devnet>
-carteira_base: <endereço 0x em Sepolia>
-regra:
-  periodo: dia
-  teto_usd: 1
-  por_chamada_max_usd: 0.05
-  destinos: [<payTo Solana da API>, <payTo Base da API>]
-  em_80pct: alertar
-  em_100pct: pausar_agente
+agent: nansen
+solana_wallet: <public Devnet address>
+base_wallet: <0x address on Sepolia>
+rule:
+  period: day
+  cap_usd: 1
+  per_call_max_usd: 0.05
+  destinations: [<API Solana payTo>, <API Base payTo>]
+  at_80pct: alert
+  at_100pct: pause_agent
 ```
 
-O `check` manda `network`, `amount`, `vendor` e `destination`. Destino fora da lista é barrado antes de assinar. O que conta no teto é o que saiu: permitido mais fora do registro, no valor da rede quando houver divergência.
+`check` sends `network`, `amount`, `vendor`, and `destination`. A destination off the list is blocked before signing. What counts toward the cap is what left: allowed plus off-ledger, at the network amount when there is a mismatch.
 
-Exemplos no seed: nansen (US$ 1/dia, máx. US$ 0,05), vybe (US$ 0,50, máx. US$ 0,03), tcg (US$ 0,40, máx. US$ 0,05). `npm run seed` apaga o registro de demonstração e recria esses três.
+Seed examples: nansen ($1/day, max $0.05), vybe ($0.50, max $0.03), tcg ($0.40, max $0.05). `npm run seed` wipes the demo ledger and recreates these three.
 
-## Validação na fonte
+## Source validation
 
-| Estado | Significa |
+| Status | Meaning |
 | --- | --- |
-| Conferido | A rede confirma valor, recebedor e sucesso |
-| Aguardando | A assinatura ou o hash ainda não aparece no RPC |
-| Divergente | A rede confirma outro valor, outro recebedor, ou a transação falhou |
-| Fora do registro | Saiu USDC da carteira vigiada sem um `check` |
+| Verified | The network confirms amount, recipient, and success |
+| Pending | The signature or hash is not on the RPC yet |
+| Mismatched | The network confirms another amount, another recipient, or a failed tx |
+| Outside the ledger | USDC left a watched wallet without a `check` |
 
-**Solana.** `getTransaction` com o status configurado (`finalized` por padrão). Saiu USDC do mint de teste `4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU` da carteira do agente, no valor declarado, para o destino pedido. A varredura usa `getSignaturesForAddress`.
+**Solana.** `getTransaction` with the configured commitment (`finalized` by default). Test USDC mint `4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU` left the agent wallet for the declared amount to the requested destination. The scan uses `getSignaturesForAddress`.
 
-**Base.** `eth_getTransactionReceipt` no USDC de teste da Circle em Sepolia, `0x036CbD53842c5426634e7929541eC2318f3dCF7e`. O evento `Transfer` precisa sair da carteira `0x` do agente para o destino pedido. A varredura usa `eth_getLogs` nos blocos recentes; se o RPC recusar a faixa, a janela encolhe.
+**Base.** `eth_getTransactionReceipt` against Circle’s Sepolia test USDC, `0x036CbD53842c5426634e7929541eC2318f3dCF7e`. The `Transfer` event must leave the agent’s `0x` wallet for the requested destination. The scan uses `eth_getLogs` on recent blocks; if the RPC rejects the range, the window shrinks.
 
-Barrado não tem o que conferir: a carteira não chegou a assinar.
+Blocked rows have nothing to verify: the wallet never signed.
 
-A validação só lê. Precisa da URL de RPC e dos endereços públicos. O login do painel (`PANEL_TOKEN`) é outro segredo, separado do `AGENT_TOKEN` e das carteiras.
+Validation is read-only. It needs the RPC URL and public addresses. Panel login (`PANEL_TOKEN`) is a separate secret from `AGENT_TOKEN` and the wallets.
 
-## Arquitetura
+## Architecture
 
 ```mermaid
 flowchart LR
-  A["Agente + SDK<br/>check antes de assinar<br/>confirm com assinatura ou hash"] <-->|check| M["Motor<br/>um teto de USDC<br/>máximo por chamada e destino"]
-  M -->|grava| R["Registro<br/>SQLite"]
-  A -->|se permitido| C["Carteira do agente<br/>a chave fica com ele"]
-  C -->|USDC| S["Solana devnet"]
+  A["Agent + SDK<br/>check before signing<br/>confirm with signature or hash"] <-->|check| M["Engine<br/>one USDC cap<br/>max per call and destination"]
+  M -->|writes| R["Ledger<br/>SQLite"]
+  A -->|if allowed| C["Agent wallet<br/>key stays with them"]
+  C -->|USDC| S["Solana Devnet"]
   C -->|USDC| B["Base Sepolia"]
-  V["Validador"] -->|lê| S
-  V -->|lê| B
-  V -->|conferido, divergente<br/>ou fora do registro| R
-  R --> P["Painel"]
+  V["Validator"] -->|reads| S
+  V -->|reads| B
+  V -->|verified, mismatched<br/>or outside the ledger| R
+  R --> P["Panel"]
 ```
 
-Se o agente pular o SDK e pagar da carteira, a varredura ainda acha a saída e soma no teto. O app não impede a assinatura na rede: impede a decisão de assinar, e denuncia o que saiu mesmo assim.
+If the agent skips the SDK and pays from the wallet, the scan still finds the outflow and adds it to the cap. The app does not stop signing on-chain: it stops the decision to sign, and reports what left anyway.
 
-## Requisitos não funcionais e segurança
+## Non-functional requirements and security
 
-| Área | Requisito |
+| Area | Requirement |
 | --- | --- |
-| Latência | Checagem de regra < 50 ms no p95 |
-| Custódia | Nunca guardar fundos nem chaves |
-| Campos de carteira | Recusam segredo e não gravam |
-| RPC | URL e chave só no `.env`; o painel mostra no máximo os 4 últimos caracteres |
-| Acesso | `AGENT_TOKEN` no SDK; `PANEL_TOKEN` no painel, obrigatório se o host não for localhost |
-| Auditoria | Mudança de teto fica em `rule_audit` |
-| Registro | A assinatura ou o hash é único |
-| Privacidade | Não guardar o corpo da chamada, só valor, rede, destino e fornecedor |
+| Latency | Rule check < 50 ms at p95 |
+| Custody | Never hold funds or keys |
+| Wallet fields | Refuse secrets and do not store them |
+| RPC | URL and key only in `.env`; the panel shows at most the last 4 characters |
+| Access | `AGENT_TOKEN` for the SDK; `PANEL_TOKEN` for the panel, required when the host is not localhost |
+| Audit | Cap changes go to `rule_audit` |
+| Ledger | Signature or hash is unique |
+| Privacy | Do not store the call body — only amount, network, destination, and vendor |
 
-## Escopo do MVP
+## MVP scope
 
-Roda localmente com Node 22.13+ (testado no 24), sem dependências. Código em `mvp/`.
+Runs locally on Node 22.13+ (tested on 24). Code lives in `mvp/`. Hosted panel also deploys on Vercel.
 
-| Parte | Estado |
+| Piece | Status |
 | --- | --- |
-| SDK `check` / `confirm` | Pronto |
-| Um teto, máximo por chamada, destinos, aprovação, pausa | Pronto |
-| Registro SQLite | Pronto |
-| Validador Solana devnet e Base Sepolia | Pronto |
-| Painel, simulação sem gravar, rodada de apresentação, abas de celular até 700 px | Pronto |
-| Login de carteira, mainnet como uso, alertas externos | Fora |
+| SDK `check` / `confirm` | Done |
+| One cap, max per call, destinations, approval, pause | Done |
+| SQLite ledger | Done |
+| Solana Devnet and Base Sepolia validators | Done |
+| Panel, dry-run simulation, presentation round, phone tabs ≤ 700 px | Done |
+| Day/night theme, hosted live agent, Phantom Devnet prepare | Done |
+| Wallet login as custody, mainnet as default usage, external alerts | Out of scope |
 
-**Como foi verificado (11/10/2026)**
+**How it was verified (11/10/2026)**
 
-- 40 testes: regras, recusa de chave, validadores Solana e Base com RPC simulado, e a API de ponta a ponta.
-- Subida local: Solana devnet e Base Sepolia responderam no RPC público. A varredura das carteiras de exemplo fechou sem erro.
+- Tests for rules, key refusal, Solana and Base validators with mocked RPC, and end-to-end API.
+- Local bring-up: Solana Devnet and Base Sepolia answered on public RPC. Example-wallet scans finished without error.
 
-**Como rodar**
+**How to run**
 
 ```bash
 cd mvp
@@ -194,32 +195,32 @@ npm run seed
 npm start
 ```
 
-Painel em `http://127.0.0.1:8787`. Abaixo de 700 px de largura, a barra de baixo abre Início, Agentes, Aprovações, Registro e Proteção.
+Panel at `http://127.0.0.1:8787`. Below 700 px width, the bottom bar opens Home, Agents, Approvals, Ledger, and More (Protection / Admin). Hosted access: see [access-manual.md](./access-manual.md).
 
-**Limites conhecidos**
+**Known limits**
 
-- O painel em localhost não pede login. Fora da máquina, exige `PANEL_TOKEN` e a conexão é HTTP.
-- Só USDC de teste é reconhecido, um contrato por rede.
-- A varredura da Base olha blocos recentes, não o histórico inteiro.
-- Dias e meses seguem o relógio do servidor; o gráfico agrupa por dia UTC.
-- Os endereços criados pelo seed não são uma Phantom. A conferência na carteira da pessoa começa quando o endereço público entra em Proteção.
-- APIs x402 de produção liquidam USDC de mainnet. Elas não aceitam o USDC destas redes de teste.
+- On localhost the panel does not ask for login. Off-machine it requires `PANEL_TOKEN`; LAN use is plain HTTP.
+- Only test USDC is recognized, one contract per network.
+- The Base scan looks at recent blocks, not the full history.
+- Days and months follow the server clock; the chart groups by UTC day.
+- Seed addresses are not a Phantom wallet. Verification of a person’s wallet starts when the public address is saved in Protection.
+- Production x402 APIs settle mainnet USDC. They do not accept test-network USDC.
 
 ## Roadmap
 
 ```mermaid
 flowchart LR
-  F1["Agora · redes de teste<br/>Um teto de USDC por API<br/>Solana devnet e Base Sepolia<br/>Painel local"]
-  --> F2["Quando sair do dev<br/>Mainnet nas duas redes<br/>Alertas fora do painel<br/>Provar o endereço com uma mensagem"]
+  F1["Now · test networks<br/>One USDC cap per API<br/>Solana Devnet and Base Sepolia<br/>Local and hosted panel"]
+  --> F2["When leaving Dev<br/>Mainnet on both networks<br/>Alerts outside the panel<br/>Prove the address with a message"]
 ```
 
-Provar o endereço é conectar a carteira e assinar uma mensagem. A chave continua na Phantom ou na carteira da Base. Isso não paga a API e não substitui o `PANEL_TOKEN`.
+Proving the address means connecting the wallet and signing a message. The key stays in Phantom or the Base wallet. That does not pay the API and does not replace `PANEL_TOKEN`.
 
-## Riscos
+## Risks
 
-| Risco | O que o MVP faz |
+| Risk | What the MVP does |
 | --- | --- |
-| O agente paga sem `check` | A varredura marca fora do registro e soma no teto. Não desfaz o pagamento |
-| RPC lento ou com limite | A linha fica aguardando; a Base encolhe a faixa de blocos se o nó recusar |
-| Alguém cola a chave | O campo recusa e avisa para mover os fundos |
-| Pagar na rede errada | O hash da Base não é lido na Solana, e o contrário também. A rede vai no `check` |
+| Agent pays without `check` | The scan marks outside the ledger and adds to the cap. It does not undo the payment |
+| Slow or rate-limited RPC | The row stays pending; Base shrinks the block range if the node refuses |
+| Someone pastes a key | The field refuses and warns to move the funds |
+| Paying on the wrong network | A Base hash is not read on Solana, and the reverse. The network goes in `check` |
