@@ -17,3 +17,7 @@ painel-teto.html
 Claude outputs/
 .vercel
 .env*
+
+# local brag / promo render folders (large media, regenerated)
+brag-output*/
+brag-output/
