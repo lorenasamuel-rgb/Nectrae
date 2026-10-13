@@ -1,0 +1,11 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "node",
+  "fluid": true,
+  "functions": {
+    "index.mjs": {
+      "includeFiles": "public/**",
+      "maxDuration": 60
+    }
+  }
+}

@@ -12,7 +12,7 @@ One USDC cap per API. Each agent is one API. Solana devnet and Base Sepolia only
 
 You need Node 22.13 or newer (tested on Node 24). The database is the SQLite that ships with Node. The automatic payer also uses `@solana/web3.js` and `@solana/spl-token`.
 
-## Run
+## Run (any machine)
 
 ```bash
 npm install
@@ -23,6 +23,10 @@ npm run demo              # in another terminal: an example agent calls the SDK 
 npm run agent             # optional: local signer from data/keys/
 npm test                  # rules, keys, Solana and Base validators, the API, and the payer plan
 ```
+
+On localhost you do not need `PANEL_TOKEN`. Optional: set `PANEL_NAME` in `.env` for the Home greeting.
+
+**Hosted panel (not on this computer):** see [docs/access-manual.md](../docs/access-manual.md) — open https://nectrae.vercel.app and sign in with the project `PANEL_TOKEN`.
 
 The database is `data/nectrae.db`. `npm run seed` wipes the demo ledger and recreates agents `nansen`, `vybe`, and `tcg`, each with a daily USDC cap. The addresses it writes are examples, not a Phantom wallet.
 
