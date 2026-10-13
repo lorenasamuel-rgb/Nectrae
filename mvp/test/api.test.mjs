@@ -25,6 +25,8 @@ const rpc = async (method, params) => {
   if (method === 'getSignaturesForAddress') return [{ signature: SIG_OK, blockTime: Math.floor(Date.now() / 1000) }, { signature: SIG_OUT, blockTime: Math.floor(Date.now() / 1000) }];
   if (method === 'getSlot') return 123;
   if (method === 'getVersion') return { 'solana-core': '2.x' };
+  if (method === 'getAccountInfo') return { value: { lamports: 1 } };
+  if (method === 'getLatestBlockhash') return { value: { blockhash: WALLET } };
 };
 
 let server, base, app;
@@ -116,6 +118,14 @@ test('nansen acima de approveAbove pede aprovação', async () => {
   const spend = new SpendControl({ url: base, token: 'tok-agent', agent: 'nansen' });
   const r = await spend.check({ network: 'solana', amount: 0.04, vendor: 'api.nansen.ai', destination: DEMO_AGENTS[0].pay.solana });
   assert.equal(r.decision, 'needs_approval');
+});
+
+test('abrir o painel testa Solana e Base sem o botão Testar conexão', async () => {
+  const { status, body } = await panel('/api/state');
+  assert.equal(status, 200);
+  assert.equal(body.connection.solana.ok, true);
+  assert.equal(body.connection.solana.slot, 123);
+  assert.equal(body.connection.base.ok, true);
 });
 
 test('o runner anuncia o endereço público em Proteção', async () => {
@@ -268,4 +278,31 @@ test('cadastro de agente novo grava carteiras, teto e destinos', async () => {
   const phrase = `${'abandon '.repeat(11)}abandon`;
   const refused = await panel('/api/agents/nova-api/rules', { method: 'PUT', body: JSON.stringify({ cap: 2, allow: [phrase] }) });
   assert.equal(refused.status, 422);
+});
+
+const PHANTOM_RECV = '9dDwQW5HeTW9UxVCG4fiw4q7rB7b2UambxiB5d1kLT4W';
+
+test('pay/prepare recusa destino de exemplo do catálogo', async () => {
+  const r = await panel('/api/pay/prepare', { method: 'POST', body: JSON.stringify({ agent: 'nansen' }) });
+  assert.equal(r.status, 400);
+});
+
+test('pay/prepare monta tx sem chave e confirm grava a assinatura', async () => {
+  await panel('/api/agents/nova-api/rules', { method: 'PUT', body: JSON.stringify({
+    period: 'mes', cap: 2, perTx: 0.1, allow: [PHANTOM_RECV], at80: 'alertar', at100: 'bloquear',
+  }) });
+  const prepped = await panel('/api/pay/prepare', { method: 'POST', body: JSON.stringify({ agent: 'nova-api', amount: 0.01 }) });
+  assert.equal(prepped.status, 200, prepped.body.error || prepped.body.note);
+  assert.equal(prepped.body.decision, 'allowed');
+  assert.ok(prepped.body.transaction);
+  assert.equal(prepped.body.from, WALLET);
+  assert.equal(prepped.body.destination, PHANTOM_RECV);
+  const raw = Buffer.from(prepped.body.transaction, 'base64');
+  assert.equal(raw[0], 1);
+  assert.ok(raw.subarray(1, 65).every(b => b === 0), 'unsigned placeholder signatures');
+  const confirmed = await panel('/api/pay/confirm', { method: 'POST', body: JSON.stringify({
+    agent: 'nova-api', paymentId: prepped.body.paymentId, signature: '6'.repeat(88),
+  }) });
+  assert.equal(confirmed.status, 200);
+  assert.equal(confirmed.body.signature, '6'.repeat(88));
 });

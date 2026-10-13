@@ -15,3 +15,5 @@ data/
 mvp/public/index.antes-*.html
 painel-teto.html
 Claude outputs/
+.vercel
+.env*

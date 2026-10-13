@@ -10,6 +10,8 @@ import { createRpc, testConnection, USDC_MINTS } from './solana.mjs';
 import { testBaseConnection, USDC_BASE } from './base.mjs';
 import { maskUrl } from './keys.mjs';
 import { createHostedLive } from './hosted-live.mjs';
+import { isExampleDestination } from './catalog.mjs';
+import { buildUnsignedUsdcTransfer } from './usdc-tx.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -146,6 +148,33 @@ export function createApp(config, { store = openStore({ path: config.dbPath }), 
     return connectionView();
   }
 
+  let probeInFlight = null;
+  let validateInFlight = null;
+  let lastValidateAt = 0;
+
+  function probeAgeMs() {
+    if (!solanaConn.at && !baseConn.at) return Infinity;
+    const t = Date.parse(solanaConn.at || baseConn.at);
+    return Number.isFinite(t) ? Date.now() - t : Infinity;
+  }
+
+  async function ensureNetworksOnPanelOpen() {
+    const refreshMs = (config.validateEverySec > 0 ? config.validateEverySec : 60) * 1000;
+    if (solanaConn.ok === null || probeAgeMs() >= refreshMs) {
+      probeInFlight ||= checkConnection().finally(() => { probeInFlight = null; });
+      await probeInFlight;
+    }
+    if (config.validateEverySec > 0 && Date.now() - lastValidateAt >= config.validateEverySec * 1000) {
+      if (!validateInFlight) {
+        validateInFlight = validate(null)
+          .then(() => { lastValidateAt = Date.now(); })
+          .catch(() => {})
+          .finally(() => { validateInFlight = null; });
+      }
+      await validateInFlight;
+    }
+  }
+
   async function validate(agentId) {
     const summary = await store.runValidation({
       solana: { rpc, mint: config.mint, commitment: config.commitment },
@@ -220,12 +249,15 @@ export function createApp(config, { store = openStore({ path: config.dbPath }), 
     }],
 
     // ---- API do painel ----
-    ['GET', /^\/api\/state$/, 'panel', async () => ({
-      ...store.state(),
-      live: liveView(),
-      connection: connectionView(),
-      operatorName: config.panelName || '',
-    })],
+    ['GET', /^\/api\/state$/, 'panel', async () => {
+      await ensureNetworksOnPanelOpen();
+      return {
+        ...store.state(),
+        live: liveView(),
+        connection: connectionView(),
+        operatorName: config.panelName || '',
+      };
+    }],
     ['POST', /^\/api\/agents$/, 'panel', async (req) => store.upsertAgent(await body(req))],
     ['POST', /^\/api\/agents\/([\w-]+)\/(pause|resume)$/, 'panel', async (_req, [id, op]) => (store.setPaused(id, op === 'pause'), { ok: true })],
     ['POST', /^\/api\/agents\/([\w-]+)\/live\/(start|stop)$/, 'panel', async (req, [id, op]) => {
@@ -242,6 +274,36 @@ export function createApp(config, { store = openStore({ path: config.dbPath }), 
     ['POST', /^\/api\/simulate$/, 'panel', async (req) => store.dryRun(await body(req))],
     ['POST', /^\/api\/demo$/, 'panel', async () => store.runPresentation()],
     ['POST', /^\/api\/validate$/, 'panel', async (req) => validate((await body(req)).agent || null)],
+    ['POST', /^\/api\/pay\/prepare$/, 'panel', async (req) => {
+      if (config.network !== 'devnet') throw new HttpError(403, 'Phantom pay is only enabled on Solana Devnet.');
+      const b = await body(req);
+      const id = String(b.agent || '').trim();
+      const me = store.agentForSdk(id);
+      const allow = me.rule?.allow || [];
+      const dest = String(b.destination || allow.find(a => a && !/^0x/i.test(a) && !isExampleDestination(a, 'solana')) || '').trim();
+      if (!dest) throw new HttpError(400, 'Put a real Solana receiving address on the allow list.');
+      if (!me.wallet) throw new HttpError(400, 'Connect Phantom first so Protection has the sending address.');
+      const cap = me.rule?.perTx > 0 ? me.rule.perTx : 0.01;
+      const amount = Number(b.amount) > 0 ? Number(b.amount) : Math.min(0.01, cap);
+      const checked = store.check({ agent: id, amount, vendor: b.vendor || 'phantom.mobile', destination: dest, network: 'solana' });
+      if (checked.decision !== 'allowed') return { ...checked, transaction: null };
+      try {
+        const built = await buildUnsignedUsdcTransfer({
+          amount, from: me.wallet, destination: dest, rpcUrl: config.rpcUrl, mint: config.mint, rpc,
+        });
+        return { ...checked, ...built };
+      } catch (e) {
+        throw new HttpError(400, e.message);
+      }
+    }],
+    ['POST', /^\/api\/pay\/confirm$/, 'panel', async (req) => {
+      const b = await body(req);
+      const p = store.attachSignature(Number(b.paymentId), b.signature, b.agent);
+      if (config.validateEverySec >= 0) {
+        try { await validate(p.agent_id); } catch { /* still recorded */ }
+      }
+      return store.getPaymentForAgent(p.id, p.agent_id);
+    }],
     ['POST', /^\/api\/connection\/test$/, 'panel', async () => checkConnection()],
     ['POST', /^\/api\/watcher$/, 'panel', async () => {
       const state = store.state();

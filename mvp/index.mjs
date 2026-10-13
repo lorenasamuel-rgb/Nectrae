@@ -15,5 +15,6 @@ config.liveRunner = {
 
 const app = createApp(config);
 seedIfEmpty(app.store);
+app.checkConnection().catch(() => {});
 
 export default app.handle;
