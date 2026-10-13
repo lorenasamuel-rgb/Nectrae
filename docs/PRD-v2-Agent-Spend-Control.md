@@ -1,4 +1,8 @@
-# PRD v2 — Agent Spend Control
+# PRD v2 — Nectrae | Agent Spend Control
+
+Demo: https://youtu.be/05wZPXyfGSU
+
+Pitch: https://youtu.be/mkPb4-25d6k
 
 11/10/2026 · Lorena Samuel
 
