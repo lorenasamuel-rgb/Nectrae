@@ -10,6 +10,10 @@ Agent Spend Control: one USDC cap per API, checked on Solana devnet and Base Sep
 
 Website: https://nectrae.lovable.app/
 
+## Access manual
+
+- [Manual de acesso · Nectrae Spend Control](docs/access-manual.md)
+
 To run the MVP:
 
 ```bash
