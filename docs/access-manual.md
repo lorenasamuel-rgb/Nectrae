@@ -11,7 +11,7 @@ Guide for anyone who is **not** on Lorena’s computer. Use it to open the panel
    **https://nectrae.vercel.app**
 
 2. You see **Sign in to the panel**.
-3. It asks for the **panel token** (`PANEL_TOKEN`).94Z04RpBUcXBFd8rEp1Eba1LSJiZ0W2C
+3. It asks for the **panel token** (`PANEL_TOKEN`). token: 94Z04RpBUcXBFd8rEp1Eba1LSJiZ0W2C
 4. Ask the project owner (Lorena) for that value.  
    It is not in this file on purpose — it is a secret.
 5. Paste the token, optionally check **Remember on this device**, and tap **Sign in**.
